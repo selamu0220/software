@@ -7,55 +7,55 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 0 72% 51%;  /* Red Creativa rojo */
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 220 79% 56%; /* Azul acento para botones secundarios */
+    /* Esta configuración ya no se usa al forzar tema oscuro */
+    --background: 0 0% 5%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 85% 60%;  /* Red Creativa rojo más vibrante */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 0% 15%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 0 72% 51%;
-    --radius: 0.5rem;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 0 85% 60%;
+    --radius: 0.25rem;
 
     /* Red Creativa specific colors */
-    --rc-red: 0 72% 51%;
-    --rc-dark: 240 10% 3.9%;
-    --rc-blue: 220 79% 56%;
-    --rc-gray: 240 3.8% 46.1%;
+    --rc-red: 0 85% 60%;
+    --rc-dark: 0 0% 0%;
+    --rc-gray: 0 0% 25%;
     --rc-light: 0 0% 98%;
   }
 
   .dark {
     --background: 0 0% 0%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 72% 51%; /* Red Creativa rojo */
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 10%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 2%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 2%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 90% 65%; /* Red Creativa rojo más vivo e intenso */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 5%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 5%;
     --muted-foreground: 0 0% 70%;
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 0 72% 51%;
+    --accent: 0 0% 5%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 90% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 8%;
+    --input: 0 0% 8%;
+    --ring: 0 90% 65%;
   }
 
   * {
@@ -73,7 +73,7 @@
 
 /* Red Creativa styles */
 .beta-badge {
-  @apply ml-2 bg-primary/80 text-white text-[10px] px-2 py-0.5 rounded-md font-semibold tracking-wider uppercase;
+  @apply ml-2 bg-primary text-white text-[10px] px-2 py-0.5 rounded-sm font-extrabold tracking-widest uppercase shadow-md shadow-primary/20;
 }
 
 /* Hero section gradient */
@@ -264,7 +264,7 @@
 }
 
 @keyframes pulseGlow {
-  0% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4); }
+  0% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.6); }
   70% { box-shadow: 0 0 0 10px hsl(var(--primary) / 0); }
   100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
 }

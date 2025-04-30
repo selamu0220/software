@@ -36,11 +36,11 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center animate-fade-in">
               <Link href="/">
-                <span className="text-primary font-heading font-bold text-2xl cursor-pointer">
-                  Red Creativa
+                <span className="text-white font-heading font-bold text-2xl cursor-pointer">
+                  <span className="text-primary font-extrabold">Red</span> Creativa
                 </span>
               </Link>
-              <span className="beta-badge ml-2">BETA</span>
+              <span className="beta-badge ml-2 animate-pulse-glow">BETA</span>
             </div>
             <div className="hidden sm:ml-8 sm:flex sm:space-x-8">
               {navLinks.map((link) => (
@@ -113,12 +113,12 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
             ) : (
               <>
                 <Link href="/login">
-                  <Button variant="ghost" className="px-3 py-1 text-sm font-medium">
+                  <Button variant="ghost" className="px-4 py-1.5 text-sm font-medium border border-transparent hover:border-border">
                     Iniciar sesión
                   </Button>
                 </Link>
                 <Link href="/register">
-                  <Button className="px-3 py-1 bg-primary text-white text-sm font-medium hover:bg-red-700 animate-pulse-glow">
+                  <Button className="px-4 py-1.5 bg-primary text-white text-sm font-medium hover:bg-primary/90 shadow-md shadow-primary/20 animate-pulse-glow">
                     Empezar gratis
                   </Button>
                 </Link>
@@ -251,14 +251,14 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
               <div className="mt-3 space-y-1">
                 <Link
                   href="/login"
-                  className="block px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
+                  className="block px-4 py-3 text-base font-medium text-white hover:text-foreground hover:bg-muted rounded-sm my-2 border border-border/30"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Iniciar sesión
                 </Link>
                 <Link
                   href="/register"
-                  className="block px-4 py-2 text-base font-medium text-primary hover:text-red-700 hover:bg-muted"
+                  className="block px-4 py-3 text-base font-medium text-white bg-primary hover:bg-primary/90 rounded-sm my-2 shadow-md shadow-primary/20"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Empezar gratis
