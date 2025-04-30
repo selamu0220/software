@@ -1,0 +1,120 @@
+creame una app para crear ideas de vídeos para youtube,ponlo que es una beta, con una ia integrada para generar estas ideas, y un calendario para crear ideas para todo el mes, con un sistema de pago mediante stripe , osea va costar 10 euros al mes , 70 euros de por vida, pago unico, te voy a pasar una plantillla pero quiro qeu hagas qeu la app sirva para cualquier tipo de canal de youtube, que se pueda elegir, categoria, subcateogoria, cuanto dura el vide 1min,10min, 1h, , esta es la plantilla, de como deberían ser los titulos, que puedan tmabien elegir el tipo de titulo,RECICLADO DE VIDEOS
+
+"Top [Número] Secretos que Nadie te Cuenta sobre [Tema]"*
+"10 Mejores Maneras de [Acción] sin [Obstáculo]"*
+"[Número] Tips para [Objetivo] como Profesional"*
+"Top [Número] Errores que Debes Evitar en [Tema]"*
+"10 Trucos Geniales para [Acción] que Cambiarán tu [Aspecto de Vida]"*
+"[Número] Cosas que Debes Saber Antes de [Acción/Tema]"*
+"Top [Número] Ideas Creativas para [Objetivo]"*
+"[Número] Hábitos que te Harán Mejor en [Tema]"*
+"Top [Número] Tendencias en [Tema] que Debes Conocer"*
+"[Número] Razones por las que [Acción/Tema] está arruinando tu vida (y cómo arreglarlo)"
+"¿Quieres [Resultado]? Aquí tienes [Número] pasos que realmente funcionan"
+"[Número] Secretos que usan los expertos en [Tema] (y tú no)"
+"[Número] Cosas que JAMÁS deberías hacer si quieres [Objetivo]"
+"[Número] Trucos psicológicos para [Acción] sin darte cuenta"
+"Lo que NADIE te dice sobre [Tema] (y deberías saber YA)"
+"[Número] Métodos poco conocidos para [Resultado brutal]"
+"[Número] Señales de que lo estás haciendo MAL en [Tema]"
+"[Número] Estrategias ridículamente fáciles para [Acción]"
+"[Número] Cambios pequeños que transformarán tu [Área de Vida]"
+"[Número] errores que estás cometiendo sin saberlo en [Tema]"
+"Si haces esto, estás saboteando tu [Meta]. Haz esto en su lugar"
+"[Número] Hacks que solo los pros usan para [Acción]"
+"La guía DEFINITIVA para [Acción/Tema] en [Año]"
+"[Número] formas de [Acción] en menos de [X minutos]"
+"¿Vale la pena [Acción]? Esto es lo que descubrí (spoiler: flipas)"
+"[Número] mitos sobre [Tema] que están jodiéndote la vida"
+"[Número] verdades incómodas sobre [Tema] que necesitas oír"
+"[Número] Cosas que Desearía Haber Sabido Antes de Empezar en [Tema]"
+"Haz Esto Durante [Tiempo Corto] y Verás Cambios Brutales en [Resultado]"
+"¿Estás Estancado en [Tema]? Prueba Estos [Número] Cambios Urgentes"
+"[Número] Cosas que Haces Mal en [Tema] y Cómo Corregirlas HOY"
+"Top [Número] Trucos de [Tema] que Nadie Está Usando (Pero Deberían)"
+"Así es como los mejores logran [Resultado] en la mitad de tiempo"
+"[Número] Ejemplos de [Tema] que te Harán Replantearte Todo"
+"La Cruda Verdad sobre [Tema]: Lo que Nadie Quiere Admitir"
+"[Número] Cosas que Estás Ignorando en [Tema] (y te están frenando)"
+"Cómo Pasar de [Nivel Básico] a [Nivel Pro] en [Tiempo] (sin volverte loco)"
+"Lo que Aprendí Después de [Acción] por [X Tiempo]"
+"[Número] Preguntas que DEBES Hacerte si Quieres Mejorar en [Tema]"
+"[Número] Pasos para Dominar [Tema] sin Ser un Genio"
+"[Número] Maneras de [Resultado] Incluso Si Empiezas de Cero"
+"[Número] Cosas que la Gente Exitosa en [Tema] Hace Diferente"
+"Así es como [Persona Épica/Famosa] domina [Tema] (y cómo puedes copiarlo)"
+"La Fórmula de [Número] Pasos para [Resultado] sin Agobiarte"
+"[Número] Cambios Tontos que Mejorarán tu [Tema] al Instante"
+Objetivo: Crear ideas para videos que sirvan como guiones o enumeraciones de temas a mencionar, centrados en herramientas de IA, edición de video, creación de páginas web y soluciones creativas, sin entrar en estrategias complejas ni mencionar SEO.
+
+Detalles del video:
+
+Público objetivo: Empresas SaaS y negocios que quieran crear anuncios sin mostrar la cara.
+Servicios que ofrezco:
+Edición de video para anuncios de YouTube.
+Herramientas gratuitas (con y sin IA).
+Creación de páginas web básicas o funnels con integración de Stripe, usando Framer o Figma.
+Herramienta específica para creadores de contenido o usuarios sin empresa: cortador de silencios para videos, con opciones:
+Suscripción de 10 €/mes.
+Suscripción de 50 €/mes con acceso de por vida al programa.
+Posibilidad de revender la herramienta o mejorarla para quienes quieran comercializarla.
+Plantillas gratuitas de DaVinci Resolve con videos preeditados para agilizar la edición.
+Enfoque del contenido:
+Resaltar herramientas y servicios como "increíbles" o fáciles de usar.
+Mostrar cómo utilizar las herramientas (tutoriales prácticos).
+Incluir creatividad en la presentación, sin mencionar estrategias avanzadas.
+Interactuar con la audiencia preguntando: "¿Qué te ha parecido esta herramienta?", "¿La usarías?", "¿Qué opinas?".
+Menciones de mis herramientas/servicios:
+En el medio del video: Una mención breve (5-10 segundos), no intrusiva, destacando una herramienta o servicio relevante al tema del video.
+Al final del video: Una mención rápida (10-15 segundos) resumiendo los servicios/herramientas (edición de video, páginas web, cortador de silencios, plantillas gratuitas) con un llamado a la acción (ej. "Contáctame para más info").
+Instrucciones para la IA:
+Genera ideas de videos basadas en este contexto, sin cambiar los servicios o herramientas mencionados.
+Cada idea debe ser una enumeración de temas a mencionar en el video (no un guion completo).
+Enfócate en IA, edición de video, páginas web y soluciones creativas.
+Evita cualquier mención a SEO u otras estrategias no incluidas.
+Incluye las menciones breves en el medio y al final del video, como se especificó.
+Termina cada video con una pregunta a la audiencia para fomentar interacción.
+---
+Nuevas Ideas de Videos con Menciones Incorporadas
+
+Video: "Crea Anuncios de YouTube Profesionales en Minutos"
+Temas a mencionar:
+Explicar cómo editar un anuncio sin mostrar la cara usando herramientas gratuitas.
+Mostrar un ejemplo de edición con plantillas de DaVinci Resolve.
+Demostrar cómo el cortador de silencios mejora la fluidez del video.
+Mención en el medio (5-10 seg.): "Por cierto, si necesitas plantillas gratis de DaVinci Resolve o un cortador de silencios, ¡las tengo disponibles para ti!"
+Mención al final (10-15 seg.): "Si quieres ahorrar tiempo, ofrezco edición de videos para YouTube, páginas web con Framer, y herramientas como el cortador de silencios. ¡Escríbeme para más info!"
+Pregunta a la audiencia: "¿Qué herramienta te gustaría probar para tus anuncios? ¡Cuéntanos abajo!"
+Video: "Cómo Hacer una Página Web Básica para tu Negocio Rápido"
+Temas a mencionar:
+Mostrar el proceso de crear una web con Framer o Figma.
+Enseñar cómo añadir Stripe para pagos.
+Explicar por qué es ideal para promociones SaaS sin aparecer en cámara.
+Mención en el medio (5-10 seg.): "Oye, si necesitas una web rápida, ¡puedo crearte una con Stripe integrado en pocos días!"
+Mención al final (10-15 seg.): "Además de webs, ofrezco edición de videos, plantillas gratis de DaVinci Resolve y un cortador de silencios. ¡Contáctame para detalles!"
+Pregunta a la audiencia: "¿Te parece útil crear una web así para tu negocio? ¿Qué opinas?"
+Video: "Edita Videos con IA para Anuncios que Enganchen"
+Temas a mencionar:
+Presentar herramientas de IA gratuitas para edición de video.
+Mostrar cómo el cortador de silencios elimina pausas automáticamente.
+Combinar con plantillas de DaVinci Resolve para resultados rápidos.
+Mención en el medio (5-10 seg.): "A propósito, mi cortador de silencios tiene una versión gratis y otra de por vida por solo 50 €/mes."
+Mención al final (10-15 seg.): "Si necesitas ayuda, hago edición de videos, páginas web con Stripe, y ofrezco plantillas gratis y herramientas de IA. ¡Escríbeme!"
+Pregunta a la audiencia: "¿Usarías IA para editar tus videos? ¿Qué te ha parecido esta herramienta?"
+Video: "Plantillas Gratis para Anuncios de YouTube Listos en Segundos"
+Temas a mencionar:
+Enseñar cómo usar mis plantillas gratuitas de DaVinci Resolve.
+Mostrar un ejemplo de anuncio preeditado para SaaS.
+Explicar cómo personalizar las plantillas para diferentes negocios.
+Mención en el medio (5-10 seg.): "Si te gustan estas plantillas, también ofrezco edición de videos personalizada para tus anuncios."
+Mención al final (10-15 seg.): "Puedo editar tus videos, crear webs con Framer, o darte herramientas como el cortador de silencios. ¡Contáctame para más!"
+Pregunta a la audiencia: "¿Qué tipo de plantilla te gustaría que compartiera? ¡Dímelo en los comentarios!"
+Video: "Elimina Silencios de tus Videos Fácilmente con Esta Herramienta"
+Temas a mencionar:
+Presentar el cortador de silencios (gratis, 10 €/mes, o 50 €/mes con acceso de por vida).
+Mostrar un antes y después de un video editado.
+Explicar cómo es perfecto para anuncios SaaS profesionales.
+Mención en el medio (5-10 seg.): "Si te gusta esta herramienta, también puedes revenderla o mejorarla para tus proyectos."
+Mención al final (10-15 seg.): "Además, ofrezco edición de videos, webs con Stripe, y plantillas gratis de DaVinci Resolve. ¡Escríbeme para más info!"
+Pregunta a la audiencia: "¿Crees que esta herramienta te ahorraría tiempo en tus videos? ¿Qué opinas?"
+Preferiblemente buscar novedades, temas de hype, y crear titulos hype, pon 10 ideas de titulo de minatura, no de video
