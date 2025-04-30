@@ -324,12 +324,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const storedIdeas = [];
       const today = new Date();
       
+      // Crear ideas para cada día de la semana
       for (let i = 0; i < 7; i++) {
         try {
-          const ideaDate = addDays(today, i);
+          // Crear una nueva fecha añadiendo i días a la fecha actual
+          const ideaDate = new Date(today);
+          ideaDate.setDate(today.getDate() + i);
+          
+          // Formato de fecha en español
+          const fechaFormateada = new Intl.DateTimeFormat('es-ES', {
+            day: 'numeric',
+            month: 'numeric',
+            year: 'numeric'
+          }).format(ideaDate);
+          
+          // Generar idea con enfoque específico para ese día
           const generatedIdea = await generateVideoIdea({
             ...params,
-            videoFocus: `${params.videoFocus} (Día ${i+1} de 7, ${ideaDate.toLocaleDateString('es-ES')})`
+            videoFocus: `${params.videoFocus} (Día ${i+1} de 7, ${fechaFormateada})`
           });
           
           // Guardar la idea en la base de datos

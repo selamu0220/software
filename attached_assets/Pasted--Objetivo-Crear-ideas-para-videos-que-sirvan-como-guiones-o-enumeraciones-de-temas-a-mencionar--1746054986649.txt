@@ -1,0 +1,31 @@
+**Objetivo**: Crear ideas para videos que sirvan como guiones o enumeraciones de temas a mencionar, centrados en herramientas de IA, edición de video, creación de páginas web y soluciones creativas, sin entrar en estrategias complejas ni mencionar SEO.
+
+**Detalles del video**:
+
+- **Público objetivo**: Empresas SaaS y negocios que quieran crear anuncios sin mostrar la cara.
+- **Servicios que ofrezco**:
+    - Edición de video para anuncios de YouTube.
+    - Herramientas gratuitas (con y sin IA).
+    - Creación de páginas web básicas o funnels con integración de Stripe, usando Framer o Figma.
+    - Herramienta específica para creadores de contenido o usuarios sin empresa: cortador de silencios para videos, con opciones:
+        - Suscripción de 10 €/mes.
+        - Suscripción de 50 €/mes con acceso de por vida al programa.
+        - Posibilidad de revender la herramienta o mejorarla para quienes quieran comercializarla.
+    - Plantillas gratuitas de DaVinci Resolve con videos preeditados para agilizar la edición.
+- **Enfoque del contenido**:
+    - Resaltar herramientas y servicios como "increíbles" o fáciles de usar.
+    - Mostrar cómo utilizar las herramientas (tutoriales prácticos).
+    - Incluir creatividad en la presentación, sin mencionar estrategias avanzadas.
+    - Interactuar con la audiencia preguntando: "¿Qué te ha parecido esta herramienta?", "¿La usarías?", "¿Qué opinas?".
+- **Menciones de mis herramientas/servicios**:
+    - **En el medio del video**: Una mención breve (5-10 segundos), no intrusiva, destacando una herramienta o servicio relevante al tema del video.
+    - **Al final del video**: Una mención rápida (10-15 segundos) resumiendo los servicios/herramientas (edición de video, páginas web, cortador de silencios, plantillas gratuitas) con un llamado a la acción (ej. "Contáctame para más info").
+- **Instrucciones para la IA**:
+    - Genera ideas de videos basadas en este contexto, sin cambiar los servicios o herramientas mencionados.
+    - Cada idea debe ser una enumeración de temas a mencionar en el video (no un guion completo).
+    - Enfócate en IA, edición de video, páginas web y soluciones creativas.
+    - Evita cualquier mención a SEO u otras estrategias no incluidas.
+    - Incluye las menciones breves en el medio y al final del video, como se especificó.
+    - Termina cada video con una pregunta a la audiencia para fomentar interacción.
+
+---

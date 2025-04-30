@@ -11,16 +11,21 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "mock-key");
 
 // Formatos para la generación de ideas de videos
 const IDEA_TEMPLATES = [
-  "Top [Número] [Tema] Que [Beneficio]",
-  "[Número] Formas de [Acción] Sin [Problema Común]",
-  "Cómo [Lograr Resultado] en [Tiempo] (Paso a Paso)",
-  "Por qué [Creencia Común] es Incorrecta y Qué Hacer En Su Lugar",
-  "La Guía Definitiva de [Tema] para [Audiencia Objetivo]",
-  "[Número] Secretos de [Tema] Que Los Profesionales No Comparten",
-  "Probé [Acción/Producto] Durante [Período] - Esto Es Lo Que Pasó",
-  "[Número] Errores a Evitar Al [Acción]",
-  "La Verdad Sobre [Tema Controversial] (Con Evidencia)",
-  "[Número] Mejores [Productos/Herramientas] para [Meta] en [Año Actual]"
+  "Top [Número] Secretos que Nadie te Cuenta sobre [Tema]",
+  "[Número] Herramientas de [Tema] que REVOLUCIONARÁN tu Trabajo",
+  "Lo que NADIE te dice sobre [Tema] (y cambiará tu forma de trabajar)",
+  "[Número] Trucos GENIALES en [Tema] que te Ahorrarán HORAS",
+  "Haz Esto Durante [Tiempo Corto] y TRANSFORMA tus [Resultado]",
+  "[Número] Errores FATALES en [Tema] que Estás Cometiendo SIN SABERLO",
+  "[Número] Métodos POCO CONOCIDOS para [Resultado brutal]",
+  "Cómo Pasar de [Nivel Básico] a [Nivel Pro] en [Tema] (sin volverte loco)",
+  "Las [Número] Herramientas de IA que DEBES Conocer para [Acción]",
+  "DESCUBRE los [Número] SECRETOS que los PROFESIONALES de [Tema] no comparten",
+  "[Número] Ideas CREATIVAS para [Objetivo] que NADIE está usando",
+  "¿Estás Estancado en [Tema]? Estos [Número] TRUCOS te SALVARÁN",
+  "Así es como los MEJORES logran [Resultado] en la MITAD de tiempo",
+  "[Número] Tendencias en [Tema] que DOMINARÁN este [Año]",
+  "PRUEBA estos [Número] HACKS de [Tema] y verás resultados INMEDIATOS"
 ];
 
 export type VideoIdeaContent = {
@@ -105,30 +110,43 @@ function buildPrompt(params: GenerationRequest): string {
     contentTone
   } = params;
 
-  return `
-Genera una idea de video de YouTube para un canal en el nicho de ${category}, específicamente sobre ${subcategory}.
-El video debe centrarse en ${videoFocus} y tener aproximadamente ${videoLength} de duración.
-Usa un estilo ${templateStyle} con un tono ${contentTone}.
+  // Selecciona aleatoriamente un template de los disponibles
+  const randomIndex = Math.floor(Math.random() * IDEA_TEMPLATES.length);
+  const randomTemplate = IDEA_TEMPLATES[randomIndex];
 
-Incluye estos elementos en tu respuesta como un objeto JSON:
-1. title: Un título atractivo que siga las mejores prácticas de YouTube
-2. outline: Un array de 7-12 puntos principales para cubrir en el video (como strings)
-3. midVideoMention: Una breve mención (1-2 oraciones) para incluir a mitad del video sobre una herramienta, servicio o producto relacionado con la eliminación de silencios o edición de video
-4. endVideoMention: Una breve mención final (1-2 oraciones) sobre servicios como edición de video, desarrollo web con Framer, o plantillas gratuitas de DaVinci Resolve
-5. thumbnailIdea: Una breve descripción de cómo podría ser la miniatura
-6. interactionQuestion: Una pregunta para los espectadores que fomente comentarios
+  return `
+Genera una idea de video profesional para YouTube dirigida a empresas SaaS y negocios que quieren crear anuncios atractivos sin mostrar la cara. 
+El tema está en el nicho de ${category}, específicamente sobre ${subcategory}.
+El video debe centrarse en ${videoFocus}, tener aproximadamente ${videoLength} de duración, y usar un estilo ${templateStyle} con un tono ${contentTone}.
+
+IMPORTANTE: Usa este formato para el título (adaptado a tu idea): "${randomTemplate}"
+Haz que el título sea IMPACTANTE, use MAYÚSCULAS estratégicamente, y tenga entre 6-10 palabras.
+
+La idea debe incluir estos servicios que ofrezco:
+- Edición de video para anuncios de YouTube 
+- Herramientas gratuitas (con y sin IA)
+- Creación de páginas web o funnels con Framer/Figma + Stripe
+- Herramienta específica de "cortador de silencios" para videos (con planes de 10€/mes o 50€/mes con acceso vitalicio)
+- Plantillas gratuitas de DaVinci Resolve con videos preeditados
+
+Incluye estos elementos EXACTOS en tu respuesta como un objeto JSON:
+1. title: Un título llamativo siguiendo el formato proporcionado, resaltando ALGUNAS palabras en MAYÚSCULAS para énfasis visual
+2. outline: Un array de 7-10 puntos concretos para cubrir en el video (como strings)
+3. midVideoMention: Una mención breve (5-10 segundos) destacando mi herramienta de "cortador de silencios"
+4. endVideoMention: Una mención rápida (10-15 segundos) que resuma TODOS mis servicios (edición de video, web, cortador de silencios, plantillas)
+5. thumbnailIdea: Una miniatura impactante que muestre el beneficio principal, con texto grande y legible
+6. interactionQuestion: Una pregunta para fomentar comentarios como "¿Qué te ha parecido esta herramienta?", "¿La usarías?", "¿Qué opinas?"
 7. category: La categoría proporcionada
 8. subcategory: La subcategoría proporcionada
 9. videoLength: La duración de video proporcionada
 
-Para contexto, el canal puede ofrecer estos servicios que puedes mencionar sutilmente:
-- Edición de video para YouTube
-- Creación de sitios web con Framer/Figma
-- Herramientas de IA para creación de contenido
-- Plantillas de DaVinci Resolve
-- Una herramienta de eliminación de silencios con varios niveles de precios
+EVITAR ABSOLUTAMENTE:
+- Mencionar SEO o estrategias de marketing
+- Incluir tácticas complejas o técnicas avanzadas
+- Usar ejemplos abstractos; ser muy CONCRETO y PRÁCTICO
+- Olvidar mencionar los servicios de edición de video, web con Framer, cortador de silencios y plantillas
 
-Haz que la idea sea específica, práctica y con probabilidades de funcionar bien en YouTube.
+Enfócate en mostrar herramientas "increíbles" y FÁCILES de usar. El contenido debe ser PRÁCTICO, DIRECTO y ÚTIL.
 Responde ÚNICAMENTE con JSON válido, sin texto adicional.
 `;
 }
@@ -140,24 +158,22 @@ function getMockVideoIdea(params: GenerationRequest): VideoIdeaContent {
   const { category, subcategory, videoLength } = params;
   
   return {
-    title: `Top 7 Herramientas de IA Que Transformarán Tu Flujo de Trabajo en ${subcategory} en 2023`,
+    title: `7 SECRETOS de EDICIÓN de Video que NADIE te CUENTA`,
     outline: [
-      "Introducción a la importancia de la IA en la creación de contenido",
-      "Herramienta #1: GPT-4 para escritura de guiones y generación de ideas",
-      "Herramienta #2: Midjourney para creación de miniaturas sin habilidades de diseño",
-      "Herramienta #3: Descript para transcripción y edición automática",
-      "Herramienta #4: RunwayML para efectos especiales sin After Effects",
-      "Herramienta #5: Nuestra herramienta de eliminación de silencios para audio más limpio",
-      "Herramienta #6: Synthesia para crear videos sin mostrar tu cara",
-      "Herramienta #7: Opus Clip para generar automáticamente shorts a partir de contenido largo",
-      "Comparación de precios y características",
-      "Cómo integrar estas herramientas en tu flujo de trabajo",
-      "Conclusión y recomendaciones"
+      "Presentación del problema: Demasiado tiempo editando videos",
+      "Secreto #1: Configuración de atajos de teclado personalizados para DaVinci Resolve",
+      "Secreto #2: Uso de plantillas pre-editadas para acelerar la producción",
+      "Secreto #3: Técnica del 'corte duro' para dinamizar cualquier video",
+      "Secreto #4: Herramientas de eliminación automática de silencios",
+      "Secreto #5: Técnicas avanzadas de recorte y composición para anuncios sin rostro",
+      "Secreto #6: Configuración de presets personalizados para exportación rápida",
+      "Secreto #7: Automatización del proceso de edición usando scripts y macros",
+      "Demostración de resultados: Antes vs Después"
     ],
-    midVideoMention: "Hablando de ahorrar tiempo, he desarrollado una herramienta de eliminación de silencios que corta automáticamente las pausas incómodas en tus videos. Está disponible con un nivel gratuito, y puedes consultarla en la descripción a continuación.",
-    endVideoMention: "Si estas herramientas te resultaron útiles, también ofrezco servicios profesionales de edición de video, creación de sitios web con Framer y plantillas gratuitas de DaVinci Resolve. ¡Consulta la descripción para más detalles!",
-    thumbnailIdea: "Pantalla dividida que muestra a un creador estresado antes de usar herramientas de IA y un creador relajado después, con texto superpuesto que dice '7 HERRAMIENTAS DE IA QUE LO CAMBIARON TODO'",
-    interactionQuestion: "¿Cuál de estas herramientas de IA estarías más emocionado de probar en tu proceso de creación de contenido? ¡Házmelo saber en los comentarios!",
+    midVideoMention: "Hablando de ahorrar tiempo... he desarrollado un cortador de silencios increíblemente potente que puede reducir el tiempo de edición hasta en un 70%. Con planes desde solo 10€ al mes o 50€ para acceso de por vida, es la herramienta perfecta para creadores y empresas.",
+    endVideoMention: "Si quieres mejorar tu contenido, ofrezco servicios profesionales de edición de video para anuncios, creación de sitios web con Framer y Figma, mi herramienta de cortador de silencios, y plantillas gratuitas de DaVinci Resolve. Toda la información está en la descripción del video.",
+    thumbnailIdea: "Imagen dividida mostrando 'ANTES' (persona estresada frente a una línea de tiempo desordenada) y 'DESPUÉS' (persona relajada con línea de tiempo optimizada), con texto grande que dice '7 SECRETOS DE EDICIÓN' y una flecha roja señalando el resultado final pulido.",
+    interactionQuestion: "¿Cuál de estos secretos de edición te ha sorprendido más? ¿Hay alguna técnica que ya utilices en tus videos?",
     category,
     subcategory,
     videoLength
