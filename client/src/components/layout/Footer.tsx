@@ -32,7 +32,6 @@ export default function Footer() {
                 <span className="sr-only">GitHub</span>
                 <Github className="h-5 w-5" />
               </a>
-              <ModeToggle />
             </div>
           </div>
           <div className="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">

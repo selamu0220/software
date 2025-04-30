@@ -72,9 +72,6 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
               <span className="sr-only">GitHub</span>
             </a>
             
-            {/* Tema toggle */}
-            <ModeToggle />
-            
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -128,8 +125,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
               </>
             )}
           </div>
-          <div className="flex items-center sm:hidden space-x-2">
-            <ModeToggle />
+          <div className="flex items-center sm:hidden">
             <Button
               variant="ghost"
               className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"

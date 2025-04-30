@@ -69,10 +69,10 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="red-creativa-theme">
+      <ThemeProvider defaultTheme="dark" storageKey="red-creativa-theme" forcedTheme="dark">
         <TooltipProvider>
           {showNavAndFooter && <Navbar user={user} onLogout={logout} />}
-          <main className="min-h-screen">
+          <main className="min-h-screen dark bg-black">
             <Switch>
               <Route path="/" component={() => <Home user={user} />} />
               <Route path="/login" component={() => <Login onLogin={login} />} />
