@@ -40,81 +40,37 @@ export default function CalendarPage({ user }: CalendarPageProps) {
         )}
       </div>
       
-      {isPremium ? (
-        <ContentCalendar userId={user.id} />
-      ) : (
-        <div className="space-y-6">
-          <Card className="border-2 border-primary">
+      <ContentCalendar userId={user.id} />
+      
+      {!isPremium && (
+        <div className="mt-8">
+          <Card className="border border-primary bg-black/5">
             <CardHeader>
-              <CardTitle>Premium Feature</CardTitle>
+              <CardTitle>Get More with Premium</CardTitle>
               <CardDescription>
-                The advanced content calendar is available to premium users only
+                Upgrade to premium for unlimited idea generation and monthly content planning
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start gap-4">
                 <Info className="h-6 w-6 text-primary mt-1" />
                 <div>
-                  <h3 className="font-medium">Why upgrade to premium?</h3>
-                  <p className="text-sm text-muted-foreground">
-                    With our premium calendar features, you can:
-                  </p>
+                  <h3 className="font-medium">Premium benefits:</h3>
                   <ul className="list-disc pl-5 mt-2 space-y-1 text-sm">
-                    <li>Schedule unlimited video ideas</li>
-                    <li>Get a visual overview of your content plan</li>
-                    <li>Set reminders for recording and editing</li>
-                    <li>Maintain a consistent posting schedule</li>
-                    <li>Track completed videos and upcoming content</li>
+                    <li>Unlimited daily idea generation</li>
+                    <li>Monthly content planning (30+ ideas at once)</li>
+                    <li>Advanced analytics and performance tracking</li>
+                    <li>Priority customer support</li>
                   </ul>
-                </div>
-              </div>
-              
-              <div className="bg-muted p-4 rounded-md flex items-start gap-4">
-                <Clock className="h-6 w-6 text-muted-foreground mt-1" />
-                <div>
-                  <h3 className="font-medium">Did you know?</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Consistency is key on YouTube. Channels that post on a regular schedule 
-                    see 45% more growth than those with irregular posting patterns.
-                  </p>
                 </div>
               </div>
               
               <div className="text-center">
                 <Link href="/subscribe">
-                  <Button size="lg" className="mt-2">
+                  <Button size="lg">
                     Upgrade Now
                   </Button>
                 </Link>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Calendar Preview</CardTitle>
-              <CardDescription>
-                Here's a preview of what our premium calendar offers
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="aspect-video bg-muted rounded-md overflow-hidden relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1611224923853-80b023f02d71?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80" 
-                  alt="Calendar Preview" 
-                  className="w-full h-full object-cover opacity-50"
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-background/80 p-6 rounded-md text-center max-w-md">
-                    <h3 className="text-xl font-bold mb-2">Organize Your Content</h3>
-                    <p className="mb-4">
-                      Plan your videos ahead of time and never miss a publishing date
-                    </p>
-                    <Link href="/subscribe">
-                      <Button>Unlock Premium Features</Button>
-                    </Link>
-                  </div>
-                </div>
               </div>
             </CardContent>
           </Card>
