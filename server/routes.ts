@@ -197,30 +197,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Video Idea Generation API
+  // ===== GENERACIÓN DE IDEAS DE VIDEO =====
+  // Funcionalidades implementadas:
+  // 1. Usuarios gratuitos: Pueden generar 1 idea por día y planificar semanalmente
+  // 2. Usuarios premium: Generación ilimitada de ideas y planificación mensual
+  // 3. Todos los usuarios: Acceso completo al calendario
+  
+  // Generar una sola idea
   app.post("/api/generate-idea", async (req, res) => {
     try {
       const params = generationRequestSchema.parse(req.body);
       
-      // Check if this is an anonymous request (limit to 1 per session)
+      // Generación anónima permitida (1 por sesión)
       if (!req.session.userId) {
-        // We could implement rate limiting here for anonymous users
-        // For now, we'll just generate the idea
+        const generatedIdea = await generateVideoIdea(params);
+        return res.json(generatedIdea);
       }
       
+      // Verificar si el usuario ha alcanzado el límite diario (si no es premium)
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+      
+      // Los usuarios premium no tienen límite diario
+      const isPremium = user.isPremium || user.lifetimeAccess;
+      
+      if (!isPremium) {
+        // Verificar si el usuario ya generó una idea hoy
+        const reachedLimit = await hasReachedDailyLimit(req.session.userId);
+        if (reachedLimit) {
+          return res.status(403).json({ 
+            message: "Has alcanzado el límite diario de ideas gratuitas. Actualiza a premium para generar más ideas.",
+            limitReached: true
+          });
+        }
+      }
+      
+      // Generar y guardar la idea
       const generatedIdea = await generateVideoIdea(params);
       
-      // If user is logged in, save the idea
-      if (req.session.userId) {
-        const videoIdea = await storage.createVideoIdea({
-          userId: req.session.userId,
-          title: generatedIdea.title,
-          category: params.category,
-          subcategory: params.subcategory,
-          videoLength: params.videoLength,
-          content: generatedIdea
-        });
-      }
+      await storage.createVideoIdea({
+        userId: req.session.userId,
+        title: generatedIdea.title,
+        category: params.category,
+        subcategory: params.subcategory,
+        videoLength: params.videoLength,
+        content: generatedIdea
+      });
       
       res.json(generatedIdea);
     } catch (error) {
@@ -279,6 +303,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Video idea deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Error deleting video idea" });
+    }
+  });
+  
+  // Generar ideas para toda una semana (disponible para usuarios gratuitos)
+  app.post("/api/generate-ideas/week", requireAuth, async (req, res) => {
+    try {
+      const params = generationRequestSchema.parse(req.body);
+      const userId = req.session.userId!;
+      
+      // Los usuarios gratuitos pueden generar ideas para toda la semana
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+      
+      // Generar 7 ideas para la semana
+      const ideas = [];
+      const today = new Date();
+      
+      for (let i = 0; i < 7; i++) {
+        try {
+          const ideaDate = addDays(today, i);
+          const generatedIdea = await generateVideoIdea({
+            ...params,
+            videoFocus: `Idea para ${ideaDate.toLocaleDateString('es-ES')} (Día ${i+1} de 7)`
+          });
+          
+          // Guardar la idea en la base de datos
+          const videoIdea = await storage.createVideoIdea({
+            userId,
+            title: generatedIdea.title,
+            category: params.category,
+            subcategory: params.subcategory,
+            videoLength: params.videoLength,
+            content: generatedIdea
+          });
+          
+          ideas.push(videoIdea);
+        } catch (error) {
+          console.error(`Error generando idea para el día ${i+1}:`, error);
+        }
+      }
+      
+      res.json({ 
+        message: "Ideas generadas para toda la semana", 
+        count: ideas.length,
+        ideas 
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input", errors: error.errors });
+      } else {
+        console.error("Error generating weekly ideas:", error);
+        res.status(500).json({ message: "Error generating weekly ideas" });
+      }
+    }
+  });
+  
+  // Generar ideas para todo un mes (solo para usuarios premium)
+  app.post("/api/generate-ideas/month", requirePremium, async (req, res) => {
+    try {
+      const params = generationRequestSchema.parse(req.body);
+      const userId = req.session.userId!;
+      
+      // Esta ruta solo está disponible para usuarios premium (verificado por middleware)
+      const today = new Date();
+      const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+      const ideas = [];
+      
+      // Generar ideas para cada día del mes actual
+      for (let i = 0; i < daysInMonth; i++) {
+        try {
+          const ideaDate = new Date(today.getFullYear(), today.getMonth(), i + 1);
+          const generatedIdea = await generateVideoIdea({
+            ...params,
+            videoFocus: `Idea para ${ideaDate.toLocaleDateString('es-ES')} (Día ${i+1} de ${daysInMonth})`
+          });
+          
+          // Guardar la idea en la base de datos
+          const videoIdea = await storage.createVideoIdea({
+            userId,
+            title: generatedIdea.title,
+            category: params.category,
+            subcategory: params.subcategory,
+            videoLength: params.videoLength,
+            content: generatedIdea
+          });
+          
+          ideas.push(videoIdea);
+        } catch (error) {
+          console.error(`Error generando idea para el día ${i+1}:`, error);
+        }
+      }
+      
+      res.json({ 
+        message: "Ideas generadas para todo el mes", 
+        count: ideas.length,
+        ideas 
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input", errors: error.errors });
+      } else {
+        console.error("Error generating monthly ideas:", error);
+        res.status(500).json({ message: "Error generating monthly ideas" });
+      }
     }
   });
 

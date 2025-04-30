@@ -303,6 +303,18 @@ export class DatabaseStorage implements IStorage {
       .from(videoIdeas)
       .where(eq(videoIdeas.userId, userId));
   }
+  
+  async getVideoIdeasByDateRange(userId: number, startDate: Date, endDate: Date): Promise<VideoIdea[]> {
+    return db.select()
+      .from(videoIdeas)
+      .where(
+        and(
+          eq(videoIdeas.userId, userId),
+          sql`${videoIdeas.createdAt} >= ${startDate}`,
+          sql`${videoIdeas.createdAt} <= ${endDate}`
+        )
+      );
+  }
 
   async deleteVideoIdea(id: number): Promise<boolean> {
     const result = await db.delete(videoIdeas)
