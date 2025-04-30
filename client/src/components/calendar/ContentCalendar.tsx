@@ -24,13 +24,14 @@ interface ContentCalendarProps {
 }
 
 // Form schema for adding calendar entries
-const calendarEntrySchema = z.object({
+// Form schema for adding/editing calendar entries
+const calendarEntryFormSchema = z.object({
   title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
   date: z.date(),
   videoIdeaId: z.number().optional(),
 });
 
-type CalendarEntryFormValues = z.infer<typeof calendarEntrySchema>;
+type CalendarEntryFormValues = z.infer<typeof calendarEntryFormSchema>;
 
 export default function ContentCalendar({ userId }: ContentCalendarProps) {
   const { toast } = useToast();
@@ -55,7 +56,7 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
 
   // Setup form for adding/editing calendar entries
   const form = useForm<CalendarEntryFormValues>({
-    resolver: zodResolver(calendarEntrySchema),
+    resolver: zodResolver(calendarEntryFormSchema),
     defaultValues: {
       title: "",
       date: today,
@@ -80,15 +81,19 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
     }
   }, [selectedEntry, selectedDate, form]);
 
+  // Define the calendar entry data type
+  type CalendarEntryData = {
+    title: string;
+    date: string;
+    videoIdeaId?: number;
+    userId: number;
+    completed: boolean;
+  };
+
   // Add calendar entry mutation
   const addEntryMutation = useMutation({
-    mutationFn: async (data: CalendarEntryFormValues) => {
-      const response = await apiRequest("POST", "/api/calendar", {
-        ...data,
-        date: data.date.toISOString(),
-        userId,
-        completed: false,
-      });
+    mutationFn: async (data: CalendarEntryData) => {
+      const response = await apiRequest("POST", "/api/calendar", data);
       
       if (!response.ok) {
         const error = await response.json();
@@ -114,9 +119,17 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
     }
   });
 
-  // Update calendar entry mutation
+  // Define the update type explicitly
+type CalendarEntryUpdate = {
+  title?: string;
+  videoIdeaId?: number | null;
+  date?: string;
+  completed?: boolean;
+};
+
+// Update calendar entry mutation
   const updateEntryMutation = useMutation({
-    mutationFn: async (data: { id: number, updates: Partial<CalendarEntry> }) => {
+    mutationFn: async (data: { id: number, updates: CalendarEntryUpdate }) => {
       const response = await apiRequest("PATCH", `/api/calendar/${data.id}`, data.updates);
       
       if (!response.ok) {
@@ -216,7 +229,12 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
       });
     } else {
       // Add new entry
-      addEntryMutation.mutate(data);
+      addEntryMutation.mutate({
+        ...data,
+        date: data.date.toISOString(),
+        userId,
+        completed: false
+      });
     }
   };
 
