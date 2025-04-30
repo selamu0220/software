@@ -37,12 +37,12 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
   const [monthlyResult, setMonthlyResult] = useState<MultiGenerationResponse | null>(null);
   
   const [formData, setFormData] = useState<GenerationRequest>({
-    category: VIDEO_CATEGORIES[0],
-    subcategory: VIDEO_SUBCATEGORIES[VIDEO_CATEGORIES[0]][0],
+    category: VIDEO_CATEGORIES[0] || "Entertainment",
+    subcategory: VIDEO_SUBCATEGORIES[VIDEO_CATEGORIES[0]]?.[0] || "General",
     videoFocus: "",
-    videoLength: VIDEO_LENGTHS[0],
-    templateStyle: TEMPLATE_STYLES[0],
-    contentTone: CONTENT_TONES[0],
+    videoLength: VIDEO_LENGTHS[0] || "10-15min",
+    templateStyle: TEMPLATE_STYLES[0] || "Educational",
+    contentTone: CONTENT_TONES[0] || "Informative",
   });
 
   // Update subcategories when category changes
@@ -57,12 +57,12 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
 
   const handleReset = () => {
     setFormData({
-      category: VIDEO_CATEGORIES[0],
-      subcategory: VIDEO_SUBCATEGORIES[VIDEO_CATEGORIES[0]][0],
+      category: VIDEO_CATEGORIES[0] || "Entertainment",
+      subcategory: VIDEO_SUBCATEGORIES[VIDEO_CATEGORIES[0]]?.[0] || "General",
       videoFocus: "",
-      videoLength: VIDEO_LENGTHS[0],
-      templateStyle: TEMPLATE_STYLES[0],
-      contentTone: CONTENT_TONES[0],
+      videoLength: VIDEO_LENGTHS[0] || "10-15min",
+      templateStyle: TEMPLATE_STYLES[0] || "Educational",
+      contentTone: CONTENT_TONES[0] || "Informative",
     });
   };
 
@@ -83,6 +83,18 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
       });
       return false;
     }
+    
+    // Verificar que todos los campos requeridos estén presentes
+    if (!formData.category || !formData.subcategory || !formData.videoLength || 
+        !formData.templateStyle || !formData.contentTone) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
     return true;
   };
 
