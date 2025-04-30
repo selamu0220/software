@@ -10,6 +10,8 @@ import {
   type InsertCalendarEntry,
   type UpdateUser
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, SQL, sql } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -197,4 +199,179 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values({
+      ...insertUser,
+      isPremium: false,
+      lifetimeAccess: false,
+    }).returning();
+    return user;
+  }
+
+  async updateUser(id: number, updates: UpdateUser): Promise<User> {
+    const [user] = await db.update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    
+    if (!user) {
+      throw new Error(`User with id ${id} not found`);
+    }
+    
+    return user;
+  }
+
+  async updateUserPremiumStatus(id: number, isPremium: boolean, lifetimeAccess = false): Promise<User> {
+    const [user] = await db.update(users)
+      .set({ isPremium, lifetimeAccess })
+      .where(eq(users.id, id))
+      .returning();
+    
+    if (!user) {
+      throw new Error(`User with id ${id} not found`);
+    }
+    
+    return user;
+  }
+
+  async updateStripeCustomerId(id: number, customerId: string): Promise<User> {
+    const [user] = await db.update(users)
+      .set({ stripeCustomerId: customerId })
+      .where(eq(users.id, id))
+      .returning();
+    
+    if (!user) {
+      throw new Error(`User with id ${id} not found`);
+    }
+    
+    return user;
+  }
+
+  async updateUserStripeInfo(id: number, info: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User> {
+    const [user] = await db.update(users)
+      .set({ 
+        stripeCustomerId: info.stripeCustomerId,
+        stripeSubscriptionId: info.stripeSubscriptionId,
+        isPremium: true
+      })
+      .where(eq(users.id, id))
+      .returning();
+    
+    if (!user) {
+      throw new Error(`User with id ${id} not found`);
+    }
+    
+    return user;
+  }
+
+  // Video idea operations
+  async createVideoIdea(idea: InsertVideoIdea): Promise<VideoIdea> {
+    const [videoIdea] = await db.insert(videoIdeas)
+      .values(idea)
+      .returning();
+    
+    return videoIdea;
+  }
+
+  async getVideoIdea(id: number): Promise<VideoIdea | undefined> {
+    const [videoIdea] = await db.select()
+      .from(videoIdeas)
+      .where(eq(videoIdeas.id, id));
+    
+    return videoIdea;
+  }
+
+  async getVideoIdeasByUser(userId: number): Promise<VideoIdea[]> {
+    return db.select()
+      .from(videoIdeas)
+      .where(eq(videoIdeas.userId, userId));
+  }
+
+  async deleteVideoIdea(id: number): Promise<boolean> {
+    const result = await db.delete(videoIdeas)
+      .where(eq(videoIdeas.id, id))
+      .returning({ id: videoIdeas.id });
+    
+    return result.length > 0;
+  }
+
+  // Calendar entries operations
+  async createCalendarEntry(entry: InsertCalendarEntry): Promise<CalendarEntry> {
+    const [calendarEntry] = await db.insert(calendarEntries)
+      .values(entry)
+      .returning();
+    
+    return calendarEntry;
+  }
+
+  async getCalendarEntry(id: number): Promise<CalendarEntry | undefined> {
+    const [entry] = await db.select()
+      .from(calendarEntries)
+      .where(eq(calendarEntries.id, id));
+    
+    return entry;
+  }
+
+  async getCalendarEntriesByUser(userId: number): Promise<CalendarEntry[]> {
+    return db.select()
+      .from(calendarEntries)
+      .where(eq(calendarEntries.userId, userId));
+  }
+
+  async getCalendarEntriesByMonth(userId: number, year: number, month: number): Promise<CalendarEntry[]> {
+    // Create start and end dates for the month
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999); // Last day of month
+    
+    return db.select()
+      .from(calendarEntries)
+      .where(
+        and(
+          eq(calendarEntries.userId, userId),
+          sql`${calendarEntries.date} >= ${startDate}`,
+          sql`${calendarEntries.date} <= ${endDate}`
+        )
+      );
+  }
+
+  async updateCalendarEntry(id: number, updates: Partial<CalendarEntry>): Promise<CalendarEntry> {
+    const [entry] = await db.update(calendarEntries)
+      .set(updates)
+      .where(eq(calendarEntries.id, id))
+      .returning();
+    
+    if (!entry) {
+      throw new Error(`Calendar entry with id ${id} not found`);
+    }
+    
+    return entry;
+  }
+
+  async deleteCalendarEntry(id: number): Promise<boolean> {
+    const result = await db.delete(calendarEntries)
+      .where(eq(calendarEntries.id, id))
+      .returning({ id: calendarEntries.id });
+    
+    return result.length > 0;
+  }
+}
+
+// Use DatabaseStorage instead of MemStorage
+export const storage = new DatabaseStorage();

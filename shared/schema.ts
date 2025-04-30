@@ -1,6 +1,7 @@
 import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // User model
 export const users = pgTable("users", {
@@ -36,6 +37,31 @@ export const calendarEntries = pgTable("calendar_entries", {
   date: timestamp("date").notNull(),
   completed: boolean("completed").default(false).notNull(),
 });
+
+// Define relations
+export const usersRelations = relations(users, ({ many }) => ({
+  videoIdeas: many(videoIdeas),
+  calendarEntries: many(calendarEntries),
+}));
+
+export const videoIdeasRelations = relations(videoIdeas, ({ one, many }) => ({
+  user: one(users, {
+    fields: [videoIdeas.userId],
+    references: [users.id],
+  }),
+  calendarEntries: many(calendarEntries),
+}));
+
+export const calendarEntriesRelations = relations(calendarEntries, ({ one }) => ({
+  user: one(users, {
+    fields: [calendarEntries.userId],
+    references: [users.id],
+  }),
+  videoIdea: one(videoIdeas, {
+    fields: [calendarEntries.videoIdeaId],
+    references: [videoIdeas.id],
+  }),
+}));
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({

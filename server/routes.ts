@@ -404,7 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Verify signature in production
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-          apiVersion: "2023-10-16",
+          apiVersion: "2025-03-31.basil",
         });
         event = stripe.webhooks.constructEvent(
           (req as any).rawBody, 
