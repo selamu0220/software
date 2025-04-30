@@ -397,8 +397,8 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
                         <FormItem>
                           <FormLabel>Video Idea (Optional)</FormLabel>
                           <Select
-                            onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}
-                            value={field.value?.toString() || ""}
+                            onValueChange={(value) => field.onChange(value !== "0" ? parseInt(value) : undefined)}
+                            value={field.value?.toString() || "0"}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -406,7 +406,7 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">None</SelectItem>
+                              <SelectItem value="0">None</SelectItem>
                               {videoIdeas?.map((idea: VideoIdea) => (
                                 <SelectItem key={idea.id} value={idea.id.toString()}>
                                   {idea.title}
