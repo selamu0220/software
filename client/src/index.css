@@ -128,7 +128,12 @@
 
 /* Pricing table highlight */
 .pricing-highlight {
-  @apply border border-white transform scale-105;
+  @apply border-2 border-primary transform scale-105 shadow-lg shadow-primary/20;
+}
+
+/* Pricing card hover effect */
+.pricing-card {
+  @apply transition-all duration-300 hover:border-primary/50 hover:shadow-md hover:shadow-primary/10;
 }
 
 .font-sans {

@@ -16,12 +16,12 @@ export default function Pricing({ user }: PricingProps) {
     <section id="pricing" className="py-12 bg-black/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="lg:text-center mb-10">
-          <h2 className="text-base text-primary font-semibold tracking-wide uppercase font-heading">Pricing</h2>
+          <h2 className="text-base text-primary font-semibold tracking-wide uppercase font-heading">Precios</h2>
           <p className="mt-2 text-3xl leading-8 font-bold tracking-tight sm:text-4xl font-heading">
-            Simple, Transparent Pricing
+            Precios Simples y Transparentes
           </p>
           <p className="mt-4 max-w-2xl text-xl text-muted-foreground lg:mx-auto">
-            Free during Beta, with affordable options when we launch.
+            Gratis durante la Beta, con opciones asequibles al lanzamiento oficial.
           </p>
         </div>
 
@@ -29,40 +29,40 @@ export default function Pricing({ user }: PricingProps) {
           {/* Free Tier */}
           <Card className="bg-slate-950 rounded-lg shadow-sm divide-y divide-gray-800">
             <div className="p-6">
-              <h2 className="text-xl leading-6 font-medium">Free Beta</h2>
-              <p className="mt-4 text-sm text-muted-foreground">Get full access during our beta period!</p>
+              <h2 className="text-xl leading-6 font-medium">Beta Gratis</h2>
+              <p className="mt-4 text-sm text-muted-foreground">¡Acceso completo durante nuestro periodo beta!</p>
               <p className="mt-8">
                 <span className="text-4xl font-extrabold">€0</span>
-                <span className="text-base font-medium text-muted-foreground">/mo</span>
+                <span className="text-base font-medium text-muted-foreground">/mes</span>
               </p>
               {!isAuthenticated ? (
                 <Link href="/register">
-                  <Button className="mt-8 block w-full">Sign Up Free</Button>
+                  <Button className="mt-8 block w-full">Registrarse Gratis</Button>
                 </Link>
               ) : (
                 <Button className="mt-8 block w-full" disabled>
-                  {isPremium ? "Current Plan" : "Already Registered"}
+                  {isPremium ? "Plan Actual" : "Ya Registrado"}
                 </Button>
               )}
             </div>
             <div className="pt-6 pb-8 px-6">
-              <h3 className="text-xs font-medium text-muted-foreground tracking-wide uppercase">What's included</h3>
+              <h3 className="text-xs font-medium text-muted-foreground tracking-wide uppercase">Incluye</h3>
               <ul className="mt-6 space-y-4">
                 <li className="flex space-x-3">
                   <Check className="flex-shrink-0 h-5 w-5 text-primary" />
-                  <span className="text-sm">Generate up to 30 ideas/month</span>
+                  <span className="text-sm">Genera hasta 30 ideas/mes</span>
                 </li>
                 <li className="flex space-x-3">
                   <Check className="flex-shrink-0 h-5 w-5 text-primary" />
-                  <span className="text-sm">Basic content calendar</span>
+                  <span className="text-sm">Calendario de contenido básico</span>
                 </li>
                 <li className="flex space-x-3">
                   <Check className="flex-shrink-0 h-5 w-5 text-primary" />
-                  <span className="text-sm">Save and export ideas</span>
+                  <span className="text-sm">Guarda y exporta ideas</span>
                 </li>
                 <li className="flex space-x-3">
                   <Check className="flex-shrink-0 h-5 w-5 text-primary" />
-                  <span className="text-sm">Access to all templates</span>
+                  <span className="text-sm">Acceso a todas las plantillas</span>
                 </li>
               </ul>
             </div>
@@ -73,55 +73,55 @@ export default function Pricing({ user }: PricingProps) {
             <div className="p-6">
               <h2 className="text-xl leading-6 font-medium">
                 Premium 
-                {!isPremium && <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full ml-2">COMING SOON</span>}
+                {!isPremium && <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full ml-2">PRÓXIMAMENTE</span>}
               </h2>
-              <p className="mt-4 text-sm text-muted-foreground">Everything you need for serious YouTube growth.</p>
+              <p className="mt-4 text-sm text-muted-foreground">Todo lo que necesitas para crecer seriamente en YouTube.</p>
               <p className="mt-8">
                 <span className="text-4xl font-extrabold">€4.99</span>
-                <span className="text-base font-medium text-muted-foreground">/mo</span>
+                <span className="text-base font-medium text-muted-foreground">/mes</span>
               </p>
-              <p className="mt-4 text-sm text-muted-foreground">Or <span className="font-bold">€29.99</span> lifetime access</p>
+              <p className="mt-4 text-sm text-muted-foreground">O <span className="font-bold">€29.99</span> acceso de por vida</p>
               
               {!isAuthenticated ? (
                 <Link href="/register">
-                  <Button className="mt-8 block w-full">Sign Up First</Button>
+                  <Button className="mt-8 block w-full">Regístrate Primero</Button>
                 </Link>
               ) : isPremium ? (
                 <Button className="mt-8 block w-full" disabled>
-                  Current Plan
+                  Plan Actual
                 </Button>
               ) : (
                 <Link href="/subscribe">
-                  <Button className="mt-8 block w-full">Upgrade Now</Button>
+                  <Button className="mt-8 block w-full">Mejorar Ahora</Button>
                 </Link>
               )}
             </div>
             <div className="pt-6 pb-8 px-6">
-              <h3 className="text-xs font-medium text-muted-foreground tracking-wide uppercase">What's included</h3>
+              <h3 className="text-xs font-medium text-muted-foreground tracking-wide uppercase">Incluye</h3>
               <ul className="mt-6 space-y-4">
                 <li className="flex space-x-3">
                   <Check className="flex-shrink-0 h-5 w-5 text-primary" />
-                  <span className="text-sm"><span className="font-semibold">Unlimited</span> idea generation</span>
+                  <span className="text-sm">Generación de ideas <span className="font-semibold">ilimitada</span></span>
                 </li>
                 <li className="flex space-x-3">
                   <Check className="flex-shrink-0 h-5 w-5 text-primary" />
-                  <span className="text-sm">Advanced content calendar</span>
+                  <span className="text-sm">Calendario de contenido avanzado</span>
                 </li>
                 <li className="flex space-x-3">
                   <Check className="flex-shrink-0 h-5 w-5 text-primary" />
-                  <span className="text-sm">Thumbnail suggestions</span>
+                  <span className="text-sm">Sugerencias de miniaturas</span>
                 </li>
                 <li className="flex space-x-3">
                   <Check className="flex-shrink-0 h-5 w-5 text-primary" />
-                  <span className="text-sm">Script outline generator</span>
+                  <span className="text-sm">Generador de esquemas de guión</span>
                 </li>
                 <li className="flex space-x-3">
                   <Check className="flex-shrink-0 h-5 w-5 text-primary" />
-                  <span className="text-sm">Priority support</span>
+                  <span className="text-sm">Soporte prioritario</span>
                 </li>
                 <li className="flex space-x-3">
                   <Check className="flex-shrink-0 h-5 w-5 text-primary" />
-                  <span className="text-sm">All future features</span>
+                  <span className="text-sm">Todas las funciones futuras</span>
                 </li>
               </ul>
             </div>
