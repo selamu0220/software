@@ -13,7 +13,7 @@ export default function Pricing({ user }: PricingProps) {
   const isPremium = user?.isPremium || user?.lifetimeAccess;
 
   return (
-    <section id="pricing" className="py-12 bg-black/20">
+    <section id="pricing" className="py-16 bg-gradient-to-b from-black to-slate-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="lg:text-center mb-10">
           <h2 className="text-base text-primary font-semibold tracking-wide uppercase font-heading">Precios</h2>
@@ -27,9 +27,9 @@ export default function Pricing({ user }: PricingProps) {
 
         <div className="mt-12 space-y-4 sm:mt-16 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-6 lg:max-w-4xl lg:mx-auto">
           {/* Free Tier */}
-          <Card className="bg-slate-950 rounded-lg shadow-sm divide-y divide-gray-800">
+          <Card className="bg-slate-950 rounded-lg shadow-sm divide-y divide-gray-800 pricing-card">
             <div className="p-6">
-              <h2 className="text-xl leading-6 font-medium">Beta Gratis</h2>
+              <h2 className="text-xl leading-6 font-medium font-heading">Beta Gratis</h2>
               <p className="mt-4 text-sm text-muted-foreground">¡Acceso completo durante nuestro periodo beta!</p>
               <p className="mt-8">
                 <span className="text-4xl font-extrabold">€0</span>
@@ -69,9 +69,9 @@ export default function Pricing({ user }: PricingProps) {
           </Card>
 
           {/* Premium Tier */}
-          <Card className={`bg-slate-950 rounded-lg shadow-sm divide-y divide-gray-800 ${isPremium ? '' : 'border-2 border-primary'}`}>
+          <Card className={`bg-slate-950 rounded-lg shadow-sm divide-y divide-gray-800 pricing-card ${isPremium ? '' : 'pricing-highlight'}`}>
             <div className="p-6">
-              <h2 className="text-xl leading-6 font-medium">
+              <h2 className="text-xl leading-6 font-medium font-heading">
                 Premium 
                 {!isPremium && <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full ml-2">PRÓXIMAMENTE</span>}
               </h2>
