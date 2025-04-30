@@ -186,19 +186,19 @@ export default function Subscribe({ user, onSubscriptionUpdate }: SubscribeProps
                 <Separator />
                 
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Choose your plan:</h3>
+                  <h3 className="text-sm font-medium">Elige tu plan:</h3>
                   <div className="flex items-start">
                     <Check className="h-5 w-5 text-green-500 mr-2" />
                     <div>
-                      <span className="text-sm font-medium">Monthly: €10/month</span>
-                      <p className="text-xs text-muted-foreground">Cancel anytime</p>
+                      <span className="text-sm font-medium">Mensual: €4.99/mes</span>
+                      <p className="text-xs text-muted-foreground">Cancela cuando quieras</p>
                     </div>
                   </div>
                   <div className="flex items-start">
                     <Check className="h-5 w-5 text-green-500 mr-2" />
                     <div>
-                      <span className="text-sm font-medium">Lifetime: €70 one-time</span>
-                      <p className="text-xs text-muted-foreground">Pay once, use forever</p>
+                      <span className="text-sm font-medium">De por vida: €29.99 un solo pago</span>
+                      <p className="text-xs text-muted-foreground">Paga una vez, úsalo para siempre</p>
                     </div>
                   </div>
                 </div>
@@ -206,27 +206,91 @@ export default function Subscribe({ user, onSubscriptionUpdate }: SubscribeProps
             </Card>
           </div>
           
-          {/* Payment Form */}
+          {/* Payment Options */}
           <div className="md:col-span-2">
-            {clientSecret && (
-              <Elements 
-                stripe={stripePromise} 
-                options={{ 
-                  clientSecret,
-                  appearance: {
-                    theme: 'stripe',
-                    variables: {
-                      colorPrimary: '#FF0000',
-                    },
-                  },
-                }}
-              >
-                <CheckoutForm 
-                  clientSecret={clientSecret} 
-                  onSuccess={handleSuccess} 
-                />
-              </Elements>
-            )}
+            <Card>
+              <CardHeader>
+                <CardTitle>Selecciona tu plan</CardTitle>
+                <CardDescription>
+                  Elige la opción que mejor se adapte a tus necesidades
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Monthly Plan Card */}
+                <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold">Plan Mensual</h3>
+                      <p className="text-sm text-muted-foreground">Acceso completo con renovación mensual</p>
+                    </div>
+                    <Badge>Popular</Badge>
+                  </div>
+                  <div className="mb-4">
+                    <span className="text-3xl font-bold">€4.99</span>
+                    <span className="text-sm text-muted-foreground">/mes</span>
+                  </div>
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-sm">Ideas ilimitadas</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-sm">Planeación mensual</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-sm">Cancela cuando quieras</span>
+                    </div>
+                  </div>
+                  <a 
+                    href="https://buy.stripe.com/00gdTXaZw1SX8UgfYY"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full py-2 px-4 bg-primary text-white text-center rounded-md hover:bg-primary/90 transition-colors"
+                  >
+                    Suscríbete Ahora
+                  </a>
+                </div>
+
+                {/* Lifetime Plan Card */}
+                <div className="border rounded-lg p-6 hover:shadow-md transition-shadow bg-muted/30">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold">Acceso de por Vida</h3>
+                      <p className="text-sm text-muted-foreground">Paga una vez, úsalo para siempre</p>
+                    </div>
+                    <Badge variant="outline">Mejor Valor</Badge>
+                  </div>
+                  <div className="mb-4">
+                    <span className="text-3xl font-bold">€29.99</span>
+                    <span className="text-sm text-muted-foreground"> un solo pago</span>
+                  </div>
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-sm">Todas las funciones premium</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-sm">Sin pagos recurrentes</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-sm">Incluye actualizaciones futuras</span>
+                    </div>
+                  </div>
+                  <a 
+                    href="https://buy.stripe.com/3cscPT8Ro7dh4E0fYZ"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full py-2 px-4 border border-primary bg-background text-primary text-center rounded-md hover:bg-muted transition-colors"
+                  >
+                    Compra Acceso de por Vida
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
         

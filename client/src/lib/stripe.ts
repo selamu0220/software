@@ -24,18 +24,20 @@ export const getStripe = () => {
  */
 export const SUBSCRIPTION_PLANS = {
   monthly: {
-    name: "Monthly Premium",
-    price: 1000, // €10.00 in cents
-    priceDisplay: "€10",
+    name: "Plan Mensual",
+    price: 499, // €4.99 in cents
+    priceDisplay: "€4.99",
     interval: "month",
-    description: "Everything you need for serious YouTube growth."
+    description: "Todo lo que necesitas para crecer en YouTube.",
+    directLink: "https://buy.stripe.com/00gdTXaZw1SX8UgfYY"
   },
   lifetime: {
-    name: "Lifetime Access",
-    price: 7000, // €70.00 in cents
-    priceDisplay: "€70",
+    name: "Acceso de por Vida",
+    price: 2999, // €29.99 in cents
+    priceDisplay: "€29.99",
     interval: "one-time",
-    description: "Pay once, access forever."
+    description: "Paga una vez, accede para siempre.",
+    directLink: "https://buy.stripe.com/3cscPT8Ro7dh4E0fYZ"
   }
 };
 
