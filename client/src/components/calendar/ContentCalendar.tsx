@@ -25,7 +25,7 @@ interface ContentCalendarProps {
 
 // Form schema for adding calendar entries
 const calendarEntrySchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
+  title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
   date: z.date(),
   videoIdeaId: z.number().optional(),
 });
@@ -209,8 +209,9 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
       updateEntryMutation.mutate({
         id: selectedEntry.id,
         updates: {
-          ...data,
-          date: data.date instanceof Date ? data.date.toISOString() : data.date,
+          title: data.title,
+          videoIdeaId: data.videoIdeaId,
+          date: data.date.toISOString(),
         }
       });
     } else {
