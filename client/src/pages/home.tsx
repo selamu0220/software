@@ -39,6 +39,7 @@ export default function Home({ user }: HomeProps) {
         onIdeaGenerated={handleIdeaGenerated} 
         isGenerating={isGenerating}
         setIsGenerating={setIsGenerating}
+        user={user}
       />
       
       {generatedIdea && (

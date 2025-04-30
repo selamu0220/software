@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateVideoIdea } from "./gemini";
+import { VideoIdeaContent } from "@/lib/openai";
 import { createMonthlySubscription, createLifetimePayment, handleWebhook } from "./stripe";
 import { 
   insertUserSchema, 
