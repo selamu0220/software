@@ -14,6 +14,7 @@ import session from "express-session";
 import MemoryStore from "memorystore";
 import { z } from "zod";
 import Stripe from "stripe";
+import { addDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 
 declare module "express-session" {
   interface SessionData {
@@ -59,6 +60,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     next();
+  };
+  
+  // Helper function to check if user has reached free idea generation limit
+  const hasReachedDailyLimit = async (userId: number): Promise<boolean> => {
+    if (!userId) return false;
+    
+    const today = new Date();
+    const startOfToday = startOfDay(today);
+    const endOfToday = endOfDay(today);
+    
+    // Get ideas created today
+    const ideas = await storage.getVideoIdeasByDateRange(userId, startOfToday, endOfToday);
+    
+    // Free users can create 1 idea per day
+    return ideas.length >= 1;
   };
 
   // Authentication APIs

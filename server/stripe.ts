@@ -8,11 +8,11 @@ if (!process.env.STRIPE_SECRET_KEY) {
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "dummy-key", {
-  apiVersion: "2023-10-16",
+  apiVersion: "2025-03-31.basil",
 });
 
-export const MONTHLY_PRICE_EUR = 1000; // €10.00 in cents
-export const LIFETIME_PRICE_EUR = 7000; // €70.00 in cents
+export const MONTHLY_PRICE_EUR = 499; // €4.99 in cents
+export const LIFETIME_PRICE_EUR = 2999; // €29.99 in cents
 
 /**
  * Creates a checkout session for monthly subscription
