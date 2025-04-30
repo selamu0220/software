@@ -20,6 +20,7 @@ import { addDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, en
 declare module "express-session" {
   interface SessionData {
     userId: number;
+    anonymousIdeaGenerated?: boolean;
   }
 }
 
@@ -211,7 +212,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Generación anónima permitida (1 por sesión)
       if (!req.session.userId) {
+        // Verificar si el usuario anónimo ya ha generado una idea en esta sesión
+        if (req.session.anonymousIdeaGenerated) {
+          return res.status(403).json({ 
+            message: "Ya has generado una idea. Regístrate para generar más ideas.",
+            limitReached: true 
+          });
+        }
+        
+        // Generar la idea y marcar que este usuario anónimo ya generó su idea gratuita
         const generatedIdea = await generateVideoIdea(params);
+        req.session.anonymousIdeaGenerated = true;
         return res.json(generatedIdea);
       }
       

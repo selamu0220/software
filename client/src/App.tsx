@@ -12,6 +12,7 @@ import Profile from "@/pages/profile";
 import Subscribe from "@/pages/subscribe";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { AssistantSidebar } from "@/components/ui/assistant-sidebar";
 import { useEffect, useState } from "react";
 import { User } from "@shared/schema";
 import { apiRequest } from "./lib/queryClient";
@@ -83,6 +84,8 @@ function App() {
           </Switch>
         </main>
         {showNavAndFooter && <Footer />}
+        {/* Sidebar del asistente que se puede abrir/cerrar */}
+        <AssistantSidebar />
       </TooltipProvider>
     </QueryClientProvider>
   );
