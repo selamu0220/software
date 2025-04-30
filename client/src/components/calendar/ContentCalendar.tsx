@@ -486,11 +486,10 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
                       </span>
                       <div className="mt-1 space-y-1">
                         {day.entries.slice(0, 3).map((entry, index) => {
-                          const colorClass = `bg-${getRandomColor()}-100 text-${getRandomColor()}-800`;
                           return (
                             <div
                               key={entry.id}
-                              className={`text-xs p-1 rounded truncate cursor-pointer ${colorClass}`}
+                              className="calendar-entry"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedEntry(entry);

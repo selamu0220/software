@@ -9,46 +9,46 @@
   :root {
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
-    --card: 0 0% 4%;
+    --card: 0 0% 3%;
     --card-foreground: 0 0% 100%;
-    --popover: 0 0% 4%;
+    --popover: 0 0% 3%;
     --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 100%;
+    --primary: 0 0% 98%;
     --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 7%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 7%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 0 0% 12%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 30.6%;
+    --secondary: 0 0% 5%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 5%;
+    --muted-foreground: 0 0% 70%;
+    --accent: 0 0% 9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 70% 35%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 80%;
     --radius: 0.25rem;
   }
 
   .dark {
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
-    --card: 0 0% 4%;
+    --card: 0 0% 3%;
     --card-foreground: 0 0% 100%;
-    --popover: 0 0% 4%;
+    --popover: 0 0% 3%;
     --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 100%;
+    --primary: 0 0% 98%;
     --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 7%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 7%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 0 0% 12%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 30.6%;
+    --secondary: 0 0% 5%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 5%;
+    --muted-foreground: 0 0% 70%;
+    --accent: 0 0% 9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 70% 35%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 80%;
   }
 
   * {
@@ -80,28 +80,41 @@
 }
 
 .calendar-day-gray {
-  @apply bg-muted;
+  @apply bg-muted/70;
 }
 
 .calendar-day-idea {
-  @apply mt-1 text-xs p-1 rounded truncate cursor-pointer border border-border;
+  @apply mt-1 text-xs p-1 rounded-sm truncate cursor-pointer border border-border;
 }
 
 .calendar-day-idea-red {
-  @apply bg-secondary text-foreground;
+  @apply bg-accent text-foreground;
 }
 
 .calendar-day-idea-blue {
-  @apply bg-secondary text-foreground;
+  @apply bg-accent text-foreground;
 }
 
 .calendar-day-idea-green {
-  @apply bg-secondary text-foreground;
+  @apply bg-accent text-foreground;
+}
+
+/* Better visibility for calendar entries */
+.calendar-entry {
+  @apply px-2 py-1 rounded-sm bg-accent text-foreground border border-border text-xs truncate hover:bg-accent/80 transition-colors;
 }
 
 /* For video idea cards */
 .idea-card {
-  @apply transition-all duration-300 hover:bg-secondary border border-border;
+  @apply transition-all duration-300 hover:bg-accent bg-card border border-border;
+}
+
+.idea-card-title {
+  @apply font-heading text-base font-medium;
+}
+
+.idea-card-content {
+  @apply text-sm text-muted-foreground;
 }
 
 /* Pricing table highlight */
