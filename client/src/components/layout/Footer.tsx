@@ -3,124 +3,100 @@ import { Twitter, Youtube, Instagram } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="bg-ytdark">
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="xl:grid xl:grid-cols-3 xl:gap-8">
-          <div className="space-y-8 xl:col-span-1">
+    <footer className="bg-background border-t border-border">
+      <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="space-y-4">
             <div className="flex">
-              <span className="text-white font-heading font-bold text-2xl">TubeIdeaGen</span>
+              <span className="text-foreground font-heading font-bold text-xl">TubeIdeaGen</span>
               <span className="beta-badge">BETA</span>
             </div>
-            <p className="text-gray-300 text-base">
+            <p className="text-muted-foreground text-sm">
               Generate engaging YouTube video ideas with AI, plan your content calendar, and never run out of inspiration.
             </p>
-            <div className="flex space-x-6">
-              <a href="#" className="text-gray-400 hover:text-gray-300">
+            <div className="flex space-x-4">
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                 <span className="sr-only">Twitter</span>
-                <Twitter className="h-6 w-6" />
+                <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-gray-300">
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                 <span className="sr-only">YouTube</span>
-                <Youtube className="h-6 w-6" />
+                <Youtube className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-gray-300">
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                 <span className="sr-only">Instagram</span>
-                <Instagram className="h-6 w-6" />
+                <Instagram className="h-5 w-5" />
               </a>
             </div>
           </div>
-          <div className="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
-            <div className="md:grid md:grid-cols-2 md:gap-8">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-200 tracking-wider uppercase">
-                  Product
-                </h3>
-                <ul className="mt-4 space-y-4">
-                  <li>
-                    <Link href="/" className="text-base text-gray-300 hover:text-white">
-                      Generator
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/calendar" className="text-base text-gray-300 hover:text-white">
-                      Calendar
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/#templates" className="text-base text-gray-300 hover:text-white">
-                      Templates
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/#pricing" className="text-base text-gray-300 hover:text-white">
-                      Pricing
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-              <div className="mt-12 md:mt-0">
-                <h3 className="text-sm font-semibold text-gray-200 tracking-wider uppercase">
-                  Support
-                </h3>
-                <ul className="mt-4 space-y-4">
-                  <li>
-                    <a href="#" className="text-base text-gray-300 hover:text-white">
-                      Help Center
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="text-base text-gray-300 hover:text-white">
-                      Documentation
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="text-base text-gray-300 hover:text-white">
-                      Contact Us
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div className="md:grid md:grid-cols-2 md:gap-8">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-200 tracking-wider uppercase">
-                  Legal
-                </h3>
-                <ul className="mt-4 space-y-4">
-                  <li>
-                    <a href="#" className="text-base text-gray-300 hover:text-white">
-                      Privacy
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="text-base text-gray-300 hover:text-white">
-                      Terms
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div className="mt-12 md:mt-0">
-                <h3 className="text-sm font-semibold text-gray-200 tracking-wider uppercase">
-                  Company
-                </h3>
-                <ul className="mt-4 space-y-4">
-                  <li>
-                    <a href="#" className="text-base text-gray-300 hover:text-white">
-                      About
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="text-base text-gray-300 hover:text-white">
-                      Blog
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
+          
+          <div>
+            <h3 className="text-xs font-mono font-medium text-foreground uppercase tracking-wider mb-4">
+              Product
+            </h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Generator
+                </Link>
+              </li>
+              <li>
+                <Link href="/calendar" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Calendar
+                </Link>
+              </li>
+              <li>
+                <Link href="/#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Pricing
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-xs font-mono font-medium text-foreground uppercase tracking-wider mb-4">
+              Support
+            </h3>
+            <ul className="space-y-2">
+              <li>
+                <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Help
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Documentation
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Contact
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-xs font-mono font-medium text-foreground uppercase tracking-wider mb-4">
+              Legal
+            </h3>
+            <ul className="space-y-2">
+              <li>
+                <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Privacy
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Terms
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
-        <div className="mt-12 border-t border-gray-700 pt-8">
-          <p className="text-base text-gray-400 xl:text-center">
+        
+        <div className="mt-12 border-t border-border pt-8">
+          <p className="text-xs text-muted-foreground text-center">
             &copy; {new Date().getFullYear()} TubeIdeaGen. All rights reserved.
           </p>
         </div>

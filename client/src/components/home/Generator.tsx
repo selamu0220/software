@@ -222,14 +222,14 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
   };
 
   return (
-    <section id="generator" className="py-12 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="lg:text-center">
-          <h2 className="text-base text-primary font-semibold tracking-wide uppercase font-heading">Generator</h2>
-          <p className="mt-2 text-3xl leading-8 font-bold tracking-tight text-ytdark sm:text-4xl font-heading">
+    <section id="generator" className="py-16 bg-background">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h2 className="text-sm text-primary font-semibold tracking-wide uppercase font-heading">Generator</h2>
+          <p className="mt-2 text-3xl leading-8 font-bold tracking-tight sm:text-4xl font-heading">
             Create Engaging YouTube Video Ideas
           </p>
-          <p className="mt-4 max-w-2xl text-xl text-ytgray lg:mx-auto">
+          <p className="mt-4 max-w-2xl text-lg text-muted-foreground mx-auto">
             Generate one idea for free, or sign up for unlimited ideas and monthly content planning.
           </p>
         </div>
@@ -418,20 +418,21 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
           
           {/* Resultados de la generación semanal o mensual */}
           {(weeklyResult || monthlyResult) && (
-            <div className="mt-6">
-              <Card>
-                <CardContent className="p-4">
-                  <h3 className="text-lg font-semibold mb-4">
+            <div className="mt-8">
+              <Card className="border border-border">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-6 font-heading">
                     {weeklyResult ? "Plan Semanal de Contenido" : "Plan Mensual de Contenido"}
                   </h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {(weeklyResult?.ideas || monthlyResult?.ideas)?.map((idea, index) => (
-                      <div key={index} className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer"
-                        onClick={() => onIdeaGenerated(idea)}>
-                        <p className="font-medium text-primary">Día {index + 1}</p>
-                        <h4 className="font-semibold">{idea.title}</h4>
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                      <div key={index} 
+                           className="border border-border rounded-md p-4 hover:bg-muted/50 transition-colors cursor-pointer idea-card"
+                           onClick={() => onIdeaGenerated(idea)}>
+                        <p className="text-xs font-medium text-primary/90 mb-1 font-mono">DÍA {index + 1}</p>
+                        <h4 className="font-semibold font-heading mb-2">{idea.title}</h4>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
                           {idea.outline[0]}
                         </p>
                       </div>
