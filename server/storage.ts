@@ -29,6 +29,7 @@ export interface IStorage {
   createVideoIdea(idea: InsertVideoIdea): Promise<VideoIdea>;
   getVideoIdea(id: number): Promise<VideoIdea | undefined>;
   getVideoIdeasByUser(userId: number): Promise<VideoIdea[]>;
+  getVideoIdeasByDateRange(userId: number, startDate: Date, endDate: Date): Promise<VideoIdea[]>;
   deleteVideoIdea(id: number): Promise<boolean>;
   
   // Calendar entries operations
@@ -152,6 +153,14 @@ export class MemStorage implements IStorage {
     return Array.from(this.videoIdeas.values()).filter(
       (idea) => idea.userId === userId,
     );
+  }
+  
+  async getVideoIdeasByDateRange(userId: number, startDate: Date, endDate: Date): Promise<VideoIdea[]> {
+    const ideas = await this.getVideoIdeasByUser(userId);
+    return ideas.filter(idea => {
+      const createdAt = new Date(idea.createdAt);
+      return createdAt >= startDate && createdAt <= endDate;
+    });
   }
 
   async deleteVideoIdea(id: number): Promise<boolean> {

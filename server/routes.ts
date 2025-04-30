@@ -320,7 +320,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Generar 7 ideas para la semana
-      const ideas = [];
+      const ideas: VideoIdeaContent[] = [];
+      const storedIdeas = [];
       const today = new Date();
       
       for (let i = 0; i < 7; i++) {
@@ -328,7 +329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const ideaDate = addDays(today, i);
           const generatedIdea = await generateVideoIdea({
             ...params,
-            videoFocus: `Idea para ${ideaDate.toLocaleDateString('es-ES')} (Día ${i+1} de 7)`
+            videoFocus: `${params.videoFocus} (Día ${i+1} de 7, ${ideaDate.toLocaleDateString('es-ES')})`
           });
           
           // Guardar la idea en la base de datos
@@ -341,16 +342,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             content: generatedIdea
           });
           
-          ideas.push(videoIdea);
+          storedIdeas.push(videoIdea);
+          ideas.push(generatedIdea);
         } catch (error) {
           console.error(`Error generando idea para el día ${i+1}:`, error);
         }
       }
       
-      res.json({ 
-        message: "Ideas generadas para toda la semana", 
+      res.json({
+        message: "Ideas generadas para toda la semana",
         count: ideas.length,
-        ideas 
+        ideas
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -371,7 +373,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Esta ruta solo está disponible para usuarios premium (verificado por middleware)
       const today = new Date();
       const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-      const ideas = [];
+      const ideas: VideoIdeaContent[] = [];
+      const storedIdeas = [];
       
       // Generar ideas para cada día del mes actual
       for (let i = 0; i < daysInMonth; i++) {
@@ -379,7 +382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const ideaDate = new Date(today.getFullYear(), today.getMonth(), i + 1);
           const generatedIdea = await generateVideoIdea({
             ...params,
-            videoFocus: `Idea para ${ideaDate.toLocaleDateString('es-ES')} (Día ${i+1} de ${daysInMonth})`
+            videoFocus: `${params.videoFocus} (Día ${i+1} de ${daysInMonth}, ${ideaDate.toLocaleDateString('es-ES')})`
           });
           
           // Guardar la idea en la base de datos
@@ -392,7 +395,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             content: generatedIdea
           });
           
-          ideas.push(videoIdea);
+          storedIdeas.push(videoIdea);
+          ideas.push(generatedIdea);
         } catch (error) {
           console.error(`Error generando idea para el día ${i+1}:`, error);
         }
