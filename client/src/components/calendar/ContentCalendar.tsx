@@ -309,9 +309,9 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-slate-950 border-b border-border">
           <div className="flex items-center space-x-2">
-            <h2 className="text-2xl font-bold">{getMonthAndYear(new Date(currentYear, currentMonth))}</h2>
+            <h2 className="text-2xl font-bold font-heading">{getMonthAndYear(new Date(currentYear, currentMonth))}</h2>
           </div>
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="icon" onClick={handlePreviousMonth}>
@@ -327,7 +327,7 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
                   setSelectedEntry(null);
                 }}>
                   <CalendarPlus className="mr-2 h-4 w-4" />
-                  Add Event
+                  Añadir Evento
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
@@ -452,14 +452,14 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="grid grid-cols-7 bg-muted/50 text-center text-xs leading-6 text-muted-foreground">
-            <div className="py-2">Sun</div>
-            <div className="py-2">Mon</div>
-            <div className="py-2">Tue</div>
-            <div className="py-2">Wed</div>
-            <div className="py-2">Thu</div>
-            <div className="py-2">Fri</div>
-            <div className="py-2">Sat</div>
+          <div className="grid grid-cols-7 bg-slate-950 text-center text-xs leading-6 text-foreground border-b border-border">
+            <div className="py-2 font-semibold">Dom</div>
+            <div className="py-2 font-semibold">Lun</div>
+            <div className="py-2 font-semibold">Mar</div>
+            <div className="py-2 font-semibold">Mié</div>
+            <div className="py-2 font-semibold">Jue</div>
+            <div className="py-2 font-semibold">Vie</div>
+            <div className="py-2 font-semibold">Sáb</div>
           </div>
           {loadingEntries ? (
             <div className="h-80 flex items-center justify-center">
@@ -472,11 +472,11 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
                   {week.map((day, dayIndex) => (
                     <div
                       key={`${weekIndex}-${dayIndex}`}
-                      className={`min-h-[100px] p-1 border-b border-r relative ${
-                        !day.currentMonth ? 'bg-black/30' : 'bg-black/10'
+                      className={`calendar-day ${
+                        !day.currentMonth ? 'calendar-day-gray' : 'calendar-day-current'
                       } ${
                         day.date.toDateString() === new Date().toDateString()
-                          ? 'bg-primary/10 border border-primary'
+                          ? 'bg-primary/20 border border-primary'
                           : ''
                       }`}
                       onClick={() => handleDateClick(day.date)}
@@ -513,9 +513,9 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
             </div>
           )}
         </CardContent>
-        <CardFooter className="p-3">
+        <CardFooter className="p-3 bg-slate-950 border-t border-border">
           <p className="text-sm text-muted-foreground">
-            Click on a day to add a new video idea to your calendar.
+            Haz clic en un día para añadir una nueva idea de video a tu calendario.
           </p>
         </CardFooter>
       </Card>
