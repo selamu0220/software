@@ -210,7 +210,7 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
         id: selectedEntry.id,
         updates: {
           ...data,
-          date: data.date.toISOString(),
+          date: data.date instanceof Date ? data.date.toISOString() : data.date,
         }
       });
     } else {
@@ -333,7 +333,7 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                   <DialogTitle>
-                    {selectedEntry ? "Edit Calendar Entry" : "Add Calendar Entry"}
+                    {selectedEntry ? "Editar Evento" : "Añadir Evento"}
                   </DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
@@ -343,9 +343,9 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
                       name="title"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Title</FormLabel>
+                          <FormLabel>Título</FormLabel>
                           <FormControl>
-                            <Input placeholder="Video Title" {...field} />
+                            <Input placeholder="Título del video" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -357,7 +357,7 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
                       name="date"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel>Date</FormLabel>
+                          <FormLabel>Fecha</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
@@ -371,7 +371,7 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
                                   {field.value ? (
                                     format(field.value, "PPP")
                                   ) : (
-                                    <span>Pick a date</span>
+                                    <span>Selecciona una fecha</span>
                                   )}
                                 </Button>
                               </FormControl>
@@ -395,18 +395,18 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
                       name="videoIdeaId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Video Idea (Optional)</FormLabel>
+                          <FormLabel>Idea de Video (Opcional)</FormLabel>
                           <Select
                             onValueChange={(value) => field.onChange(value !== "0" ? parseInt(value) : undefined)}
                             value={field.value?.toString() || "0"}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select a video idea (optional)" />
+                                <SelectValue placeholder="Selecciona una idea de video (opcional)" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="0">None</SelectItem>
+                              <SelectItem value="0">Ninguna</SelectItem>
                               {videoIdeas.map((idea) => (
                                 <SelectItem key={idea.id} value={idea.id.toString()}>
                                   {idea.title}
@@ -432,7 +432,7 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
                           ) : (
                             <Trash2 className="mr-2 h-4 w-4" />
                           )}
-                          Delete
+                          Eliminar
                         </Button>
                       )}
                       <Button
@@ -442,7 +442,7 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
                         {(addEntryMutation.isPending || updateEntryMutation.isPending) ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : null}
-                        {selectedEntry ? "Update" : "Add"}
+                        {selectedEntry ? "Actualizar" : "Añadir"}
                       </Button>
                     </DialogFooter>
                   </form>
@@ -502,7 +502,7 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
                         })}
                         {day.entries.length > 3 && (
                           <div className="text-xs text-muted-foreground text-center">
-                            +{day.entries.length - 3} more
+                            +{day.entries.length - 3} más
                           </div>
                         )}
                       </div>
