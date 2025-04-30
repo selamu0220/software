@@ -104,19 +104,19 @@ export default function GeneratedIdeas({ generatedIdea, user, regenerateIdea, is
   };
 
   return (
-    <section id="results" className="py-8 bg-ytlight">
+    <section id="results" className="py-8 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-bold text-ytdark mb-6 font-heading">Generated Ideas</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-6 font-heading">Ideas Generadas</h2>
 
         {generatedIdea ? (
           // Single Generated Idea
-          <Card className="bg-white shadow overflow-hidden sm:rounded-md mb-6">
+          <Card className="idea-card mb-6">
             <div className="px-4 py-5 sm:px-6 flex items-start justify-between">
               <div>
-                <h3 className="text-lg leading-6 font-medium text-ytdark">
+                <h3 className="text-lg leading-6 font-medium text-foreground">
                   {generatedIdea.title}
                 </h3>
-                <p className="mt-1 max-w-2xl text-sm text-ytgray">
+                <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
                   {generatedIdea.category} | {generatedIdea.subcategory} | {generatedIdea.videoLength}
                 </p>
               </div>
@@ -152,51 +152,51 @@ export default function GeneratedIdeas({ generatedIdea, user, regenerateIdea, is
                 </Button>
               </div>
             </div>
-            <CardContent className="border-t border-gray-200">
-              <div className="text-sm text-ytdark">
-                <p className="font-medium mb-2">Video Outline:</p>
-                <ul className="list-disc pl-5 space-y-1">
+            <CardContent className="border-t border-border">
+              <div className="text-sm text-foreground">
+                <p className="font-medium mb-2">Estructura del Video:</p>
+                <ul className="space-y-1">
                   {generatedIdea.outline.map((point, index) => (
-                    <li key={index}>{point}</li>
+                    <li key={index} className="idea-list-item">{point}</li>
                   ))}
                 </ul>
-                <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-100">
-                  <p className="text-sm text-blue-800">
-                    <span className="font-medium">Mid-video mention:</span> {generatedIdea.midVideoMention}
+                <div className="mt-4 p-3 bg-accent rounded-md border border-border">
+                  <p className="text-sm text-foreground">
+                    <span className="font-medium">Mención a mitad de video:</span> {generatedIdea.midVideoMention}
                   </p>
                 </div>
-                <div className="mt-3 p-3 bg-green-50 rounded-md border border-green-100">
-                  <p className="text-sm text-green-800">
-                    <span className="font-medium">End-video mention:</span> {generatedIdea.endVideoMention}
+                <div className="mt-3 p-3 bg-secondary rounded-md border border-border">
+                  <p className="text-sm text-foreground">
+                    <span className="font-medium">Mención al final de video:</span> {generatedIdea.endVideoMention}
                   </p>
                 </div>
-                <div className="mt-3 p-3 bg-purple-50 rounded-md border border-purple-100">
-                  <p className="text-sm text-purple-800">
-                    <span className="font-medium">Thumbnail idea:</span> {generatedIdea.thumbnailIdea}
+                <div className="mt-3 p-3 bg-accent rounded-md border border-border">
+                  <p className="text-sm text-foreground">
+                    <span className="font-medium">Idea para la miniatura:</span> {generatedIdea.thumbnailIdea}
                   </p>
                 </div>
-                <div className="mt-3 p-3 bg-yellow-50 rounded-md border border-yellow-100">
-                  <p className="text-sm text-yellow-800">
-                    <span className="font-medium">Interaction question:</span> {generatedIdea.interactionQuestion}
+                <div className="mt-3 p-3 bg-secondary rounded-md border border-border">
+                  <p className="text-sm text-foreground">
+                    <span className="font-medium">Pregunta para interacción:</span> {generatedIdea.interactionQuestion}
                   </p>
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="bg-gray-50 px-4 py-4 sm:px-6 flex justify-between flex-wrap gap-2">
+            <CardFooter className="bg-card px-4 py-4 sm:px-6 flex justify-between flex-wrap gap-2">
               <Button variant="outline" onClick={downloadIdea}>
                 <Download className="mr-2 h-4 w-4" />
-                Download
+                Descargar
               </Button>
               {user?.isPremium || user?.lifetimeAccess ? (
-                <Button onClick={saveToCalendar} className="bg-accent hover:bg-blue-700">
+                <Button onClick={saveToCalendar} variant="default">
                   <Calendar className="mr-2 h-4 w-4" />
-                  Save to calendar
+                  Guardar en calendario
                 </Button>
               ) : (
                 <Link href="/subscribe">
-                  <Button variant="link" className="text-accent hover:text-blue-700">
+                  <Button variant="link" className="text-primary hover:text-primary/80">
                     <Lock className="mr-2 h-4 w-4" />
-                    Save to calendar (Upgrade to Pro)
+                    Guardar en calendario (Upgrade a Pro)
                   </Button>
                 </Link>
               )}
@@ -206,20 +206,20 @@ export default function GeneratedIdeas({ generatedIdea, user, regenerateIdea, is
 
         {/* Login/Signup Prompt */}
         {!user && (
-          <Card className="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+          <Card className="mb-6">
             <CardContent className="px-4 py-5 sm:p-6 text-center">
-              <h3 className="text-lg leading-6 font-medium text-ytdark mb-2">
-                Want more ideas and a content calendar?
+              <h3 className="text-lg leading-6 font-medium text-foreground mb-2">
+                ¿Quieres más ideas y un calendario de contenido?
               </h3>
-              <p className="text-sm text-ytgray mb-4">
-                Sign up for free during our Beta period to generate unlimited ideas and organize your content calendar.
+              <p className="text-sm text-muted-foreground mb-4">
+                Regístrate gratis durante nuestro periodo Beta para generar ideas ilimitadas y organizar tu calendario de contenido.
               </p>
               <div className="flex justify-center space-x-4">
                 <Link href="/login">
-                  <Button variant="outline">Sign In</Button>
+                  <Button variant="outline">Iniciar Sesión</Button>
                 </Link>
                 <Link href="/register">
-                  <Button>Sign Up Free</Button>
+                  <Button>Registrarse Gratis</Button>
                 </Link>
               </div>
             </CardContent>

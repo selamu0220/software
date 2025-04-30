@@ -13,8 +13,8 @@
     --card-foreground: 0 0% 100%;
     --popover: 0 0% 3%;
     --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 0%;
+    --primary: 0 72% 51%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 5%;
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 5%;
@@ -25,7 +25,7 @@
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 12%;
     --input: 0 0% 12%;
-    --ring: 0 0% 80%;
+    --ring: 0 72% 51%;
     --radius: 0.25rem;
   }
 
@@ -36,8 +36,8 @@
     --card-foreground: 0 0% 100%;
     --popover: 0 0% 3%;
     --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 0%;
+    --primary: 0 72% 51%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 5%;
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 5%;
@@ -48,7 +48,7 @@
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 12%;
     --input: 0 0% 12%;
-    --ring: 0 0% 80%;
+    --ring: 0 72% 51%;
   }
 
   * {
@@ -110,11 +110,16 @@
 }
 
 .idea-card-title {
-  @apply font-heading text-base font-medium;
+  @apply font-heading text-base font-medium text-foreground;
 }
 
 .idea-card-content {
-  @apply text-sm text-muted-foreground;
+  @apply text-sm text-foreground;
+}
+
+/* Idea list styling */
+.idea-list-item {
+  @apply text-foreground border-l-2 border-primary pl-2 my-1;
 }
 
 /* Pricing table highlight */
