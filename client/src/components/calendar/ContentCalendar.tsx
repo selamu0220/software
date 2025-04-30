@@ -42,13 +42,13 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
   const [selectedEntry, setSelectedEntry] = useState<CalendarEntry | null>(null);
 
   // Fetch calendar entries
-  const { data: calendarEntries, isLoading: loadingEntries } = useQuery({
+  const { data: calendarEntries = [], isLoading: loadingEntries } = useQuery<CalendarEntry[]>({
     queryKey: ['/api/calendar'],
     staleTime: 60000, // 1 minute
   });
 
   // Fetch video ideas for dropdown
-  const { data: videoIdeas, isLoading: loadingIdeas } = useQuery({
+  const { data: videoIdeas = [], isLoading: loadingIdeas } = useQuery<VideoIdea[]>({
     queryKey: ['/api/video-ideas'],
     staleTime: 60000, // 1 minute
   });
@@ -301,8 +301,8 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
 
   // Get video idea title by id
   const getVideoIdeaTitle = (id: number): string => {
-    if (!videoIdeas) return "Loading...";
-    const idea = videoIdeas.find((idea: VideoIdea) => idea.id === id);
+    if (videoIdeas.length === 0) return "Loading...";
+    const idea = videoIdeas.find((idea) => idea.id === id);
     return idea ? idea.title : "Unknown Video";
   };
 
@@ -407,7 +407,7 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="0">None</SelectItem>
-                              {videoIdeas?.map((idea: VideoIdea) => (
+                              {videoIdeas.map((idea) => (
                                 <SelectItem key={idea.id} value={idea.id.toString()}>
                                   {idea.title}
                                 </SelectItem>
