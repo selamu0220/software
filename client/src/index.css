@@ -80,7 +80,7 @@
 }
 
 .calendar-day-gray {
-  @apply bg-muted/70;
+  @apply bg-black/40;
 }
 
 .calendar-day-idea {
@@ -88,20 +88,20 @@
 }
 
 .calendar-day-idea-red {
-  @apply bg-accent text-foreground;
+  @apply bg-[#500A0A] text-white;
 }
 
 .calendar-day-idea-blue {
-  @apply bg-accent text-foreground;
+  @apply bg-[#0A1A50] text-white;
 }
 
 .calendar-day-idea-green {
-  @apply bg-accent text-foreground;
+  @apply bg-[#0A500A] text-white;
 }
 
 /* Better visibility for calendar entries */
 .calendar-entry {
-  @apply px-2 py-1 rounded-sm bg-accent text-foreground border border-border text-xs truncate hover:bg-accent/80 transition-colors;
+  @apply px-2 py-1 rounded-sm bg-primary/20 text-foreground border border-primary/30 text-xs truncate hover:bg-primary/30 transition-colors font-semibold;
 }
 
 /* For video idea cards */

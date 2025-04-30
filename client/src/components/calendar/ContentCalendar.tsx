@@ -473,10 +473,10 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
                     <div
                       key={`${weekIndex}-${dayIndex}`}
                       className={`min-h-[100px] p-1 border-b border-r relative ${
-                        !day.currentMonth ? 'bg-muted/30' : ''
+                        !day.currentMonth ? 'bg-black/30' : 'bg-black/10'
                       } ${
                         day.date.toDateString() === new Date().toDateString()
-                          ? 'bg-muted/50'
+                          ? 'bg-primary/10 border border-primary'
                           : ''
                       }`}
                       onClick={() => handleDateClick(day.date)}
