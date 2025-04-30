@@ -5,7 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { VIDEO_CATEGORIES, VIDEO_SUBCATEGORIES, VIDEO_LENGTHS, TEMPLATE_STYLES, CONTENT_TONES } from "@/lib/utils";
-import { generateVideoIdea, generateWeeklyIdeas, generateMonthlyIdeas, VideoIdeaContent } from "@/lib/openai";
+import { 
+  generateVideoIdea, 
+  generateWeeklyIdeas, 
+  generateMonthlyIdeas, 
+  VideoIdeaContent,
+  MultiGenerationResponse
+} from "@/lib/openai";
 import { GenerationRequest } from "@shared/schema";
 import { Info, RefreshCw, Calendar, Calendar1 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -27,8 +33,8 @@ interface GeneratorProps {
 export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerating, user }: GeneratorProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('single');
-  const [weeklyResult, setWeeklyResult] = useState<{message: string, count: number, ideas: any[]} | null>(null);
-  const [monthlyResult, setMonthlyResult] = useState<{message: string, count: number, ideas: any[]} | null>(null);
+  const [weeklyResult, setWeeklyResult] = useState<MultiGenerationResponse | null>(null);
+  const [monthlyResult, setMonthlyResult] = useState<MultiGenerationResponse | null>(null);
   
   const [formData, setFormData] = useState<GenerationRequest>({
     category: VIDEO_CATEGORIES[0],

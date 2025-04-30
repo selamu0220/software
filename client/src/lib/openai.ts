@@ -47,11 +47,20 @@ export async function generateVideoIdea(
 }
 
 /**
+ * Tipo para la respuesta de generación múltiple
+ */
+export type MultiGenerationResponse = {
+  message: string;
+  count: number;
+  ideas: VideoIdeaContent[];
+};
+
+/**
  * Genera ideas para una semana completa (7 días)
  */
 export async function generateWeeklyIdeas(
   params: GenerationRequest
-): Promise<{ message: string; count: number; ideas: any[] }> {
+): Promise<MultiGenerationResponse> {
   const response = await apiRequest("POST", "/api/generate-ideas/week", params);
   
   if (!response.ok) {
@@ -67,7 +76,7 @@ export async function generateWeeklyIdeas(
  */
 export async function generateMonthlyIdeas(
   params: GenerationRequest
-): Promise<{ message: string; count: number; ideas: any[] }> {
+): Promise<MultiGenerationResponse> {
   const response = await apiRequest("POST", "/api/generate-ideas/month", params);
   
   if (!response.ok) {
