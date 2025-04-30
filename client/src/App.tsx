@@ -2,7 +2,6 @@ import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ThemeProvider } from "@/components/ui/theme-provider";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Login from "@/pages/login";
@@ -69,24 +68,22 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="red-creativa-theme" forcedTheme="dark">
-        <TooltipProvider>
-          {showNavAndFooter && <Navbar user={user} onLogout={logout} />}
-          <main className="min-h-screen dark bg-black">
-            <Switch>
-              <Route path="/" component={() => <Home user={user} />} />
-              <Route path="/login" component={() => <Login onLogin={login} />} />
-              <Route path="/register" component={() => <Register onRegister={login} />} />
-              <Route path="/dashboard" component={() => <Dashboard user={user} />} />
-              <Route path="/calendar" component={() => <Calendar user={user} />} />
-              <Route path="/profile" component={() => <Profile user={user} onProfileUpdate={setUser} />} />
-              <Route path="/subscribe" component={() => <Subscribe user={user} onSubscriptionUpdate={setUser} />} />
-              <Route component={NotFound} />
-            </Switch>
-          </main>
-          {showNavAndFooter && <Footer />}
-        </TooltipProvider>
-      </ThemeProvider>
+      <TooltipProvider>
+        {showNavAndFooter && <Navbar user={user} onLogout={logout} />}
+        <main className="min-h-screen">
+          <Switch>
+            <Route path="/" component={() => <Home user={user} />} />
+            <Route path="/login" component={() => <Login onLogin={login} />} />
+            <Route path="/register" component={() => <Register onRegister={login} />} />
+            <Route path="/dashboard" component={() => <Dashboard user={user} />} />
+            <Route path="/calendar" component={() => <Calendar user={user} />} />
+            <Route path="/profile" component={() => <Profile user={user} onProfileUpdate={setUser} />} />
+            <Route path="/subscribe" component={() => <Subscribe user={user} onSubscriptionUpdate={setUser} />} />
+            <Route component={NotFound} />
+          </Switch>
+        </main>
+        {showNavAndFooter && <Footer />}
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
