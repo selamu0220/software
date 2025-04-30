@@ -87,20 +87,32 @@
   @apply bg-slate-800;
 }
 
+.calendar-day {
+  @apply min-h-[60px] p-2 relative;
+}
+
+.calendar-day-gray {
+  @apply bg-slate-900/50;
+}
+
 .calendar-day-idea {
-  @apply mt-1 text-xs p-1 rounded-sm truncate cursor-pointer border border-border;
+  @apply mt-1 text-xs p-1.5 rounded-md truncate cursor-pointer border border-transparent shadow-sm transition-all duration-200 hover:scale-[1.02];
 }
 
 .calendar-day-idea-red {
-  @apply bg-[#500A0A] text-white;
+  @apply bg-red-950 text-white border-red-800/40;
 }
 
 .calendar-day-idea-blue {
-  @apply bg-[#0A1A50] text-white;
+  @apply bg-blue-950 text-white border-blue-800/40;
 }
 
 .calendar-day-idea-green {
-  @apply bg-[#0A500A] text-white;
+  @apply bg-green-950 text-white border-green-800/40;
+}
+
+.calendar-day-idea-purple {
+  @apply bg-purple-950 text-white border-purple-800/40;
 }
 
 /* Better visibility for calendar entries */

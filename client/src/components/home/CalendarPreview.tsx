@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { getMonthAndYear, getFirstDayOfMonth, getDaysInMonth, getNextMonth, getPreviousMonth } from "@/lib/utils";
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
 interface CalendarPreviewProps {
   isLoggedIn: boolean;
@@ -17,12 +17,12 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
 
-  // Mock data for calendar entries
+  // Datos de ejemplo para entradas del calendario
   const mockEntries = [
-    { day: 2, title: "Top 5 AI Tools", color: "red" },
-    { day: 5, title: "Editing Tutorial", color: "blue" },
-    { day: 9, title: "Web Dev Guide", color: "green" },
-    { day: 12, title: "DaVinci Review", color: "purple" },
+    { day: 2, title: "Top 5 Herramientas IA", color: "red" },
+    { day: 5, title: "Tutorial de edición", color: "blue" },
+    { day: 9, title: "Guía de desarrollo web", color: "green" },
+    { day: 12, title: "Review de DaVinci", color: "purple" },
   ];
 
   const handlePreviousMonth = () => {
@@ -74,21 +74,21 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
   const calendarDays = generateCalendarGrid();
 
   return (
-    <section className="py-12 bg-white">
+    <section className="py-16 bg-gradient-to-b from-slate-950 to-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="lg:text-center mb-10">
-          <h2 className="text-base text-primary font-semibold tracking-wide uppercase font-heading">Content Calendar</h2>
-          <p className="mt-2 text-3xl leading-8 font-bold tracking-tight text-ytdark sm:text-4xl font-heading">
-            Plan Your Entire Month
+          <h2 className="text-base text-primary font-semibold tracking-wide uppercase font-heading">Calendario de Contenido</h2>
+          <p className="mt-2 text-3xl leading-8 font-bold tracking-tight sm:text-4xl font-heading">
+            Planifica Todo Tu Mes
           </p>
-          <p className="mt-4 max-w-2xl text-xl text-ytgray lg:mx-auto">
-            Organize your video ideas into a content calendar to maintain a consistent posting schedule.
+          <p className="mt-4 max-w-2xl text-xl text-muted-foreground lg:mx-auto">
+            Organiza tus ideas de videos en un calendario de contenido para mantener un ritmo constante de publicación.
           </p>
         </div>
 
-        <Card>
-          <CardHeader className="px-4 py-5 sm:px-6 flex justify-between items-center">
-            <h3 className="text-lg leading-6 font-medium text-ytdark">{getMonthAndYear(new Date(currentYear, currentMonth))}</h3>
+        <Card className="bg-slate-950 border-slate-800">
+          <CardHeader className="px-4 py-5 sm:px-6 flex justify-between items-center border-b border-slate-800">
+            <h3 className="text-lg leading-6 font-medium font-heading">{getMonthAndYear(new Date(currentYear, currentMonth))}</h3>
             <div className="flex space-x-2">
               <Button variant="outline" size="sm" onClick={handlePreviousMonth}>
                 <ChevronLeft className="h-4 w-4" />
@@ -98,20 +98,20 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="border-t border-gray-200 p-0">
+          <CardContent className="p-0">
             {/* Calendar Grid */}
-            <div className="grid grid-cols-7 text-center text-xs leading-6 text-ytgray">
+            <div className="grid grid-cols-7 text-center text-xs leading-6 text-muted-foreground">
               {WEEKDAYS.map(day => (
                 <div key={day} className="py-2">{day}</div>
               ))}
             </div>
-            <div className="grid grid-cols-7 text-sm border-t border-l">
+            <div className="grid grid-cols-7 text-sm border-t border-l border-slate-800">
               {calendarDays.map((day, index) => (
                 <div
                   key={index}
-                  className={`calendar-day ${!day.currentMonth ? 'calendar-day-gray' : ''}`}
+                  className={`calendar-day border-r border-b border-slate-800 ${!day.currentMonth ? 'calendar-day-gray' : ''}`}
                 >
-                  <span className={!day.currentMonth ? 'text-gray-400' : ''}>{day.day}</span>
+                  <span className={!day.currentMonth ? 'text-slate-500' : ''}>{day.day}</span>
                   {day.entry && (
                     <div className={`calendar-day-idea calendar-day-idea-${day.entry.color}`}>
                       {day.entry.title}
@@ -121,15 +121,15 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
               ))}
             </div>
           </CardContent>
-          <CardFooter className="bg-gray-50 px-4 py-4 sm:px-6 border-t border-gray-200">
+          <CardFooter className="bg-slate-900 px-4 py-4 sm:px-6 border-t border-slate-800">
             {isLoggedIn && isPremium ? (
               <Link href="/calendar">
-                <Button>View Full Calendar</Button>
+                <Button>Ver Calendario Completo</Button>
               </Link>
             ) : (
-              <span className="text-sm text-ytgray">
+              <span className="text-sm text-muted-foreground">
                 <Lock className="inline-block mr-1 h-4 w-4" /> 
-                Calendar feature available to registered users
+                Calendario disponible para usuarios registrados
               </span>
             )}
           </CardFooter>
