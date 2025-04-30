@@ -137,14 +137,14 @@ export default function Subscribe({ user, onSubscriptionUpdate }: SubscribeProps
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <Badge className="mb-2">BETA PRICING</Badge>
-          <h1 className="text-4xl font-bold font-heading text-gray-900 mb-3">
+          <h1 className="text-4xl font-bold font-heading mb-3">
             Upgrade to Premium
           </h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             Unlock unlimited video ideas, advanced calendar features, and more premium tools to supercharge your YouTube channel.
           </p>
         </div>
@@ -162,24 +162,24 @@ export default function Subscribe({ user, onSubscriptionUpdate }: SubscribeProps
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-start">
-                    <Check className="h-5 w-5 text-green-500 mr-2" />
-                    <span className="text-sm">Unlimited video idea generation</span>
+                    <Check className="h-5 w-5 text-primary mr-2" />
+                    <span className="text-sm">Generación ilimitada de ideas</span>
                   </div>
                   <div className="flex items-start">
-                    <Check className="h-5 w-5 text-green-500 mr-2" />
-                    <span className="text-sm">Advanced content calendar</span>
+                    <Check className="h-5 w-5 text-primary mr-2" />
+                    <span className="text-sm">Calendario de contenidos avanzado</span>
                   </div>
                   <div className="flex items-start">
-                    <Check className="h-5 w-5 text-green-500 mr-2" />
-                    <span className="text-sm">Thumbnail suggestions</span>
+                    <Check className="h-5 w-5 text-primary mr-2" />
+                    <span className="text-sm">Sugerencias para miniaturas</span>
                   </div>
                   <div className="flex items-start">
-                    <Check className="h-5 w-5 text-green-500 mr-2" />
-                    <span className="text-sm">Script outline generator</span>
+                    <Check className="h-5 w-5 text-primary mr-2" />
+                    <span className="text-sm">Generador de guiones</span>
                   </div>
                   <div className="flex items-start">
-                    <Check className="h-5 w-5 text-green-500 mr-2" />
-                    <span className="text-sm">Priority support</span>
+                    <Check className="h-5 w-5 text-primary mr-2" />
+                    <span className="text-sm">Soporte prioritario</span>
                   </div>
                 </div>
                 
@@ -188,14 +188,14 @@ export default function Subscribe({ user, onSubscriptionUpdate }: SubscribeProps
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium">Elige tu plan:</h3>
                   <div className="flex items-start">
-                    <Check className="h-5 w-5 text-green-500 mr-2" />
+                    <Check className="h-5 w-5 text-primary mr-2" />
                     <div>
                       <span className="text-sm font-medium">Mensual: €4.99/mes</span>
                       <p className="text-xs text-muted-foreground">Cancela cuando quieras</p>
                     </div>
                   </div>
                   <div className="flex items-start">
-                    <Check className="h-5 w-5 text-green-500 mr-2" />
+                    <Check className="h-5 w-5 text-primary mr-2" />
                     <div>
                       <span className="text-sm font-medium">De por vida: €29.99 un solo pago</span>
                       <p className="text-xs text-muted-foreground">Paga una vez, úsalo para siempre</p>
@@ -231,15 +231,15 @@ export default function Subscribe({ user, onSubscriptionUpdate }: SubscribeProps
                   </div>
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <Check className="h-5 w-5 text-primary mr-2" />
                       <span className="text-sm">Ideas ilimitadas</span>
                     </div>
                     <div className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <Check className="h-5 w-5 text-primary mr-2" />
                       <span className="text-sm">Planeación mensual</span>
                     </div>
                     <div className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <Check className="h-5 w-5 text-primary mr-2" />
                       <span className="text-sm">Cancela cuando quieras</span>
                     </div>
                   </div>
@@ -268,15 +268,15 @@ export default function Subscribe({ user, onSubscriptionUpdate }: SubscribeProps
                   </div>
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <Check className="h-5 w-5 text-primary mr-2" />
                       <span className="text-sm">Todas las funciones premium</span>
                     </div>
                     <div className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <Check className="h-5 w-5 text-primary mr-2" />
                       <span className="text-sm">Sin pagos recurrentes</span>
                     </div>
                     <div className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <Check className="h-5 w-5 text-primary mr-2" />
                       <span className="text-sm">Incluye actualizaciones futuras</span>
                     </div>
                   </div>
@@ -294,9 +294,9 @@ export default function Subscribe({ user, onSubscriptionUpdate }: SubscribeProps
           </div>
         </div>
         
-        <div className="mt-12 text-center text-sm text-gray-500">
-          <p>
-            Questions about our pricing? <a href="#" className="text-primary hover:text-red-700">Contact our support team</a>
+        <div className="mt-12 text-center text-sm">
+          <p className="text-muted-foreground">
+            ¿Preguntas sobre nuestros precios? <a href="#" className="text-primary hover:text-primary/80">Contacta con nuestro equipo de soporte</a>
           </p>
         </div>
       </div>
