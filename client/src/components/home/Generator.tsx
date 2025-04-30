@@ -5,18 +5,26 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { VIDEO_CATEGORIES, VIDEO_SUBCATEGORIES, VIDEO_LENGTHS, TEMPLATE_STYLES, CONTENT_TONES } from "@/lib/utils";
-import { generateVideoIdea, VideoIdeaContent } from "@/lib/openai";
+import { generateVideoIdea, generateWeeklyIdeas, generateMonthlyIdeas, VideoIdeaContent } from "@/lib/openai";
 import { GenerationRequest } from "@shared/schema";
-import { Info, RefreshCw } from "lucide-react";
+import { Info, RefreshCw, Calendar, Calendar1 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import { User } from "@shared/schema";
 
 interface GeneratorProps {
   onIdeaGenerated: (idea: VideoIdeaContent) => void;
   isGenerating: boolean;
   setIsGenerating: (isGenerating: boolean) => void;
+  user: User | null;
 }
 
-export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerating }: GeneratorProps) {
+export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerating, user }: GeneratorProps) {
   const { toast } = useToast();
   const [formData, setFormData] = useState<GenerationRequest>({
     category: VIDEO_CATEGORIES[0],
