@@ -1,4 +1,5 @@
 import { useLocation } from "wouter";
+import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User } from "@shared/schema";
 import ContentCalendar from "@/components/calendar/ContentCalendar";
@@ -15,7 +16,10 @@ export default function CalendarPage({ user }: CalendarPageProps) {
 
   // Redirect to login if not authenticated
   if (!user) {
-    setLocation('/login');
+    // Use useEffect para redirigir después del renderizado
+    useEffect(() => {
+      setLocation('/login');
+    }, []);
     return null;
   }
 

@@ -28,13 +28,13 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
   ];
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50">
+    <nav className="bg-background border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/">
-                <span className="text-primary font-heading font-bold text-2xl cursor-pointer">
+                <span className="text-foreground font-heading font-bold text-xl cursor-pointer">
                   TubeIdeaGen
                 </span>
               </Link>
@@ -47,8 +47,8 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   href={link.href}
                   className={`${
                     location === link.href || (link.href !== "/" && location.startsWith(link.href))
-                      ? "border-primary text-ytdark"
-                      : "border-transparent text-ytgray hover:text-ytdark"
+                      ? "border-primary text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
                   } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
                   {link.name}
@@ -60,14 +60,14 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative rounded-full p-1">
+                  <Button variant="ghost" size="sm" className="relative rounded-md h-9 w-9 p-0">
                     <span className="sr-only">Open user menu</span>
-                    <UserIcon className="h-6 w-6" />
+                    <UserIcon className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <div className="px-4 py-3">
-                    <p className="text-sm">Signed in as</p>
+                  <div className="px-4 py-2">
+                    <p className="text-xs text-muted-foreground">Signed in as</p>
                     <p className="text-sm font-medium truncate">{user.username}</p>
                   </div>
                   <DropdownMenuSeparator />
@@ -98,12 +98,12 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
             ) : (
               <>
                 <Link href="/login">
-                  <Button variant="ghost" className="px-3 py-1 text-sm font-medium">
+                  <Button variant="ghost" size="sm" className="text-sm font-medium">
                     Sign In
                   </Button>
                 </Link>
                 <Link href="/register">
-                  <Button className="px-3 py-1 bg-primary text-white text-sm font-medium hover:bg-red-700">
+                  <Button variant="default" size="sm" className="text-sm font-medium">
                     Get Started
                   </Button>
                 </Link>
@@ -113,14 +113,15 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
           <div className="-mr-2 flex items-center sm:hidden">
             <Button
               variant="ghost"
-              className="inline-flex items-center justify-center p-2 rounded-md text-ytgray hover:text-ytdark hover:bg-gray-100"
+              size="sm"
+              className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               <span className="sr-only">Open main menu</span>
               {mobileMenuOpen ? (
-                <X className="block h-6 w-6" aria-hidden="true" />
+                <X className="block h-5 w-5" aria-hidden="true" />
               ) : (
-                <Menu className="block h-6 w-6" aria-hidden="true" />
+                <Menu className="block h-5 w-5" aria-hidden="true" />
               )}
             </Button>
           </div>
@@ -129,69 +130,69 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="sm:hidden">
-          <div className="pt-2 pb-3 space-y-1">
+        <div className="sm:hidden bg-background border-b border-border">
+          <div className="pt-2 pb-3 space-y-0.5">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
                 className={`${
-                  location === link.href
-                    ? "bg-red-50 border-primary text-primary"
-                    : "border-transparent text-ytgray hover:bg-gray-50 hover:border-gray-300 hover:text-ytdark"
-                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                  location === link.href || (link.href !== "/" && location.startsWith(link.href))
+                    ? "bg-secondary/50 border-primary text-foreground"
+                    : "border-transparent text-muted-foreground hover:bg-secondary/20 hover:text-foreground"
+                } block pl-3 pr-4 py-2 border-l-2 text-sm font-medium`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {link.name}
               </Link>
             ))}
           </div>
-          <div className="pt-4 pb-3 border-t border-gray-200">
+          <div className="pt-4 pb-3 border-t border-border">
             {user ? (
               <>
                 <div className="flex items-center px-4">
                   <div className="flex-shrink-0">
-                    <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                      <UserIcon className="h-6 w-6 text-gray-600" />
+                    <div className="h-9 w-9 rounded-md bg-secondary/70 flex items-center justify-center">
+                      <UserIcon className="h-5 w-5 text-foreground" />
                     </div>
                   </div>
                   <div className="ml-3">
-                    <div className="text-base font-medium text-ytdark">{user.username}</div>
-                    <div className="text-sm font-medium text-ytgray">{user.email}</div>
+                    <div className="text-sm font-medium text-foreground">{user.username}</div>
+                    <div className="text-xs text-muted-foreground">{user.email}</div>
                   </div>
                 </div>
-                <div className="mt-3 space-y-1">
+                <div className="mt-3 space-y-0.5">
                   <Link
                     href="/dashboard"
-                    className="block px-4 py-2 text-base font-medium text-ytgray hover:text-ytdark hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Dashboard
                   </Link>
                   <Link
                     href="/calendar"
-                    className="block px-4 py-2 text-base font-medium text-ytgray hover:text-ytdark hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <div className="flex items-center">
-                      <Calendar className="mr-2 h-5 w-5" />
+                      <Calendar className="mr-2 h-4 w-4" />
                       <span>Calendar</span>
                     </div>
                   </Link>
                   <Link
                     href="/profile"
-                    className="block px-4 py-2 text-base font-medium text-ytgray hover:text-ytdark hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <div className="flex items-center">
-                      <Settings className="mr-2 h-5 w-5" />
+                      <Settings className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </div>
                   </Link>
                   {!user.isPremium && !user.lifetimeAccess && (
                     <Link
                       href="/subscribe"
-                      className="block px-4 py-2 text-base font-medium text-primary hover:text-red-700 hover:bg-gray-100"
+                      className="block px-4 py-2 text-sm font-medium text-primary/90 hover:text-primary hover:bg-secondary/20"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Upgrade to Premium
@@ -202,27 +203,27 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                       setMobileMenuOpen(false);
                       onLogout();
                     }}
-                    className="block w-full text-left px-4 py-2 text-base font-medium text-ytgray hover:text-ytdark hover:bg-gray-100"
+                    className="block w-full text-left px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
                   >
                     <div className="flex items-center">
-                      <LogOut className="mr-2 h-5 w-5" />
+                      <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
                     </div>
                   </button>
                 </div>
               </>
             ) : (
-              <div className="mt-3 space-y-1">
+              <div className="mt-3 space-y-1 p-2">
                 <Link
                   href="/login"
-                  className="block px-4 py-2 text-base font-medium text-ytgray hover:text-ytdark hover:bg-gray-100"
+                  className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20 rounded-md"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/register"
-                  className="block px-4 py-2 text-base font-medium text-primary hover:text-red-700 hover:bg-gray-100"
+                  className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary/50 bg-secondary/30 rounded-md mt-2"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Get Started
