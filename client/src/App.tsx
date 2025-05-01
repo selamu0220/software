@@ -10,6 +10,7 @@ import Dashboard from "@/pages/dashboard";
 import Calendar from "@/pages/calendar";
 import Profile from "@/pages/profile";
 import Subscribe from "@/pages/subscribe";
+import Teleprompter from "@/pages/teleprompter";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AssistantSidebar } from "@/components/ui/assistant-sidebar";
@@ -80,6 +81,7 @@ function App() {
             <Route path="/calendar" component={() => <Calendar user={user} />} />
             <Route path="/profile" component={() => <Profile user={user} onProfileUpdate={setUser} />} />
             <Route path="/subscribe" component={() => <Subscribe user={user} onSubscriptionUpdate={setUser} />} />
+            <Route path="/teleprompter" component={() => <Teleprompter user={user} />} />
             <Route component={NotFound} />
           </Switch>
         </main>

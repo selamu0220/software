@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, User as UserIcon, Calendar, LogOut, Settings } from "lucide-react";
+import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video } from "lucide-react";
 
 interface NavbarProps {
   user: User | null;
@@ -74,19 +74,34 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard">Dashboard</Link>
+                    <Link href="/dashboard" className="flex items-center">
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      Dashboard
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/calendar">Calendario</Link>
+                    <Link href="/calendar" className="flex items-center">
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Calendario
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/teleprompter">Teleprompter</Link>
+                    <Link href="/teleprompter" className="flex items-center">
+                      <MonitorPlay className="mr-2 h-4 w-4" />
+                      Teleprompter
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/recording">Grabación</Link>
+                    <Link href="/recording" className="flex items-center">
+                      <Video className="mr-2 h-4 w-4" />
+                      Grabación
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/profile">Perfil</Link>
+                    <Link href="/profile" className="flex items-center">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Perfil
+                    </Link>
                   </DropdownMenuItem>
                   {!user.isPremium && !user.lifetimeAccess && (
                     <>
@@ -193,6 +208,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <div className="flex items-center">
+                      <MonitorPlay className="mr-2 h-4 w-4" />
                       <span>Teleprompter</span>
                     </div>
                   </Link>
@@ -202,6 +218,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <div className="flex items-center">
+                      <Video className="mr-2 h-4 w-4" />
                       <span>Grabación</span>
                     </div>
                   </Link>
