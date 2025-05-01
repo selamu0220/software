@@ -685,80 +685,99 @@ export default function Recording({ user }: RecordingProps) {
           </TabsContent>
           
           <TabsContent value="videos" className="space-y-6">
-            {recordedVideos.length === 0 ? (
-              <div className="p-12 text-center rounded-lg border border-border bg-muted/20">
-                <Video className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
-                <h3 className="text-lg font-medium mb-2">No hay videos grabados</h3>
-                <p className="text-muted-foreground">
-                  Los videos que grabes aparecerán aquí para que puedas descargarlos o compartirlos.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {recordedVideos.map(video => (
-                  <Card key={video.id} className="overflow-hidden">
-                    <div className="grid md:grid-cols-[300px,1fr] grid-cols-1">
-                      <div className="aspect-video bg-black flex items-center justify-center overflow-hidden">
-                        <video 
-                          src={video.url} 
-                          controls 
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                      <div className="p-4 flex flex-col">
-                        <div className="mb-2">
-                          <h3 className="text-lg font-medium truncate">{video.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {video.date.toLocaleString()}
-                          </p>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-2 mt-auto pt-4">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => downloadVideo(video.url, video.name)}
-                          >
-                            <Download className="h-4 w-4 mr-1" />
-                            Descargar
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => copyVideoLink(video.url)}
-                          >
-                            <Copy className="h-4 w-4 mr-1" />
-                            Copiar Link
-                          </Button>
-                          {user && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => uploadToServer(video.id)}
-                              disabled={isProcessing}
-                            >
-                              {isProcessing ? (
-                                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                              ) : (
-                                <Upload className="h-4 w-4 mr-1" />
+            <Tabs defaultValue="local" className="w-full">
+              <TabsList className="grid grid-cols-2 max-w-[400px] mx-auto mb-4">
+                <TabsTrigger value="local" className="flex items-center gap-1">
+                  <Camera className="h-4 w-4" />
+                  Grabaciones Locales
+                </TabsTrigger>
+                <TabsTrigger value="stored" className="flex items-center gap-1">
+                  <Upload className="h-4 w-4" />
+                  Videos Subidos
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="local" className="space-y-6">
+                {recordedVideos.length === 0 ? (
+                  <div className="p-12 text-center rounded-lg border border-border bg-muted/20">
+                    <Video className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
+                    <h3 className="text-lg font-medium mb-2">No hay videos grabados</h3>
+                    <p className="text-muted-foreground">
+                      Los videos que grabes aparecerán aquí para que puedas descargarlos o compartirlos.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {recordedVideos.map(video => (
+                      <Card key={video.id} className="overflow-hidden">
+                        <div className="grid md:grid-cols-[300px,1fr] grid-cols-1">
+                          <div className="aspect-video bg-black flex items-center justify-center overflow-hidden">
+                            <video 
+                              src={video.url} 
+                              controls 
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                          <div className="p-4 flex flex-col">
+                            <div className="mb-2">
+                              <h3 className="text-lg font-medium truncate">{video.name}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {video.date.toLocaleString()}
+                              </p>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-2 mt-auto pt-4">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => downloadVideo(video.url, video.name)}
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                Descargar
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => copyVideoLink(video.url)}
+                              >
+                                <Copy className="h-4 w-4 mr-1" />
+                                Copiar Link
+                              </Button>
+                              {user && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => uploadToServer(video.id)}
+                                  disabled={isProcessing}
+                                >
+                                  {isProcessing ? (
+                                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                  ) : (
+                                    <Upload className="h-4 w-4 mr-1" />
+                                  )}
+                                  Subir
+                                </Button>
                               )}
-                              Subir
-                            </Button>
-                          )}
-                          <Button 
-                            variant="destructive" 
-                            size="sm"
-                            onClick={() => deleteVideo(video.id)}
-                          >
-                            Eliminar
-                          </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => deleteVideo(video.id)}
+                              >
+                                Eliminar
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="stored" className="space-y-6">
+                <StoredVideos userId={user?.id} />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
         </Tabs>
       </div>
