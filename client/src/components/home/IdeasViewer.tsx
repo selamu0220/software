@@ -223,17 +223,34 @@ export function IdeasViewer({
           </div>
           <div className="flex gap-2">
             {onAddToCalendar && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  setActiveTab('editor');
-                  scrollToElement('results');
-                }}
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                Editar en Profundidad
-              </Button>
+              <>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setActiveTab('editor');
+                    scrollToElement('results');
+                  }}
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Editar
+                </Button>
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={() => {
+                    // Agregar directamente al calendario con la fecha actual
+                    onAddToCalendar(idea, new Date());
+                    toast({
+                      title: "Idea añadida al calendario",
+                      description: "Se ha programado para hoy",
+                    });
+                  }}
+                >
+                  <Calendar className="h-4 w-4 mr-1" />
+                  Añadir al Calendario
+                </Button>
+              </>
             )}
           </div>
         </CardFooter>
