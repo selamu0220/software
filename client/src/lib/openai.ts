@@ -14,6 +14,12 @@ export type VideoIdeaContent = {
   category: string;
   subcategory: string;
   videoLength: string;
+  
+  // Campos adicionales para diferentes tipos de contenido
+  intro?: string;
+  conclusion?: string;
+  fullScript?: string | { [section: string]: string };
+  timings?: { [section: string]: string } | string[];
 };
 
 /**
