@@ -140,24 +140,94 @@ export default function WeeklyGenerator({
             ¡Te ahorrarás horas de planificación!
           </p>
           
-          <Button 
-            onClick={handleGenerateWeekly} 
-            disabled={isGenerating || !generationParams} 
-            className="w-full sm:w-auto"
-            size="lg"
-          >
-            {isGenerating ? (
-              <>
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                Generando plan semanal...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generar Plan Semanal
-              </>
-            )}
-          </Button>
+          <div className="flex gap-3 justify-center">
+            <Button 
+              onClick={handleGenerateWeekly} 
+              disabled={isGenerating || !generationParams} 
+              className="sm:w-auto"
+              size="lg"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                  Generando plan...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Plan Personalizado
+                </>
+              )}
+            </Button>
+
+            <Button 
+              onClick={() => {
+                // Crear parámetros rápidos para generación semanal
+                const quickParams: GenerationRequest = {
+                  category: "Gaming",
+                  subcategory: "Game Reviews",
+                  videoFocus: "Game Reviews sin mostrar la cara",
+                  videoLength: "Medium (5-10 min)",
+                  templateStyle: "Listicle",
+                  contentTone: "Enthusiastic",
+                  titleTemplate: "CICLADO DE VIDEOS: Top [Número] Secretos que Nadie te Cuenta sobre [Tema]",
+                  contentType: "fullScript",
+                  timingDetail: true,
+                  useSubcategory: true,
+                  customChannelType: "",
+                  geminiApiKey: generationParams?.geminiApiKey || "",
+                };
+                
+                // Actualizar los parámetros y ejecutar la generación
+                setIsGenerating(true);
+                setError(null);
+                
+                // Aseguramos que contentType sea "fullScript" para generar guiones completos
+                apiRequest("POST", "/api/generate-ideas/week", quickParams)
+                  .then(async response => {
+                    if (!response.ok) {
+                      const errorData = await response.json();
+                      throw new Error(errorData.message || "Error al generar ideas semanales");
+                    }
+                    return response.json();
+                  })
+                  .then(result => {
+                    toast({
+                      title: "¡Plan semanal generado!",
+                      description: `Se generaron ${result.count} ideas para esta semana`,
+                    });
+                    onSuccess(result);
+                  })
+                  .catch(error => {
+                    setError(error.message || "Error al generar ideas semanales");
+                    toast({
+                      title: "Error",
+                      description: error.message || "No se pudieron generar las ideas semanales",
+                      variant: "destructive"
+                    });
+                  })
+                  .finally(() => {
+                    setIsGenerating(false);
+                  });
+              }}
+              disabled={isGenerating} 
+              className="sm:w-auto"
+              size="lg"
+              variant="outline"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <CalendarCheck className="mr-2 h-4 w-4" />
+                  Plan Rápido (1-clic)
+                </>
+              )}
+            </Button>
+          </div>
           
           <p className="text-xs text-muted-foreground mt-4">
             Se generará un plan completo con 7 guiones para toda la semana.

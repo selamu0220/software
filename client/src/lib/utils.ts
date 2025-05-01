@@ -172,11 +172,20 @@ export const VIDEO_CATEGORIES = [
   "Fashion & Beauty",
   "Sports",
   "Science",
-  "Art"
+  "Art",
+  "Métricas"
 ];
 
 // Subcategory options mapped by category
 export const VIDEO_SUBCATEGORIES: Record<string, string[]> = {
+  "Métricas": [
+    "Análisis de Canales",
+    "Tendencias de YouTube",
+    "Optimización de SEO",
+    "Comparativa de Métricas",
+    "Estrategias de Crecimiento",
+    "Análisis de Audiencia"
+  ],
   "Gaming": [
     "Game Reviews",
     "Let's Plays",
