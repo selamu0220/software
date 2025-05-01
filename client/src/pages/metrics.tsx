@@ -38,32 +38,16 @@ export default function Metrics() {
     setError(null);
 
     try {
-      // En una implementación real, esto debería llamar a la API para obtener datos reales
-      // Simularemos la carga de datos para demostrar la interfaz
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Llamada a la API para obtener datos de métricas
+      const response = await apiRequest('GET', `/api/youtube/metrics?channelId=${encodeURIComponent(channelId)}`);
       
-      // Para una implementación completa, harías algo como:
-      // const response = await apiRequest('GET', `/api/youtube/metrics?channelId=${encodeURIComponent(channelId)}`);
-      // const data = await response.json();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Error al obtener métricas");
+      }
       
-      // Datos de ejemplo para mostrar la interfaz
-      setMetricsData({
-        channelStats: {
-          title: channelId.includes('@') ? channelId : `Canal de ${channelId}`,
-          subscribers: "1.2M",
-          totalViews: "45.6M",
-          videoCount: 327,
-          joinDate: "15 Oct 2018",
-          averageViews: "139.7K",
-          engagementRate: "8.2%"
-        },
-        viewsData: generateViewsData(),
-        subscribersData: generateSubscribersData(),
-        topVideos: generateTopVideos(),
-        engagementData: generateEngagementData(),
-        audienceData: generateAudienceData(),
-        contentPerformance: generateContentPerformanceData()
-      });
+      const data = await response.json();
+      setMetricsData(data);
     } catch (err) {
       console.error("Error al analizar el canal:", err);
       setError("No se pudo analizar el canal. Por favor, verifica el ID del canal e inténtalo de nuevo.");
@@ -512,98 +496,4 @@ function Recommendations({ channelStats }: { channelStats: any }) {
   );
 }
 
-// Funciones para generar datos de ejemplo (para demostración)
-function generateViewsData() {
-  const months = [
-    'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 
-    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
-  ];
-  
-  return months.map((month, index) => ({
-    name: month,
-    views: Math.floor(100000 + Math.random() * 250000)
-  }));
-}
-
-function generateSubscribersData() {
-  const months = [
-    'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 
-    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
-  ];
-  
-  return months.map((month) => ({
-    name: month,
-    subscribers: Math.floor(5000 + Math.random() * 15000)
-  }));
-}
-
-function generateEngagementData() {
-  const contentTypes = ['Tutoriales', 'Vlogs', 'Reviews', 'Listas', 'Reacciones', 'Shorts'];
-  
-  return contentTypes.map((type) => ({
-    name: type,
-    likes: Math.floor(10 + Math.random() * 40),
-    comments: Math.floor(5 + Math.random() * 15),
-    shares: Math.floor(2 + Math.random() * 8)
-  }));
-}
-
-function generateAudienceData() {
-  return [
-    { name: '18-24', value: 25 },
-    { name: '25-34', value: 35 },
-    { name: '35-44', value: 20 },
-    { name: '45-54', value: 12 },
-    { name: '55+', value: 8 }
-  ];
-}
-
-function generateTopVideos() {
-  return [
-    {
-      title: "10 Trucos para Editar Videos como un Pro",
-      views: "843K",
-      engagement: "9.8%",
-      ctr: "12.4%",
-      date: "15 Feb 2024"
-    },
-    {
-      title: "¿Vale la Pena este Software? Análisis Completo",
-      views: "712K",
-      engagement: "8.7%",
-      ctr: "11.2%",
-      date: "3 Mar 2024"
-    },
-    {
-      title: "Cómo TRIPLICAR tus Vistas en YouTube (Tutorial)",
-      views: "698K",
-      engagement: "10.1%",
-      ctr: "13.5%",
-      date: "21 Ene 2024"
-    },
-    {
-      title: "5 Herramientas GRATIS para Creadores de Contenido",
-      views: "654K",
-      engagement: "7.9%",
-      ctr: "10.8%",
-      date: "9 Abr 2024"
-    },
-    {
-      title: "Mi Setup Completo 2024 | Tour del Estudio",
-      views: "587K",
-      engagement: "8.5%",
-      ctr: "9.7%",
-      date: "5 Mar 2024"
-    }
-  ];
-}
-
-function generateContentPerformanceData() {
-  return [
-    { category: "Tutoriales", avgViews: 165000, avgEngagement: 9.2 },
-    { category: "Reviews", avgViews: 142000, avgEngagement: 8.5 },
-    { category: "Vlogs", avgViews: 98000, avgEngagement: 7.8 },
-    { category: "Shorts", avgViews: 245000, avgEngagement: 6.3 },
-    { category: "Listas", avgViews: 187000, avgEngagement: 9.7 }
-  ];
-}
+// Los datos ahora se obtienen directamente desde la API
