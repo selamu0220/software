@@ -107,19 +107,25 @@ function buildPrompt(params: GenerationRequest): string {
     videoFocus,
     videoLength,
     templateStyle,
-    contentTone
+    contentTone,
+    titleTemplate
   } = params;
 
-  // Selecciona aleatoriamente un template de los disponibles
-  const randomIndex = Math.floor(Math.random() * IDEA_TEMPLATES.length);
-  const randomTemplate = IDEA_TEMPLATES[randomIndex];
+  // Usa la plantilla de título seleccionada por el usuario, o selecciona una aleatoria si no se proporciona
+  let selectedTemplate;
+  if (titleTemplate) {
+    selectedTemplate = titleTemplate;
+  } else {
+    const randomIndex = Math.floor(Math.random() * IDEA_TEMPLATES.length);
+    selectedTemplate = IDEA_TEMPLATES[randomIndex];
+  }
 
   return `
 Genera una idea de video profesional para YouTube dirigida a empresas SaaS y negocios que quieren crear anuncios atractivos sin mostrar la cara. 
 El tema está en el nicho de ${category}, específicamente sobre ${subcategory}.
 El video debe centrarse en ${videoFocus}, tener aproximadamente ${videoLength} de duración, y usar un estilo ${templateStyle} con un tono ${contentTone}.
 
-IMPORTANTE: Usa este formato para el título (adaptado a tu idea): "${randomTemplate}"
+IMPORTANTE: Usa este formato para el título (adaptado a tu idea): "${selectedTemplate}"
 Haz que el título sea IMPACTANTE, use MAYÚSCULAS estratégicamente, y tenga entre 6-10 palabras.
 
 La idea debe incluir estos servicios que ofrezco:

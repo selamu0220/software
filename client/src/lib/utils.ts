@@ -274,6 +274,8 @@ export const CONTENT_TONES = [
 
 // Plantillas de títulos personalizados
 export const VIDEO_TITLE_TEMPLATES = [
+  "CICLADO DE VIDEOS: Top [Número] Secretos que Nadie te Cuenta sobre [Tema]",
+  "RECICLADO DE VIDEOS: Top [Número] Secretos que Nadie te Cuenta sobre [Tema]",
   "Top [Número] Secretos que Nadie te Cuenta sobre [Tema]",
   "10 Mejores Maneras de [Acción] sin [Obstáculo]",
   "[Número] Tips para [Objetivo] como Profesional",
