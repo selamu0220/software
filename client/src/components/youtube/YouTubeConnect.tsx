@@ -332,7 +332,6 @@ export default function YouTubeConnect({ tokens, onConnect, onDisconnect }: YouT
                 <Button 
                   onClick={handleConnect} 
                   className="gap-2"
-                  disabled={!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET}
                 >
                   <Youtube className="h-4 w-4" />
                   Conectar con YouTube
