@@ -1,14 +1,10 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, LogOut, Youtube } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { SiYoutube } from "react-icons/si";
+import { LoaderCircle, Check, X, Upload } from "lucide-react";
 
 export interface YouTubeTokens {
   accessToken: string;
@@ -22,393 +18,450 @@ interface YouTubeConnectProps {
   onDisconnect?: () => void;
 }
 
+interface ChannelInfo {
+  id: string;
+  title: string;
+  customUrl?: string;
+  thumbnailUrl?: string;
+  subscriberCount?: number;
+  videoCount?: number;
+}
+
 export default function YouTubeConnect({ tokens, onConnect, onDisconnect }: YouTubeConnectProps) {
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [channelInfo, setChannelInfo] = useState<ChannelInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const [isConnected, setIsConnected] = useState<boolean>(!!tokens?.accessToken);
-  const [isConnecting, setIsConnecting] = useState<boolean>(false);
-  const [channelInfo, setChannelInfo] = useState<{
-    name: string;
-    thumbnail: string;
-  } | null>(null);
-  
-  // Estado para el diálogo de publicación
-  const [publishDialogOpen, setPublishDialogOpen] = useState<boolean>(false);
-  const [videoToPublish, setVideoToPublish] = useState<{
-    id: string;
-    name: string;
-    url: string;
-  } | null>(null);
-  const [publishForm, setPublishForm] = useState({
-    title: "",
-    description: "",
-    tags: "",
-    isPrivate: true
-  });
-  const [isUploading, setIsUploading] = useState<boolean>(false);
-  
-  // Verificar si los tokens están expirados
-  useEffect(() => {
-    if (tokens?.accessToken && tokens?.expiresAt) {
-      const now = Date.now();
-      if (now >= tokens.expiresAt) {
-        // Tokens expirados, intentar renovar
-        refreshTokens();
-      } else {
-        // Tokens válidos, obtener información del canal
-        fetchChannelInfo();
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tokens]);
-  
-  // Escuchar eventos para abrir el diálogo de publicación
-  useEffect(() => {
-    const handleOpenPublishDialog = (event: CustomEvent) => {
-      const video = event.detail;
-      if (video) {
-        openPublishDialog(video);
-      }
-    };
-    
-    window.addEventListener("OPEN_YOUTUBE_PUBLISH", handleOpenPublishDialog as EventListener);
-    
-    return () => {
-      window.removeEventListener("OPEN_YOUTUBE_PUBLISH", handleOpenPublishDialog as EventListener);
-    };
-  }, []);
-  
-  // Obtener información del canal
-  const fetchChannelInfo = async () => {
+
+  const fetchChannelInfo = useCallback(async () => {
     try {
+      setIsLoading(true);
       const response = await apiRequest("GET", "/api/youtube/channel");
-      const data = await response.json();
       
-      if (data.name && data.thumbnail) {
-        setChannelInfo({
-          name: data.name,
-          thumbnail: data.thumbnail
-        });
-        setIsConnected(true);
+      if (response.ok) {
+        const data = await response.json();
+        setChannelInfo(data);
+      } else {
+        const error = await response.json();
+        if (error.needsAuth) {
+          // Token expirado o no válido, borrar estado
+          setChannelInfo(null);
+          if (onDisconnect) onDisconnect();
+        }
       }
     } catch (error) {
-      console.error("Error al obtener información del canal:", error);
-      setIsConnected(false);
+      console.error("Error fetching channel info:", error);
+      setChannelInfo(null);
+    } finally {
+      setIsLoading(false);
     }
-  };
-  
-  // Refrescar tokens
-  const refreshTokens = async () => {
-    try {
-      const response = await apiRequest("POST", "/api/youtube/refresh-token");
-      const data = await response.json();
-      
-      if (data.accessToken && data.refreshToken) {
-        onConnect?.({
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-          expiresAt: data.expiresAt
-        });
-        fetchChannelInfo();
-      }
-    } catch (error) {
-      console.error("Error al refrescar tokens:", error);
-      setIsConnected(false);
-      onDisconnect?.();
+  }, [onDisconnect]);
+
+  useEffect(() => {
+    if (tokens?.accessToken) {
+      fetchChannelInfo();
     }
-  };
-  
-  // Iniciar el proceso de conexión
+  }, [tokens, fetchChannelInfo]);
+
   const connectYouTube = async () => {
-    setIsConnecting(true);
-    
     try {
-      // Obtener la URL de autorización de Google OAuth
-      const response = await apiRequest("GET", "/api/youtube/auth-url");
-      const data = await response.json();
+      setIsConnecting(true);
       
-      if (data.url) {
-        // Abrir una nueva ventana para la autorización
-        const width = 600;
-        const height = 800;
-        const left = window.screenX + (window.outerWidth - width) / 2;
-        const top = window.screenY + (window.outerHeight - height) / 2;
-        
-        const authWindow = window.open(
-          data.url,
-          "youtube-auth",
-          `width=${width},height=${height},left=${left},top=${top}`
-        );
-        
-        // Manejar el mensaje de la ventana de autorización
-        const handleMessage = (event: MessageEvent) => {
-          if (event.data.type === "YOUTUBE_AUTH_SUCCESS") {
-            authWindow?.close();
-            
-            const { accessToken, refreshToken, expiresAt } = event.data;
-            onConnect?.({
-              accessToken,
-              refreshToken,
-              expiresAt
-            });
-            
-            setIsConnected(true);
-            fetchChannelInfo();
-            
-            toast({
-              title: "Conectado a YouTube",
-              description: "Tu cuenta de YouTube ha sido conectada correctamente.",
-            });
-            
-            window.removeEventListener("message", handleMessage);
-          }
-        };
-        
-        window.addEventListener("message", handleMessage);
+      // 1. Obtener URL de autorización del servidor
+      const authUrlResponse = await apiRequest("GET", "/api/youtube/auth-url");
+      
+      if (!authUrlResponse.ok) {
+        const error = await authUrlResponse.json();
+        if (error.missingCredentials) {
+          toast({
+            title: "Configuración incompleta",
+            description: "La API de YouTube no está configurada. Contacta al administrador.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "No se pudo iniciar el proceso de autenticación",
+            variant: "destructive"
+          });
+        }
+        return;
       }
+      
+      const { url } = await authUrlResponse.json();
+      
+      // 2. Abrir ventana de autorización de Google
+      const authWindow = window.open(url, "youtube-auth", "width=800,height=600");
+      
+      if (!authWindow) {
+        toast({
+          title: "Error",
+          description: "Por favor, permite las ventanas emergentes para continuar",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // 3. Escuchar mensaje de la ventana de callback
+      const handleMessage = (event: MessageEvent) => {
+        // Verificar que el mensaje sea de nuestra ventana de callback
+        if (!event.data || !event.data.type) return;
+        
+        if (event.data.type === "YOUTUBE_AUTH_SUCCESS") {
+          // Autenticación exitosa, guardar tokens
+          const tokens: YouTubeTokens = {
+            accessToken: event.data.accessToken,
+            refreshToken: event.data.refreshToken,
+            expiresAt: event.data.expiresAt
+          };
+          
+          if (onConnect) onConnect(tokens);
+          
+          // Obtener información del canal
+          fetchChannelInfo();
+          
+          toast({
+            title: "Conectado con éxito",
+            description: "Ahora puedes subir videos directamente a YouTube",
+            variant: "default"
+          });
+          
+          // Limpiar listener
+          window.removeEventListener("message", handleMessage);
+        } else if (event.data.type === "YOUTUBE_AUTH_ERROR") {
+          toast({
+            title: "Error al conectar",
+            description: event.data.error || "No se pudo completar la autenticación",
+            variant: "destructive"
+          });
+          
+          // Limpiar listener
+          window.removeEventListener("message", handleMessage);
+        }
+      };
+      
+      window.addEventListener("message", handleMessage);
     } catch (error) {
-      console.error("Error al conectar YouTube:", error);
+      console.error("Error connecting to YouTube:", error);
       toast({
-        title: "Error de conexión",
-        description: "No se pudo iniciar la conexión con YouTube.",
-        variant: "destructive",
+        title: "Error",
+        description: "No se pudo conectar con YouTube",
+        variant: "destructive"
       });
     } finally {
       setIsConnecting(false);
     }
   };
   
-  // Desconectar cuenta
   const disconnectYouTube = async () => {
     try {
-      await apiRequest("POST", "/api/youtube/disconnect");
+      setIsDisconnecting(true);
       
-      setIsConnected(false);
-      setChannelInfo(null);
-      onDisconnect?.();
+      const response = await apiRequest("POST", "/api/youtube/disconnect");
       
-      toast({
-        title: "Desconectado de YouTube",
-        description: "Tu cuenta de YouTube ha sido desconectada.",
-      });
+      if (response.ok) {
+        setChannelInfo(null);
+        if (onDisconnect) onDisconnect();
+        
+        toast({
+          title: "Desconectado",
+          description: "Tu cuenta de YouTube ha sido desconectada",
+          variant: "default"
+        });
+      } else {
+        throw new Error("Failed to disconnect");
+      }
     } catch (error) {
-      console.error("Error al desconectar YouTube:", error);
+      console.error("Error disconnecting YouTube:", error);
       toast({
         title: "Error",
-        description: "No se pudo desconectar la cuenta de YouTube.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  // Abrir el diálogo de publicación
-  const openPublishDialog = (video: { id: string; name: string; url: string }) => {
-    setVideoToPublish(video);
-    setPublishForm({
-      title: video.name,
-      description: "",
-      tags: "",
-      isPrivate: true
-    });
-    setPublishDialogOpen(true);
-  };
-  
-  // Publicar video en YouTube
-  const publishVideo = async () => {
-    if (!videoToPublish) return;
-    
-    setIsUploading(true);
-    
-    try {
-      // Convertir el blob URL a blob
-      const response = await fetch(videoToPublish.url);
-      const blob = await response.blob();
-      
-      // Crear FormData
-      const formData = new FormData();
-      formData.append('video', blob, `${videoToPublish.name}.webm`);
-      formData.append('title', publishForm.title);
-      formData.append('description', publishForm.description);
-      formData.append('tags', publishForm.tags);
-      formData.append('private', publishForm.isPrivate.toString());
-      
-      // Subir a YouTube
-      const uploadResponse = await apiRequest(
-        'POST',
-        '/api/youtube/upload',
-        formData,
-        true // enviar como FormData en lugar de JSON
-      );
-      
-      const uploadData = await uploadResponse.json();
-      
-      if (uploadData.success && uploadData.videoId) {
-        toast({
-          title: "Video publicado en YouTube",
-          description: "Tu video ha sido publicado correctamente.",
-        });
-        
-        setPublishDialogOpen(false);
-        // Aquí podrías añadir un callback para actualizar la lista de videos publicados
-      } else {
-        throw new Error(uploadData.message || "No se pudo publicar el video");
-      }
-    } catch (error: any) {
-      console.error("Error al publicar en YouTube:", error);
-      toast({
-        title: "Error de publicación",
-        description: error.message || "No se pudo publicar el video en YouTube.",
-        variant: "destructive",
+        description: "No se pudo desconectar de YouTube",
+        variant: "destructive"
       });
     } finally {
-      setIsUploading(false);
+      setIsDisconnecting(false);
     }
   };
   
+  const handleOpenPublishDialog = (event: CustomEvent<{ video: { id: string; name: string; url: string } }>) => {
+    const video = event.detail.video;
+    openYouTubePublishDialog(video);
+  };
+  
+  useEffect(() => {
+    // Escuchar eventos personalizados para abrir el diálogo de publicación
+    window.addEventListener('openYouTubePublish' as any, handleOpenPublishDialog as any);
+    
+    return () => {
+      window.removeEventListener('openYouTubePublish' as any, handleOpenPublishDialog as any);
+    };
+  }, []);
+
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Youtube className="h-5 w-5 text-red-500" />
-            Conexión a YouTube
-          </CardTitle>
-          <CardDescription>
-            Conecta tu cuenta de YouTube para publicar videos directamente.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isConnected && channelInfo ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                {channelInfo.thumbnail && (
-                  <img 
-                    src={channelInfo.thumbnail} 
-                    alt={channelInfo.name}
-                    className="h-12 w-12 rounded-full" 
-                  />
-                )}
-                <div>
-                  <h3 className="font-medium">{channelInfo.name}</h3>
-                  <p className="text-sm text-muted-foreground">Cuenta conectada</p>
-                </div>
-              </div>
-              
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={disconnectYouTube}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Desconectar cuenta
-              </Button>
-            </div>
-          ) : (
-            <Button 
-              onClick={connectYouTube} 
-              className="w-full"
-              disabled={isConnecting}
-            >
-              {isConnecting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Conectando...
-                </>
-              ) : (
-                <>
-                  <Youtube className="mr-2 h-4 w-4" />
-                  Conectar con YouTube
-                </>
-              )}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <SiYoutube className="w-6 h-6 text-red-600" />
+          Integración con YouTube
+        </CardTitle>
+        <CardDescription>
+          Conecta tu cuenta para subir videos directamente a YouTube
+        </CardDescription>
+      </CardHeader>
       
-      {/* Diálogo de publicación */}
-      <Dialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Publicar en YouTube</DialogTitle>
-            <DialogDescription>
-              Completa la información para publicar tu video en YouTube.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Título del video</Label>
-              <Input 
-                id="title" 
-                value={publishForm.title}
-                onChange={(e) => setPublishForm({...publishForm, title: e.target.value})}
-                disabled={isUploading}
+      <CardContent>
+        {isLoading ? (
+          <div className="flex justify-center py-6">
+            <LoaderCircle className="w-8 h-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : channelInfo ? (
+          <div className="flex items-center gap-4">
+            {channelInfo.thumbnailUrl && (
+              <img 
+                src={channelInfo.thumbnailUrl} 
+                alt={channelInfo.title} 
+                className="w-16 h-16 rounded-full object-cover"
               />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="description">Descripción</Label>
-              <Textarea 
-                id="description" 
-                rows={4}
-                value={publishForm.description}
-                onChange={(e) => setPublishForm({...publishForm, description: e.target.value})}
-                disabled={isUploading}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="tags">Etiquetas (separadas por comas)</Label>
-              <Input 
-                id="tags" 
-                value={publishForm.tags}
-                onChange={(e) => setPublishForm({...publishForm, tags: e.target.value})}
-                disabled={isUploading}
-                placeholder="tutorial, español, contenido educativo"
-              />
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Switch 
-                id="private" 
-                checked={publishForm.isPrivate}
-                onCheckedChange={(checked) => setPublishForm({...publishForm, isPrivate: checked})}
-                disabled={isUploading}
-              />
-              <Label htmlFor="private">Publicar como privado</Label>
+            )}
+            <div>
+              <h3 className="font-medium text-lg">{channelInfo.title}</h3>
+              {channelInfo.customUrl && (
+                <p className="text-sm text-muted-foreground">@{channelInfo.customUrl}</p>
+              )}
+              <div className="flex gap-4 mt-1">
+                <span className="text-xs text-muted-foreground">
+                  {channelInfo.subscriberCount !== undefined 
+                    ? `${formatNumber(channelInfo.subscriberCount)} suscriptores` 
+                    : 'Suscriptores ocultos'}
+                </span>
+                {channelInfo.videoCount !== undefined && (
+                  <span className="text-xs text-muted-foreground">
+                    {channelInfo.videoCount} videos
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setPublishDialogOpen(false)}
-              disabled={isUploading}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={publishVideo}
-              disabled={isUploading || !publishForm.title}
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Publicando...
-                </>
-              ) : (
-                "Publicar en YouTube"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+        ) : (
+          <div className="py-6 text-center">
+            <p className="text-muted-foreground mb-4">
+              No estás conectado a YouTube. Conecta tu cuenta para subir videos directamente desde la aplicación.
+            </p>
+          </div>
+        )}
+      </CardContent>
+      
+      <CardFooter className="flex justify-end">
+        {channelInfo ? (
+          <Button 
+            variant="destructive" 
+            onClick={disconnectYouTube}
+            disabled={isDisconnecting}
+          >
+            {isDisconnecting ? (
+              <>
+                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                Desconectando...
+              </>
+            ) : (
+              <>
+                <X className="mr-2 h-4 w-4" />
+                Desconectar
+              </>
+            )}
+          </Button>
+        ) : (
+          <Button 
+            onClick={connectYouTube}
+            disabled={isConnecting}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            {isConnecting ? (
+              <>
+                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                Conectando...
+              </>
+            ) : (
+              <>
+                <SiYoutube className="mr-2 h-4 w-4" />
+                Conectar con YouTube
+              </>
+            )}
+          </Button>
+        )}
+      </CardFooter>
+    </Card>
   );
 }
 
-// Exportamos función para utilizarla desde cualquier componente
+// Utilidad para formatear números grandes
+function formatNumber(num: number): string {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M';
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K';
+  }
+  return num.toString();
+}
+
+// Función para abrir el diálogo de publicación de YouTube
 export function openYouTubePublishDialog(video: { id: string; name: string; url: string }) {
-  // Buscamos la instancia del componente YouTubeConnect
-  const event = new CustomEvent("OPEN_YOUTUBE_PUBLISH", { detail: video });
-  window.dispatchEvent(event);
+  // Crear elemento modal
+  const modalId = 'youtube-publish-modal';
+  let modalElement = document.getElementById(modalId);
+  
+  if (!modalElement) {
+    modalElement = document.createElement('div');
+    modalElement.id = modalId;
+    document.body.appendChild(modalElement);
+  }
+  
+  // Renderizar contenido
+  modalElement.innerHTML = `
+    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div class="bg-background rounded-lg shadow-lg max-w-md w-full p-6">
+        <h2 class="text-xl font-bold mb-4">Publicar en YouTube</h2>
+        <p class="mb-4">Completa los detalles para publicar tu video en YouTube</p>
+        
+        <form id="youtube-upload-form">
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Título</label>
+            <input type="text" id="yt-title" required 
+              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2" 
+              value="${video.name || ''}" />
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Descripción</label>
+            <textarea id="yt-description" rows="3" 
+              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2"
+              placeholder="Describe tu video..."></textarea>
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Etiquetas (separadas por comas)</label>
+            <input type="text" id="yt-tags" 
+              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2" />
+          </div>
+          
+          <div class="mb-4 flex items-center">
+            <input type="checkbox" id="yt-private" class="mr-2" checked />
+            <label for="yt-private">Publicar como privado</label>
+          </div>
+          
+          <div class="flex justify-end gap-2">
+            <button type="button" id="yt-cancel" 
+              class="px-4 py-2 border rounded-md">
+              Cancelar
+            </button>
+            <button type="submit" id="yt-submit" 
+              class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center">
+              <Upload class="w-4 h-4 mr-2" />
+              Publicar
+            </button>
+          </div>
+        </form>
+        
+        <div id="yt-upload-progress" class="hidden mt-4">
+          <p>Subiendo video...</p>
+          <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+            <div id="yt-progress-bar" class="bg-red-600 h-2.5 rounded-full" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Añadir event listeners
+  document.getElementById('yt-cancel')?.addEventListener('click', () => {
+    document.body.removeChild(modalElement!);
+  });
+  
+  document.getElementById('youtube-upload-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const titleInput = document.getElementById('yt-title') as HTMLInputElement;
+    const descriptionInput = document.getElementById('yt-description') as HTMLTextAreaElement;
+    const tagsInput = document.getElementById('yt-tags') as HTMLInputElement;
+    const privateInput = document.getElementById('yt-private') as HTMLInputElement;
+    
+    const formElement = document.getElementById('youtube-upload-form') as HTMLFormElement;
+    const progressElement = document.getElementById('yt-upload-progress') as HTMLDivElement;
+    const progressBarElement = document.getElementById('yt-progress-bar') as HTMLDivElement;
+    
+    try {
+      // Ocultar formulario y mostrar progreso
+      formElement.classList.add('hidden');
+      progressElement.classList.remove('hidden');
+      
+      // Crear FormData
+      const formData = new FormData();
+      
+      // Conseguir el archivo de video desde la URL
+      const response = await fetch(video.url);
+      const blob = await response.blob();
+      
+      // Añadir archivo y metadatos
+      formData.append('video', blob, video.name);
+      formData.append('title', titleInput.value);
+      formData.append('description', descriptionInput.value);
+      formData.append('tags', tagsInput.value);
+      formData.append('private', privateInput.checked.toString());
+      
+      // Simular actualización de progreso
+      const progressInterval = setInterval(() => {
+        const currentWidth = parseInt(progressBarElement.style.width || '0');
+        if (currentWidth < 90) {
+          progressBarElement.style.width = (currentWidth + 5) + '%';
+        }
+      }, 500);
+      
+      // Enviar al servidor
+      const uploadResponse = await fetch('/api/youtube/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+      
+      clearInterval(progressInterval);
+      progressBarElement.style.width = '100%';
+      
+      if (uploadResponse.ok) {
+        const result = await uploadResponse.json();
+        
+        // Mostrar toast de éxito (usando el event bus para comunicarse)
+        const successEvent = new CustomEvent('youtubeUploadSuccess', {
+          detail: {
+            videoId: result.videoId,
+            videoUrl: result.videoUrl
+          }
+        });
+        window.dispatchEvent(successEvent);
+        
+        // Cerrar modal después de 1 segundo
+        setTimeout(() => {
+          if (document.body.contains(modalElement!)) {
+            document.body.removeChild(modalElement!);
+          }
+        }, 1000);
+      } else {
+        const error = await uploadResponse.json();
+        throw new Error(error.message || 'Error al subir video');
+      }
+    } catch (error) {
+      console.error('Error uploading to YouTube:', error);
+      
+      // Disparar evento de error
+      const errorEvent = new CustomEvent('youtubeUploadError', {
+        detail: { error: error instanceof Error ? error.message : 'Error desconocido' }
+      });
+      window.dispatchEvent(errorEvent);
+      
+      // Cerrar modal
+      if (document.body.contains(modalElement!)) {
+        document.body.removeChild(modalElement!);
+      }
+    }
+  });
 }

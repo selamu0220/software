@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import StoredVideos from "@/components/videos/StoredVideos";
+import YouTubeConnect, { YouTubeTokens } from "@/components/youtube/YouTubeConnect";
 import { 
   Mic, 
   Camera, 
@@ -46,6 +47,7 @@ export default function Recording({ user }: RecordingProps) {
   const [availableMicrophones, setAvailableMicrophones] = useState<MediaDeviceInfo[]>([]);
   const [countdownValue, setCountdownValue] = useState<number>(0);
   const [videoName, setVideoName] = useState<string>("");
+  const [youtubeTokens, setYoutubeTokens] = useState<YouTubeTokens | undefined>();
   
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);

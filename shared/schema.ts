@@ -162,6 +162,10 @@ export const updateUserSchema = z.object({
   email: z.string().email().optional(),
   username: z.string().min(3).optional(),
   password: z.string().min(6).optional(),
+  // YouTube integration
+  youtubeAccessToken: z.string().nullable().optional(),
+  youtubeRefreshToken: z.string().nullable().optional(),
+  youtubeTokenExpiry: z.date().nullable().optional(),
 });
 
 export type UpdateUser = z.infer<typeof updateUserSchema>;

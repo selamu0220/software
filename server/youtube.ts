@@ -1,31 +1,36 @@
 import { google } from 'googleapis';
-import { Readable } from 'stream';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+import { OAuth2Client } from 'google-auth-library';
 
 // Configuración de Google OAuth
-const oauth2Client = new google.auth.OAuth2(
+const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5000/api/youtube/callback'
+  `${process.env.NODE_ENV === 'production' 
+    ? 'https://yourdomain.com' 
+    : 'http://localhost:5000'}/api/youtube/callback`
 );
 
-// Definir los scopes necesarios para YouTube
-const SCOPES = [
-  'https://www.googleapis.com/auth/youtube.upload',
-  'https://www.googleapis.com/auth/youtube.readonly'
-];
+// YouTube API
+const youtube = google.youtube('v3');
 
 /**
  * Generar URL de autorización para Google OAuth
  */
 export function getAuthUrl(): string {
-  return oauth2Client.generateAuthUrl({
+  const scopes = [
+    'https://www.googleapis.com/auth/youtube',
+    'https://www.googleapis.com/auth/youtube.upload',
+    'https://www.googleapis.com/auth/youtube.readonly'
+  ];
+
+  const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
-    scope: SCOPES,
-    prompt: 'consent' // Para asegurar que siempre se reciba un refresh token
+    scope: scopes,
+    include_granted_scopes: true,
+    prompt: 'consent' // Siempre pedir consentimiento para obtener refresh_token
   });
+
+  return authUrl;
 }
 
 /**
@@ -37,18 +42,15 @@ export async function getTokensFromCode(code: string): Promise<{
   expiresAt: number;
 }> {
   const { tokens } = await oauth2Client.getToken(code);
-  
-  if (!tokens.access_token || !tokens.expiry_date) {
-    throw new Error('No se pudieron obtener tokens válidos');
+
+  if (!tokens.access_token) {
+    throw new Error('No se recibió token de acceso');
   }
-  
-  // Guardar los tokens para este cliente
-  oauth2Client.setCredentials(tokens);
-  
+
   return {
     accessToken: tokens.access_token,
     refreshToken: tokens.refresh_token || '',
-    expiresAt: tokens.expiry_date
+    expiresAt: tokens.expiry_date || Date.now() + 3600 * 1000
   };
 }
 
@@ -63,17 +65,13 @@ export async function refreshAccessToken(refreshToken: string): Promise<{
   oauth2Client.setCredentials({
     refresh_token: refreshToken
   });
-  
+
   const { credentials } = await oauth2Client.refreshAccessToken();
-  
-  if (!credentials.access_token || !credentials.expiry_date) {
-    throw new Error('No se pudo refrescar el token');
-  }
-  
+
   return {
-    accessToken: credentials.access_token,
+    accessToken: credentials.access_token || '',
     refreshToken: credentials.refresh_token || refreshToken,
-    expiresAt: credentials.expiry_date
+    expiresAt: credentials.expiry_date || Date.now() + 3600 * 1000
   };
 }
 
@@ -91,36 +89,43 @@ export function setTokens(accessToken: string, refreshToken: string): void {
  * Obtener información del canal de YouTube
  */
 export async function getChannelInfo(): Promise<{
-  name: string;
-  thumbnail: string;
   id: string;
+  title: string;
+  customUrl?: string;
+  thumbnailUrl?: string;
+  subscriberCount?: number;
+  videoCount?: number;
 }> {
-  const youtube = google.youtube({
-    version: 'v3',
-    auth: oauth2Client
-  });
-  
-  const response = await youtube.channels.list({
-    part: ['snippet'],
-    mine: true
-  });
-  
-  if (!response.data.items || response.data.items.length === 0) {
-    throw new Error('No se pudo obtener información del canal');
+  try {
+    // Obtener lista de canales del usuario autenticado
+    const channelsResponse = await youtube.channels.list({
+      auth: oauth2Client,
+      part: ['snippet', 'statistics'],
+      mine: true
+    });
+
+    const channel = channelsResponse.data.items?.[0];
+
+    if (!channel) {
+      throw new Error('No se encontró información del canal');
+    }
+
+    return {
+      id: channel.id || '',
+      title: channel.snippet?.title || '',
+      customUrl: channel.snippet?.customUrl,
+      thumbnailUrl: channel.snippet?.thumbnails?.default?.url,
+      subscriberCount: channel.statistics?.subscriberCount 
+        ? parseInt(channel.statistics.subscriberCount) 
+        : undefined,
+      videoCount: channel.statistics?.videoCount 
+        ? parseInt(channel.statistics.videoCount) 
+        : undefined
+    };
+  } catch (error) {
+    console.error('Error al obtener información del canal:', error);
+    throw error;
   }
-  
-  const channel = response.data.items[0];
-  const snippet = channel.snippet;
-  
-  if (!snippet) {
-    throw new Error('No se pudo obtener información del canal');
-  }
-  
-  return {
-    name: snippet.title || 'Canal sin nombre',
-    thumbnail: snippet.thumbnails?.default?.url || '',
-    id: channel.id || ''
-  };
 }
 
 /**
@@ -128,70 +133,49 @@ export async function getChannelInfo(): Promise<{
  */
 export async function uploadVideoToYouTube(
   videoBuffer: Buffer,
-  fileName: string,
+  filename: string,
   title: string,
   description: string,
-  tags: string[],
-  isPrivate: boolean
+  tags: string[] = [],
+  isPrivate: boolean = true
 ): Promise<{ videoId: string; url: string }> {
-  // Crear archivo temporal
-  const tempDir = os.tmpdir();
-  const tempFilePath = path.join(tempDir, fileName);
-  
   try {
-    // Escribir el buffer al archivo temporal
-    fs.writeFileSync(tempFilePath, videoBuffer);
-    
-    // Inicializar el cliente de YouTube
-    const youtube = google.youtube({
-      version: 'v3',
-      auth: oauth2Client
-    });
-    
-    // Crear stream para leer el archivo
-    const fileStream = fs.createReadStream(tempFilePath);
-    
-    // Configurar los metadatos del video
+    // Configurar metadatos del video
     const requestBody = {
       snippet: {
         title,
         description,
         tags,
-        categoryId: '22' // Categoría "People & Blogs"
+        categoryId: '22' // Categoría People & Blogs
       },
       status: {
-        privacyStatus: isPrivate ? 'private' : 'public'
+        privacyStatus: isPrivate ? 'private' : 'public',
+        selfDeclaredMadeForKids: false
       }
     };
-    
-    // Realizar la subida del video
-    const response = await youtube.videos.insert({
+
+    // Realizar la subida
+    const uploadResponse = await youtube.videos.insert({
+      auth: oauth2Client,
       part: ['snippet', 'status'],
       requestBody,
       media: {
-        body: fileStream
+        body: videoBuffer
       }
     });
+
+    const videoId = uploadResponse.data.id;
     
-    if (!response.data.id) {
-      throw new Error('No se pudo obtener el ID del video subido');
+    if (!videoId) {
+      throw new Error('No se recibió ID del video');
     }
-    
-    const videoId = response.data.id;
-    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    
-    return { videoId, url: videoUrl };
+
+    return {
+      videoId,
+      url: `https://www.youtube.com/watch?v=${videoId}`
+    };
   } catch (error) {
     console.error('Error al subir video a YouTube:', error);
     throw error;
-  } finally {
-    // Eliminar el archivo temporal
-    try {
-      if (fs.existsSync(tempFilePath)) {
-        fs.unlinkSync(tempFilePath);
-      }
-    } catch (err) {
-      console.error('Error al eliminar archivo temporal:', err);
-    }
   }
 }
