@@ -22,6 +22,7 @@ import {
   Loader2,
   PlayCircle,
   PauseCircle,
+  MonitorPlay,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -200,33 +201,53 @@ export default function Recording({ user }: RecordingProps) {
       // Get screen if needed
       if (recordingType === "screen" || recordingType === "both") {
         try {
+          // Pedir el permiso para compartir pantalla con configuración mejorada
           screenStream = await navigator.mediaDevices.getDisplayMedia({
-            video: true,
+            video: {
+              cursor: "always", // Mostrar siempre el cursor
+              displaySurface: "monitor" // Preferir pantalla completa
+            } as any,
             audio: false
           });
           
+          // Asegurarse de que obtuvimos las pistas de video
+          if (screenStream.getVideoTracks().length === 0) {
+            throw new Error("No se pudo obtener la pista de video de la pantalla");
+          }
+          
+          // Añadir las pistas de video de la pantalla
           combinedTracks.push(...screenStream.getVideoTracks());
           console.log("Screen tracks added:", screenStream.getVideoTracks().length);
           
-          // Add handler for when user stops sharing screen
+          // Cuando el usuario cancela la compartición de pantalla
           screenStream.getVideoTracks()[0].onended = () => {
             toast({
-              title: "Compartir pantalla cancelado",
-              description: "La grabación se ha detenido porque se canceló la compartición de pantalla.",
+              title: "Compartición de pantalla finalizada",
+              description: "Se ha detenido la grabación porque se canceló la compartición de pantalla.",
             });
             stopRecording();
           };
         } catch (err) {
           console.error("Error compartiendo pantalla:", err);
           toast({
-            title: "Error de pantalla",
-            description: "No se pudo acceder a la pantalla. El usuario canceló o no dio permisos.",
+            title: "Error al compartir pantalla",
+            description: "No se pudo grabar la pantalla. El usuario canceló o no dio permisos.",
             variant: "destructive",
           });
           if (recordingType === "screen") {
             throw new Error("No se pudo acceder a la pantalla para grabar");
           }
         }
+      }
+      
+      // Verificamos que tenemos pistas para grabar
+      if (combinedTracks.length === 0) {
+        toast({
+          title: "Error de grabación",
+          description: "No se pudieron obtener pistas de audio o video para grabar.",
+          variant: "destructive",
+        });
+        throw new Error("No hay pistas de audio o video para grabar");
       }
       
       // Create a combined stream
@@ -532,65 +553,94 @@ export default function Recording({ user }: RecordingProps) {
           </TabsList>
           
           <TabsContent value="record" className="space-y-6">
-            {/* Recording Preview */}
-            <div className="aspect-video bg-black/95 rounded-lg overflow-hidden relative flex items-center justify-center mb-4">
-              {countdownValue > 0 && (
-                <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
-                  <div className="text-6xl font-bold text-primary animate-pulse">
-                    {countdownValue}
-                  </div>
+            {/* Video Preview - Estilo Streamer con pantalla dividida */}
+            <div className="rounded-lg overflow-hidden relative mb-4">
+              {/* Pantalla dividida: cámara + pantalla compartida */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+                {/* Vista principal (pantalla compartida o lo que se esté grabando) */}
+                <div className="md:col-span-2 aspect-video bg-black/95 rounded-lg overflow-hidden relative">
+                  {isRecording && recordingType !== "camera" && (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="text-center p-4 bg-black/50 rounded-lg">
+                        <MonitorPlay className="h-12 w-12 mx-auto mb-2 text-primary/60" />
+                        <p className="text-white/70">Compartiendo pantalla</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {!isRecording && recordingType !== "camera" && (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="text-center p-4">
+                        <MonitorPlay className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                        <p className="text-muted-foreground">La pantalla se mostrará aquí al iniciar la grabación</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {isProcessing && (
+                    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-20">
+                      <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+                      <div className="text-xl font-medium">Procesando video...</div>
+                    </div>
+                  )}
+                  
+                  {countdownValue > 0 && (
+                    <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20">
+                      <div className="text-6xl font-bold text-primary animate-pulse">
+                        {countdownValue}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-              
-              {!isRecording && !isProcessing && !countdownValue && (
-                <div className="text-muted-foreground text-center p-8">
-                  <Camera className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                  <p>Vista previa de cámara (disponible durante la grabación)</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    onClick={() => {
-                      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-                        .then(stream => {
-                          if (videoPreviewRef.current) {
-                            videoPreviewRef.current.srcObject = stream;
-                            videoPreviewRef.current.play().catch(e => console.error("Error playing video:", e));
-                          }
-                          // No detenemos el stream para que el usuario pueda verse
-                          streamRef.current = stream;
-                        })
-                        .catch(err => {
-                          console.error("Error al obtener acceso a la cámara:", err);
-                          toast({
-                            title: "Error de permisos",
-                            description: "Por favor, concede permisos de cámara y micrófono para usar esta función.",
-                            variant: "destructive",
-                          });
-                        });
-                    }}
-                  >
-                    Ver cámara
-                  </Button>
+                
+                {/* Webcam (PiP - Picture in Picture) */}
+                <div className="aspect-video bg-black/90 rounded-lg overflow-hidden relative border-2 border-primary/40">
+                  {/* Vista de cámara */}
+                  {!streamRef.current && !isRecording && (
+                    <div className="text-muted-foreground text-center p-4 h-full flex flex-col items-center justify-center">
+                      <Camera className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                      <p className="text-sm">Vista previa de cámara</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="mt-3"
+                        onClick={() => {
+                          navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                            .then(stream => {
+                              if (videoPreviewRef.current) {
+                                videoPreviewRef.current.srcObject = stream;
+                                videoPreviewRef.current.play().catch(e => console.error("Error playing video:", e));
+                              }
+                              // No detenemos el stream para que el usuario pueda verse
+                              streamRef.current = stream;
+                            })
+                            .catch(err => {
+                              console.error("Error al obtener acceso a la cámara:", err);
+                              toast({
+                                title: "Error de permisos",
+                                description: "Por favor, concede permisos de cámara y micrófono para usar esta función.",
+                                variant: "destructive",
+                              });
+                            });
+                        }}
+                      >
+                        Ver cámara
+                      </Button>
+                    </div>
+                  )}
+                  
+                  <video 
+                    ref={videoPreviewRef} 
+                    autoPlay 
+                    muted 
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-              )}
-              
-              {isProcessing && (
-                <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-10">
-                  <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                  <div className="text-xl font-medium">Procesando video...</div>
-                </div>
-              )}
-              
-              <video 
-                ref={videoPreviewRef} 
-                autoPlay 
-                muted 
-                playsInline
-                className="w-full h-full object-contain"
-              />
+              </div>
               
               {isRecording && (
-                <div className="absolute top-4 left-4 bg-red-500/90 text-white px-3 py-1 rounded-full flex items-center gap-1.5 text-sm font-medium">
+                <div className="absolute top-4 left-4 bg-red-500/90 text-white px-3 py-1 rounded-full flex items-center gap-1.5 text-sm font-medium z-10">
                   <div className="h-2 w-2 rounded-full bg-white animate-pulse"></div>
                   <span>REC</span>
                   <span>{formatTime(recordingTime)}</span>
