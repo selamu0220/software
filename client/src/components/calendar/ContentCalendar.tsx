@@ -51,7 +51,7 @@ export default function ContentCalendar({ user }: ContentCalendarProps) {
         
         const response = await apiRequest(
           "GET", 
-          `/api/calendar/${year}/${month}`
+          `/api/calendar/month?year=${year}&month=${month}`
         );
         
         if (!response.ok) {
@@ -173,21 +173,38 @@ export default function ContentCalendar({ user }: ContentCalendarProps) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Calendario de Contenido</CardTitle>
+      <Card className="border-border shadow-md">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-xl font-bold font-heading">Calendario de Contenido</CardTitle>
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="icon" onClick={prevMonth}>
+            <Button variant="outline" size="icon" onClick={prevMonth} className="hover:bg-primary/10">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium min-w-[120px] text-center">
+            <span className="text-sm font-medium min-w-[150px] text-center font-mono">
               {formattedMonth}
             </span>
-            <Button variant="outline" size="icon" onClick={nextMonth}>
+            <Button variant="outline" size="icon" onClick={nextMonth} className="hover:bg-primary/10">
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </CardHeader>
+        
+        <div className="px-6 pb-1">
+          <div className="flex items-center flex-wrap gap-x-4 gap-y-2">
+            <div className="flex items-center text-xs">
+              <div className="w-3 h-3 rounded-full bg-primary/10 mr-1"></div>
+              <span>Contiene videos</span>
+            </div>
+            <div className="flex items-center text-xs">
+              <div className="w-3 h-3 rounded-full bg-green-500/20 mr-1"></div>
+              <span>Completados</span>
+            </div>
+            <div className="flex items-center text-xs">
+              <div className="w-3 h-3 rounded-full bg-primary mr-1"></div>
+              <span>Día actual</span>
+            </div>
+          </div>
+        </div>
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center py-12">
@@ -246,21 +263,31 @@ export default function ContentCalendar({ user }: ContentCalendarProps) {
               
               {/* Lista de entradas para el día seleccionado */}
               <div className="mt-8">
-                <h3 className="text-lg font-medium mb-4">
-                  {format(selectedDate, "EEEE d 'de' MMMM, yyyy", { locale: es })}
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium font-heading">
+                    {format(selectedDate, "EEEE d 'de' MMMM, yyyy", { locale: es })}
+                  </h3>
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setSelectedDate(new Date())}
+                  >
+                    Hoy
+                  </Button>
+                </div>
                 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {getEntriesForDay(selectedDate).length > 0 ? (
                     getEntriesForDay(selectedDate).map(entry => (
                       <div 
                         key={entry.id} 
-                        className="flex items-start p-3 border rounded-lg bg-card"
+                        className={`flex items-start p-3 border rounded-lg transition-all ${entry.completed ? 'bg-muted/40 border-muted' : 'bg-card border-border hover:border-primary/30 hover:shadow-sm'}`}
                       >
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="mt-0.5 mr-2 flex-shrink-0" 
+                          className="mt-0.5 mr-3 flex-shrink-0 transition-all" 
                           onClick={() => toggleEntryCompletion(entry.id, entry.completed)}
                         >
                           {entry.completed ? (
@@ -271,15 +298,39 @@ export default function ContentCalendar({ user }: ContentCalendarProps) {
                         </Button>
                         
                         <div className="flex-1">
-                          <div className="font-medium text-foreground">{entry.title}</div>
+                          <div className={`font-medium ${entry.completed ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                            {entry.title}
+                          </div>
+                          {entry.videoIdeaId && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Video programado del calendario
+                            </p>
+                          )}
+                        </div>
+                        <div className="ml-2 flex items-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 px-2 text-xs"
+                            asChild
+                          >
+                            <a href={entry.videoIdeaId ? `/video-ideas/${entry.videoIdeaId}` : '#'} target="_blank" rel="noopener noreferrer">
+                              Ver detalles
+                            </a>
+                          </Button>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                      <p>No hay contenido programado para este día.</p>
-                      <p className="text-sm mt-2">Genera ideas de video y agrégalas al calendario.</p>
+                    <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-xl bg-muted/10">
+                      <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                      <p className="font-medium text-foreground">No hay contenido programado para este día</p>
+                      <p className="text-sm mt-2 mb-4 max-w-md mx-auto">
+                        Genera ideas de video y agrégalas al calendario para organizar tu contenido.
+                      </p>
+                      <Button asChild variant="outline" size="sm">
+                        <a href="/">Generar nueva idea</a>
+                      </Button>
                     </div>
                   )}
                 </div>
