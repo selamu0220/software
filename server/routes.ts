@@ -294,16 +294,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, password } = req.body;
 
+      console.log("Login attempt:", { username, passwordLength: password?.length });
+
       // Find user
       const user = await storage.getUserByUsername(username);
       if (!user) {
+        console.log("Login failed: User not found");
         return res
           .status(401)
           .json({ message: "Invalid username or password" });
       }
 
+      console.log("User found:", { id: user.id, hasPassword: !!user.password });
+
       // Verify password
       const passwordMatch = await bcrypt.compare(password, user.password);
+      console.log("Password match:", passwordMatch);
+      
       if (!passwordMatch) {
         return res
           .status(401)
@@ -312,11 +319,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Set session
       req.session.userId = user.id;
+      console.log("Session set:", { userId: user.id });
 
       // Return user without password
       const { password: _, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
     } catch (error) {
+      console.error("Login error:", error);
       res.status(500).json({ message: "Error during login" });
     }
   });
