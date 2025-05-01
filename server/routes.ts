@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateVideoIdea, aiAssistant } from "./gemini";
+import { generateVideoIdea, aiAssistant, aiAssistRequestSchema } from "./gemini";
 import { VideoIdeaContent } from "@/lib/openai";
 import {
   createMonthlySubscription,
@@ -1125,6 +1125,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const pendingAuthStates = new Map<string, { redirectUrl: string }>();
   
   // Obtener URL de autorización
+  // Endpoint de asistente de IA para el editor
+  app.post("/api/ai-assist", async (req, res) => {
+    try {
+      const params = aiAssistRequestSchema.parse(req.body);
+      const result = await aiAssistant(params);
+      res.json(result);
+    } catch (error) {
+      console.error("Error en asistente de IA:", error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Error procesando solicitud de IA" 
+      });
+    }
+  });
+
   app.get("/api/youtube/auth-url", requireAuth, async (req, res) => {
     try {
       if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {

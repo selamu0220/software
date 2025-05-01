@@ -265,7 +265,7 @@ export async function aiAssistant(params: z.infer<typeof aiAssistRequestSchema>)
     
     return { content: result.response.text() };
     
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error en asistente de IA:", error);
     throw new Error(`Error al generar contenido con IA: ${error.message || "Error desconocido"}`);
   }
