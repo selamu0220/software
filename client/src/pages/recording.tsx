@@ -23,7 +23,7 @@ import {
   PauseCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface RecordingProps {
   user: User | null;

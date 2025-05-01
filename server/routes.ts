@@ -9,7 +9,8 @@ import {
   generationRequestSchema, 
   insertCalendarEntrySchema,
   updateUserSchema,
-  insertUserVideoSchema
+  insertUserVideoSchema,
+  UserVideo
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import session from "express-session";
