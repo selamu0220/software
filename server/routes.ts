@@ -546,7 +546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             year: "numeric",
           }).format(ideaDate);
 
-          // Generar idea con enfoque específico para ese día
+          // Generar idea con enfoque específico para ese día y usando la API key personalizada si existe
           const generatedIdea = await generateVideoIdea({
             ...params,
             videoFocus: `${params.videoFocus} (Día ${i + 1} de 7, ${fechaFormateada})`,
@@ -610,6 +610,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             today.getMonth(),
             i + 1,
           );
+          // Generar idea con enfoque específico para ese día y usando la API key personalizada si existe
           const generatedIdea = await generateVideoIdea({
             ...params,
             videoFocus: `${params.videoFocus} (Día ${i + 1} de ${daysInMonth}, ${ideaDate.toLocaleDateString("es-ES")})`,
