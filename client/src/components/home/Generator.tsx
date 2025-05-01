@@ -48,6 +48,7 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
     timingDetail: true, // Incluir tiempos en los guiones
     customChannelType: "", // Campo para tipo de canal personalizado
     useSubcategory: true, // Opción para usar subcategorías
+    geminiApiKey: "", // API key personalizada de Gemini
   });
 
   // Update subcategories when category changes
@@ -73,6 +74,7 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
       timingDetail: true,
       customChannelType: "", // Campo para tipo de canal personalizado
       useSubcategory: true, // Opción para usar subcategorías
+      geminiApiKey: "", // Mantener la API key personalizada
     });
   };
 
