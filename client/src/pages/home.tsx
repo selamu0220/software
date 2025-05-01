@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User } from "@shared/schema";
+import { User, VideoIdea } from "@shared/schema";
 import { VideoIdeaContent } from "@/lib/openai";
 import Hero from "@/components/home/Hero";
 import Generator from "@/components/home/Generator";
@@ -18,6 +18,7 @@ interface HomeProps {
 export default function Home({ user }: HomeProps) {
   const [generatedIdea, setGeneratedIdea] = useState<VideoIdeaContent | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [savedIdeaId, setSavedIdeaId] = useState<number | null>(null);
   const { toast } = useToast();
 
   const handleIdeaGenerated = (idea: VideoIdeaContent) => {
@@ -46,6 +47,10 @@ export default function Home({ user }: HomeProps) {
       if (!response.ok) {
         throw new Error("Failed to save idea");
       }
+      
+      // Get the ID of the saved idea from the response
+      const savedIdea = await response.json() as VideoIdea;
+      setSavedIdeaId(savedIdea.id);
       
       toast({
         title: "Idea guardada",
@@ -77,6 +82,7 @@ export default function Home({ user }: HomeProps) {
           ideaData={generatedIdea} 
           onSave={saveIdeaToProfile}
           user={user} 
+          videoIdeaId={savedIdeaId || undefined}
         />
       )}
       

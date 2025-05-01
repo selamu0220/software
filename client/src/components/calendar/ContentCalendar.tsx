@@ -1,542 +1,292 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
-import { PopoverContent, PopoverTrigger, Popover } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { CalendarEntry, VideoIdea } from "@shared/schema";
-import { format } from "date-fns";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { cn, getMonthAndYear, getDaysInMonth, getFirstDayOfMonth, getPreviousMonth, getNextMonth, getRandomColor } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, CalendarPlus, Loader2, Trash2 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, Circle } from "lucide-react";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parse } from "date-fns";
+import { es } from "date-fns/locale";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { CalendarEntry, User } from "@shared/schema";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ContentCalendarProps {
-  userId: number;
+  user: User | null;
 }
 
-// Form schema for adding calendar entries
-// Form schema for adding/editing calendar entries
-const calendarEntryFormSchema = z.object({
-  title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
-  date: z.date(),
-  videoIdeaId: z.number().optional(),
-});
-
-type CalendarEntryFormValues = z.infer<typeof calendarEntryFormSchema>;
-
-export default function ContentCalendar({ userId }: ContentCalendarProps) {
+export default function ContentCalendar({ user }: ContentCalendarProps) {
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [calendarEntries, setCalendarEntries] = useState<CalendarEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const today = new Date();
-  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-  const [currentYear, setCurrentYear] = useState(today.getFullYear());
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [calendarDialogOpen, setCalendarDialogOpen] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<CalendarEntry | null>(null);
+  const isMobile = useIsMobile();
 
-  // Fetch calendar entries
-  const { data: calendarEntries = [], isLoading: loadingEntries } = useQuery<CalendarEntry[]>({
-    queryKey: ['/api/calendar'],
-    staleTime: 60000, // 1 minute
-  });
+  const currentMonth = format(selectedDate, 'MMMM yyyy', { locale: es });
+  
+  // Formatear el mes con la primera letra en mayúscula
+  const formattedMonth = currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1);
 
-  // Fetch video ideas for dropdown
-  const { data: videoIdeas = [], isLoading: loadingIdeas } = useQuery<VideoIdea[]>({
-    queryKey: ['/api/video-ideas'],
-    staleTime: 60000, // 1 minute
-  });
+  // Navegar entre meses
+  const prevMonth = () => {
+    const prevMonthDate = new Date(selectedDate);
+    prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+    setSelectedDate(prevMonthDate);
+  };
 
-  // Setup form for adding/editing calendar entries
-  const form = useForm<CalendarEntryFormValues>({
-    resolver: zodResolver(calendarEntryFormSchema),
-    defaultValues: {
-      title: "",
-      date: today,
-      videoIdeaId: undefined,
-    },
-  });
+  const nextMonth = () => {
+    const nextMonthDate = new Date(selectedDate);
+    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+    setSelectedDate(nextMonthDate);
+  };
 
-  // Reset form values when selected entry changes
+  // Cargar entradas del calendario para el mes seleccionado
   useEffect(() => {
-    if (selectedEntry) {
-      form.reset({
-        title: selectedEntry.title,
-        date: new Date(selectedEntry.date),
-        videoIdeaId: selectedEntry.videoIdeaId || undefined,
-      });
-    } else {
-      form.reset({
-        title: "",
-        date: selectedDate || today,
-        videoIdeaId: undefined,
-      });
-    }
-  }, [selectedEntry, selectedDate, form]);
-
-  // Define the calendar entry data type
-  type CalendarEntryData = {
-    title: string;
-    date: string;
-    videoIdeaId?: number;
-    userId: number;
-    completed: boolean;
-  };
-
-  // Add calendar entry mutation
-  const addEntryMutation = useMutation({
-    mutationFn: async (data: CalendarEntryData) => {
-      const response = await apiRequest("POST", "/api/calendar", data);
+    const fetchCalendarEntries = async () => {
+      if (!user) return;
       
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to add calendar entry");
-      }
-      
-      return await response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar'] });
-      toast({
-        title: "Success",
-        description: "Calendar entry added successfully",
-      });
-      setCalendarDialogOpen(false);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Define the update type explicitly
-type CalendarEntryUpdate = {
-  title?: string;
-  videoIdeaId?: number | null;
-  date?: string;
-  completed?: boolean;
-};
-
-// Update calendar entry mutation
-  const updateEntryMutation = useMutation({
-    mutationFn: async (data: { id: number, updates: CalendarEntryUpdate }) => {
-      const response = await apiRequest("PATCH", `/api/calendar/${data.id}`, data.updates);
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update calendar entry");
-      }
-      
-      return await response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar'] });
-      toast({
-        title: "Success",
-        description: "Calendar entry updated successfully",
-      });
-      setCalendarDialogOpen(false);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Delete calendar entry mutation
-  const deleteEntryMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await apiRequest("DELETE", `/api/calendar/${id}`, undefined);
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to delete calendar entry");
-      }
-      
-      return true;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar'] });
-      toast({
-        title: "Success",
-        description: "Calendar entry deleted successfully",
-      });
-      setCalendarDialogOpen(false);
-      setSelectedEntry(null);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-
-  const handlePreviousMonth = () => {
-    const { year, month } = getPreviousMonth(currentYear, currentMonth);
-    setCurrentYear(year);
-    setCurrentMonth(month);
-  };
-
-  const handleNextMonth = () => {
-    const { year, month } = getNextMonth(currentYear, currentMonth);
-    setCurrentYear(year);
-    setCurrentMonth(month);
-  };
-
-  const handleDateClick = (date: Date) => {
-    setSelectedDate(date);
-    
-    // Check if there's an entry for this date
-    const entry = calendarEntries?.find(e => {
-      const entryDate = new Date(e.date);
-      return entryDate.toDateString() === date.toDateString();
-    });
-    
-    if (entry) {
-      setSelectedEntry(entry);
-    } else {
-      setSelectedEntry(null);
-    }
-    
-    setCalendarDialogOpen(true);
-  };
-
-  const onSubmit = (data: CalendarEntryFormValues) => {
-    if (selectedEntry) {
-      // Update existing entry
-      updateEntryMutation.mutate({
-        id: selectedEntry.id,
-        updates: {
-          title: data.title,
-          videoIdeaId: data.videoIdeaId,
-          date: data.date.toISOString(),
+      setIsLoading(true);
+      try {
+        const year = selectedDate.getFullYear();
+        const month = selectedDate.getMonth() + 1; // API espera mes en formato 1-12
+        
+        const response = await apiRequest(
+          "GET", 
+          `/api/calendar/${year}/${month}`
+        );
+        
+        if (!response.ok) {
+          throw new Error("Error al cargar entradas del calendario");
         }
-      });
-    } else {
-      // Add new entry
-      addEntryMutation.mutate({
-        ...data,
-        date: data.date.toISOString(),
-        userId,
-        completed: false
-      });
-    }
-  };
+        
+        const entries = await response.json();
+        setCalendarEntries(entries);
+      } catch (error) {
+        console.error("Error fetching calendar entries:", error);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar las entradas del calendario",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchCalendarEntries();
+  }, [selectedDate, user, toast]);
 
-  const handleDeleteEntry = () => {
-    if (selectedEntry) {
-      deleteEntryMutation.mutate(selectedEntry.id);
-    }
-  };
-
-  // Generate calendar grid
-  const generateCalendarGrid = () => {
-    const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
-    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+  // Marcar días con entradas en el calendario
+  const getCalendarDaysWithContent = () => {
+    const days: Date[] = [];
     
-    // Previous month
-    const prevMonth = getPreviousMonth(currentYear, currentMonth);
-    const daysInPrevMonth = getDaysInMonth(prevMonth.year, prevMonth.month);
-    
-    const days = [];
-    
-    // Add days from previous month
-    for (let i = firstDay - 1; i >= 0; i--) {
-      const day = daysInPrevMonth - i;
-      const date = new Date(prevMonth.year, prevMonth.month, day);
-      days.push({ 
-        day, 
-        date, 
-        currentMonth: false,
-        entries: getEntriesForDate(date)
-      });
-    }
-    
-    // Add days from current month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentYear, currentMonth, day);
-      days.push({ 
-        day, 
-        date, 
-        currentMonth: true,
-        entries: getEntriesForDate(date)
-      });
-    }
-    
-    // Next month
-    const nextMonth = getNextMonth(currentYear, currentMonth);
-    const remainingDays = 42 - days.length; // 6 rows of 7 days
-    
-    // Add days from next month
-    for (let day = 1; day <= remainingDays; day++) {
-      const date = new Date(nextMonth.year, nextMonth.month, day);
-      days.push({ 
-        day, 
-        date, 
-        currentMonth: false,
-        entries: getEntriesForDate(date)
-      });
-    }
+    // Convertir las fechas de string a objetos Date
+    calendarEntries.forEach(entry => {
+      const entryDate = new Date(entry.date);
+      // Evitar duplicados
+      if (!days.some(day => isSameDay(day, entryDate))) {
+        days.push(entryDate);
+      }
+    });
     
     return days;
   };
 
-  // Get calendar entries for a specific date
-  const getEntriesForDate = (date: Date) => {
-    if (!calendarEntries) return [];
-    
+  // Obtener entradas para un día específico
+  const getEntriesForDay = (date: Date) => {
     return calendarEntries.filter(entry => {
       const entryDate = new Date(entry.date);
-      return entryDate.toDateString() === date.toDateString();
+      return isSameDay(entryDate, date);
     });
   };
 
-  // Generate weeks for calendar grid display
-  const generateCalendarWeeks = () => {
-    const days = generateCalendarGrid();
-    const weeks = [];
+  // Completar/descompletar una entrada
+  const toggleEntryCompletion = async (entryId: number, completed: boolean) => {
+    if (!user) return;
     
-    for (let i = 0; i < days.length; i += 7) {
-      weeks.push(days.slice(i, i + 7));
+    try {
+      const response = await apiRequest(
+        "PATCH", 
+        `/api/calendar/entry/${entryId}`,
+        { completed: !completed }
+      );
+      
+      if (!response.ok) {
+        throw new Error("Error al actualizar la entrada");
+      }
+      
+      // Actualizar la entrada localmente
+      setCalendarEntries(prev => 
+        prev.map(entry => 
+          entry.id === entryId ? { ...entry, completed: !completed } : entry
+        )
+      );
+      
+      // Mostrar toast de confirmación
+      toast({
+        title: completed ? "Entrada desmarcada" : "Entrada completada",
+        description: completed 
+          ? "La entrada ha sido desmarcada como completada" 
+          : "La entrada ha sido marcada como completada",
+      });
+    } catch (error) {
+      console.error("Error updating calendar entry:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado de la entrada",
+        variant: "destructive",
+      });
     }
-    
-    return weeks;
   };
 
-  // Get video idea title by id
-  const getVideoIdeaTitle = (id: number): string => {
-    if (videoIdeas.length === 0) return "Loading...";
-    const idea = videoIdeas.find((idea) => idea.id === id);
-    return idea ? idea.title : "Unknown Video";
-  };
+  // Si no hay usuario autenticado, mostrar mensaje de inicio de sesión
+  if (!user) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <Card>
+          <CardContent className="py-16 text-center">
+            <div className="mb-6">
+              <CalendarIcon className="h-16 w-16 mx-auto text-muted-foreground" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Calendario de Contenido</h2>
+            <p className="text-muted-foreground mb-6">
+              Inicia sesión para acceder a tu calendario de contenido y organizar tus videos.
+            </p>
+            <div className="flex justify-center space-x-4">
+              <Button variant="outline" asChild>
+                <a href="/login">Iniciar Sesión</a>
+              </Button>
+              <Button asChild>
+                <a href="/register">Crear Cuenta</a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Generar array de días para la vista móvil
+  const daysInMonth = eachDayOfInterval({
+    start: startOfMonth(selectedDate),
+    end: endOfMonth(selectedDate)
+  });
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-slate-950 border-b border-border">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Calendario de Contenido</CardTitle>
           <div className="flex items-center space-x-2">
-            <h2 className="text-2xl font-bold font-heading">{getMonthAndYear(new Date(currentYear, currentMonth))}</h2>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="icon" onClick={handlePreviousMonth}>
+            <Button variant="outline" size="icon" onClick={prevMonth}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={handleNextMonth}>
+            <span className="text-sm font-medium min-w-[120px] text-center">
+              {formattedMonth}
+            </span>
+            <Button variant="outline" size="icon" onClick={nextMonth}>
               <ChevronRight className="h-4 w-4" />
             </Button>
-            <Dialog open={calendarDialogOpen} onOpenChange={setCalendarDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => {
-                  setSelectedDate(new Date(currentYear, currentMonth, new Date().getDate()));
-                  setSelectedEntry(null);
-                }}>
-                  <CalendarPlus className="mr-2 h-4 w-4" />
-                  Añadir Evento
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>
-                    {selectedEntry ? "Editar Evento" : "Añadir Evento"}
-                  </DialogTitle>
-                </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="title"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Título</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Título del video" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="date"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Fecha</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Selecciona una fecha</span>
-                                  )}
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="videoIdeaId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Idea de Video (Opcional)</FormLabel>
-                          <Select
-                            onValueChange={(value) => field.onChange(value !== "0" ? parseInt(value) : undefined)}
-                            value={field.value?.toString() || "0"}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecciona una idea de video (opcional)" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="0">Ninguna</SelectItem>
-                              {videoIdeas.map((idea) => (
-                                <SelectItem key={idea.id} value={idea.id.toString()}>
-                                  {idea.title}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <DialogFooter className="gap-2 sm:gap-0">
-                      {selectedEntry && (
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          onClick={handleDeleteEntry}
-                          disabled={deleteEntryMutation.isPending}
-                        >
-                          {deleteEntryMutation.isPending ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="mr-2 h-4 w-4" />
-                          )}
-                          Eliminar
-                        </Button>
-                      )}
-                      <Button
-                        type="submit"
-                        disabled={addEntryMutation.isPending || updateEntryMutation.isPending}
-                      >
-                        {(addEntryMutation.isPending || updateEntryMutation.isPending) ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : null}
-                        {selectedEntry ? "Actualizar" : "Añadir"}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="grid grid-cols-7 bg-slate-950 text-center text-xs leading-6 text-foreground border-b border-border">
-            <div className="py-2 font-semibold">Dom</div>
-            <div className="py-2 font-semibold">Lun</div>
-            <div className="py-2 font-semibold">Mar</div>
-            <div className="py-2 font-semibold">Mié</div>
-            <div className="py-2 font-semibold">Jue</div>
-            <div className="py-2 font-semibold">Vie</div>
-            <div className="py-2 font-semibold">Sáb</div>
-          </div>
-          {loadingEntries ? (
-            <div className="h-80 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
             </div>
           ) : (
-            <div className="border-l border-t">
-              {generateCalendarWeeks().map((week, weekIndex) => (
-                <div key={weekIndex} className="grid grid-cols-7">
-                  {week.map((day, dayIndex) => (
-                    <div
-                      key={`${weekIndex}-${dayIndex}`}
-                      className={`calendar-day ${
-                        !day.currentMonth ? 'calendar-day-gray' : 'calendar-day-current'
-                      } ${
-                        day.date.toDateString() === new Date().toDateString()
-                          ? 'bg-primary/20 border border-primary'
-                          : ''
-                      }`}
-                      onClick={() => handleDateClick(day.date)}
-                    >
-                      <span className={`text-sm ${!day.currentMonth ? 'text-muted-foreground' : ''}`}>
-                        {day.day}
-                      </span>
-                      <div className="mt-1 space-y-1">
-                        {day.entries.slice(0, 3).map((entry, index) => {
-                          return (
-                            <div
-                              key={entry.id}
-                              className="calendar-entry"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedEntry(entry);
-                                setCalendarDialogOpen(true);
-                              }}
-                            >
-                              {entry.title}
-                            </div>
-                          );
-                        })}
-                        {day.entries.length > 3 && (
-                          <div className="text-xs text-muted-foreground text-center">
-                            +{day.entries.length - 3} más
-                          </div>
-                        )}
-                      </div>
+            <>
+              {!isMobile ? (
+                // Vista de escritorio: Calendario completo
+                <div className="mt-4">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    className="rounded-md border"
+                    locale={es}
+                    modifiers={{
+                      withContent: getCalendarDaysWithContent(),
+                    }}
+                    modifiersClassNames={{
+                      withContent: "withContent",
+                    }}
+                    // Aplicamos estilos personalizados vía className
+                  />
+                </div>
+              ) : (
+                // Vista móvil: Lista de días
+                <div className="mt-4 grid grid-cols-7 gap-1 text-center">
+                  {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day, i) => (
+                    <div key={`header-${i}`} className="text-xs font-medium text-muted-foreground py-1">
+                      {day}
                     </div>
                   ))}
+                  
+                  {daysInMonth.map((day, i) => {
+                    const hasContent = getCalendarDaysWithContent().some(d => isSameDay(d, day));
+                    const isSelected = isSameDay(day, selectedDate);
+                    
+                    return (
+                      <div 
+                        key={`day-${i}`} 
+                        className={`
+                          py-2 text-sm cursor-pointer rounded-full
+                          ${isSelected ? 'bg-primary text-primary-foreground' : ''}
+                          ${hasContent && !isSelected ? 'bg-primary/10 font-medium text-primary' : ''}
+                          hover:bg-muted
+                        `}
+                        onClick={() => setSelectedDate(day)}
+                      >
+                        {format(day, 'd')}
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+              )}
+              
+              {/* Lista de entradas para el día seleccionado */}
+              <div className="mt-8">
+                <h3 className="text-lg font-medium mb-4">
+                  {format(selectedDate, "EEEE d 'de' MMMM, yyyy", { locale: es })}
+                </h3>
+                
+                <div className="space-y-3">
+                  {getEntriesForDay(selectedDate).length > 0 ? (
+                    getEntriesForDay(selectedDate).map(entry => (
+                      <div 
+                        key={entry.id} 
+                        className="flex items-start p-3 border rounded-lg bg-card"
+                      >
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="mt-0.5 mr-2 flex-shrink-0" 
+                          onClick={() => toggleEntryCompletion(entry.id, entry.completed)}
+                        >
+                          {entry.completed ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <Circle className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </Button>
+                        
+                        <div className="flex-1">
+                          <div className="font-medium text-foreground">{entry.title}</div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                      <p>No hay contenido programado para este día.</p>
+                      <p className="text-sm mt-2">Genera ideas de video y agrégalas al calendario.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
           )}
         </CardContent>
-        <CardFooter className="p-3 bg-slate-950 border-t border-border">
-          <p className="text-sm text-muted-foreground">
-            Haz clic en un día para añadir una nueva idea de video a tu calendario.
-          </p>
-        </CardFooter>
       </Card>
     </div>
   );

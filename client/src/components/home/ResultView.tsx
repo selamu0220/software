@@ -310,6 +310,12 @@ export default function ResultView({ ideaData, onSave, user, videoIdeaId }: Resu
               <Share2 className="h-4 w-4 mr-1" />
               Compartir
             </Button>
+            {user && videoIdeaId && (
+              <AddToCalendarButton 
+                videoIdeaId={videoIdeaId} 
+                title={ideaData.title} 
+              />
+            )}
           </div>
           <Button onClick={handleSaveIdea} disabled={!user}>
             <SaveIcon className="h-4 w-4 mr-1" />

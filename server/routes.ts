@@ -3,27 +3,39 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateVideoIdea } from "./gemini";
 import { VideoIdeaContent } from "@/lib/openai";
-import { createMonthlySubscription, createLifetimePayment, handleWebhook } from "./stripe";
-import { 
-  insertUserSchema, 
-  generationRequestSchema, 
+import {
+  createMonthlySubscription,
+  createLifetimePayment,
+  handleWebhook,
+} from "./stripe";
+import {
+  insertUserSchema,
+  generationRequestSchema,
   insertCalendarEntrySchema,
   updateUserSchema,
   insertUserVideoSchema,
-  UserVideo
+  UserVideo,
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import MemoryStore from "memorystore";
 import { z } from "zod";
 import Stripe from "stripe";
-import { addDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import {
+  addDays,
+  startOfDay,
+  endOfDay,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+} from "date-fns";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 
 // Configure multer for video uploads
-const uploadDir = path.join(process.cwd(), 'uploads');
+const uploadDir = path.join(process.cwd(), "uploads");
 // Ensure uploads directory exists
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -34,9 +46,12 @@ const videoStorage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname),
+    );
+  },
 });
 
 const videoUpload = multer({
@@ -47,13 +62,15 @@ const videoUpload = multer({
   fileFilter: (req, file, cb) => {
     const filetypes = /webm|mp4|mov|avi/;
     const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    
+    const extname = filetypes.test(
+      path.extname(file.originalname).toLowerCase(),
+    );
+
     if (mimetype && extname) {
       return cb(null, true);
     }
     cb(new Error("Error: Solo se permiten videos (webm, mp4, mov, avi)"));
-  }
+  },
 });
 
 declare module "express-session" {
@@ -66,20 +83,22 @@ declare module "express-session" {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create session store
   const SessionStore = MemoryStore(session);
-  
+
   // Setup session middleware
-  app.use(session({
-    secret: process.env.SESSION_SECRET || "keyboard-cat",
-    resave: false,
-    saveUninitialized: false,
-    store: new SessionStore({
-      checkPeriod: 86400000 // prune expired entries every 24h
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || "keyboard-cat",
+      resave: false,
+      saveUninitialized: false,
+      store: new SessionStore({
+        checkPeriod: 86400000, // prune expired entries every 24h
+      }),
+      cookie: {
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+      },
     }),
-    cookie: { 
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
-    }
-  }));
+  );
 
   // Middleware to check if user is authenticated
   const requireAuth = (req: Request, res: Response, next: Function) => {
@@ -90,71 +109,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Middleware to check if user is premium
-  const requirePremium = async (req: Request, res: Response, next: Function) => {
+  const requirePremium = async (
+    req: Request,
+    res: Response,
+    next: Function,
+  ) => {
     if (!req.session.userId) {
       return res.status(401).json({ message: "Authentication required" });
     }
-    
+
     const user = await storage.getUser(req.session.userId);
     if (!user || (!user.isPremium && !user.lifetimeAccess)) {
       return res.status(403).json({ message: "Premium subscription required" });
     }
-    
+
     next();
   };
-  
-  // Add video idea to calendar
-  app.post("/api/video-ideas/:id/add-to-calendar", requireAuth, async (req, res) => {
+
+  // Get calendar entries by month
+  app.get("/api/calendar/:year/:month", requireAuth, async (req, res) => {
     try {
-      const videoIdeaId = parseInt(req.params.id);
-      const { date } = req.body;
-      
-      if (!date) {
-        return res.status(400).json({ message: "Date is required" });
+      const userId = req.session.userId!;
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+
+      if (isNaN(year) || isNaN(month)) {
+        return res.status(400).json({ message: "Invalid year or month" });
       }
-      
-      // Get the video idea
-      const videoIdea = await storage.getVideoIdea(videoIdeaId);
-      if (!videoIdea) {
-        return res.status(404).json({ message: "Video idea not found" });
-      }
-      
-      // Check if the video idea belongs to the user
-      if (videoIdea.userId !== req.session.userId) {
-        return res.status(403).json({ message: "Unauthorized" });
-      }
-      
-      // Create a calendar entry
-      const calendarEntry = await storage.createCalendarEntry({
-        userId: req.session.userId,
-        videoIdeaId: videoIdeaId,
-        date: new Date(date),
-        title: videoIdea.title,
-        completed: false
-      });
-      
-      res.status(201).json({ 
-        message: "Video idea added to calendar",
-        calendarEntry 
-      });
-      
+
+      const entries = await storage.getCalendarEntriesByMonth(
+        userId,
+        year,
+        month,
+      );
+      res.json(entries);
     } catch (error) {
-      console.error("Error adding video idea to calendar:", error);
-      res.status(500).json({ message: "Failed to add video idea to calendar" });
+      console.error("Error fetching calendar entries:", error);
+      res.status(500).json({ message: "Failed to fetch calendar entries" });
     }
   });
-  
+
+  // Add video idea to calendar
+  app.post(
+    "/api/video-ideas/:id/add-to-calendar",
+    requireAuth,
+    async (req, res) => {
+      try {
+        const videoIdeaId = parseInt(req.params.id);
+        const { date } = req.body;
+
+        if (!date) {
+          return res.status(400).json({ message: "Date is required" });
+        }
+
+        // Get the video idea
+        const videoIdea = await storage.getVideoIdea(videoIdeaId);
+        if (!videoIdea) {
+          return res.status(404).json({ message: "Video idea not found" });
+        }
+
+        // Check if the video idea belongs to the user
+        if (videoIdea.userId !== req.session.userId) {
+          return res.status(403).json({ message: "Unauthorized" });
+        }
+
+        // Create a calendar entry
+        const calendarEntry = await storage.createCalendarEntry({
+          userId: req.session.userId,
+          videoIdeaId: videoIdeaId,
+          date: new Date(date),
+          title: videoIdea.title,
+          completed: false,
+        });
+
+        res.status(201).json({
+          message: "Video idea added to calendar",
+          calendarEntry,
+        });
+      } catch (error) {
+        console.error("Error adding video idea to calendar:", error);
+        res
+          .status(500)
+          .json({ message: "Failed to add video idea to calendar" });
+      }
+    },
+  );
+
   // Helper function to check if user has reached free idea generation limit
   const hasReachedDailyLimit = async (userId: number): Promise<boolean> => {
     if (!userId) return false;
-    
+
     const today = new Date();
     const startOfToday = startOfDay(today);
     const endOfToday = endOfDay(today);
-    
+
     // Get ideas created today
-    const ideas = await storage.getVideoIdeasByDateRange(userId, startOfToday, endOfToday);
-    
+    const ideas = await storage.getVideoIdeasByDateRange(
+      userId,
+      startOfToday,
+      endOfToday,
+    );
+
     // Free users can create 1 idea per day
     return ideas.length >= 1;
   };
@@ -163,36 +218,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/register", async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
-      
+
       // Check if username or email already exists
-      const existingUsername = await storage.getUserByUsername(userData.username);
+      const existingUsername = await storage.getUserByUsername(
+        userData.username,
+      );
       if (existingUsername) {
         return res.status(400).json({ message: "Username already taken" });
       }
-      
+
       const existingEmail = await storage.getUserByEmail(userData.email);
       if (existingEmail) {
         return res.status(400).json({ message: "Email already registered" });
       }
-      
+
       // Hash password
       const hashedPassword = await bcrypt.hash(userData.password, 10);
-      
+
       // Create user
       const user = await storage.createUser({
         ...userData,
         password: hashedPassword,
       });
-      
+
       // Set session
       req.session.userId = user.id;
-      
+
       // Return user without password
       const { password, ...userWithoutPassword } = user;
       res.status(201).json(userWithoutPassword);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Invalid input", errors: error.errors });
+        res
+          .status(400)
+          .json({ message: "Invalid input", errors: error.errors });
       } else {
         res.status(500).json({ message: "Error creating user" });
       }
@@ -202,22 +261,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/login", async (req, res) => {
     try {
       const { username, password } = req.body;
-      
+
       // Find user
       const user = await storage.getUserByUsername(username);
       if (!user) {
-        return res.status(401).json({ message: "Invalid username or password" });
+        return res
+          .status(401)
+          .json({ message: "Invalid username or password" });
       }
-      
+
       // Verify password
       const passwordMatch = await bcrypt.compare(password, user.password);
       if (!passwordMatch) {
-        return res.status(401).json({ message: "Invalid username or password" });
+        return res
+          .status(401)
+          .json({ message: "Invalid username or password" });
       }
-      
+
       // Set session
       req.session.userId = user.id;
-      
+
       // Return user without password
       const { password: _, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
@@ -239,14 +302,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session.userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    
+
     try {
       const user = await storage.getUser(req.session.userId);
       if (!user) {
         req.session.destroy(() => {});
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       // Return user without password
       const { password, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
@@ -259,20 +322,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/me", requireAuth, async (req, res) => {
     try {
       const updates = updateUserSchema.parse(req.body);
-      
+
       // Hash password if provided
       if (updates.password) {
         updates.password = await bcrypt.hash(updates.password, 10);
       }
-      
-      const updatedUser = await storage.updateUser(req.session.userId!, updates);
-      
+
+      const updatedUser = await storage.updateUser(
+        req.session.userId!,
+        updates,
+      );
+
       // Return user without password
       const { password, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Invalid input", errors: error.errors });
+        res
+          .status(400)
+          .json({ message: "Invalid input", errors: error.errors });
       } else {
         res.status(500).json({ message: "Error updating user" });
       }
@@ -284,64 +352,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 1. Usuarios gratuitos: Pueden generar 1 idea por día y planificar semanalmente
   // 2. Usuarios premium: Generación ilimitada de ideas y planificación mensual
   // 3. Todos los usuarios: Acceso completo al calendario
-  
+
   // Generar una sola idea
   app.post("/api/generate-idea", async (req, res) => {
     try {
       const params = generationRequestSchema.parse(req.body);
-      
+
       // Generación anónima permitida (1 por sesión)
       if (!req.session.userId) {
         // Verificar si el usuario anónimo ya ha generado una idea en esta sesión
         if (req.session.anonymousIdeaGenerated) {
-          return res.status(403).json({ 
-            message: "Ya has generado una idea. Regístrate para generar más ideas.",
-            limitReached: true 
+          return res.status(403).json({
+            message:
+              "Ya has generado una idea. Regístrate para generar más ideas.",
+            limitReached: true,
           });
         }
-        
+
         // Generar la idea y marcar que este usuario anónimo ya generó su idea gratuita
         const generatedIdea = await generateVideoIdea(params);
         req.session.anonymousIdeaGenerated = true;
         return res.json(generatedIdea);
       }
-      
+
       // Verificar si el usuario ha alcanzado el límite diario (si no es premium)
       const user = await storage.getUser(req.session.userId);
       if (!user) {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
-      
+
       // Los usuarios premium no tienen límite diario
       const isPremium = user.isPremium || user.lifetimeAccess;
-      
+
       if (!isPremium) {
         // Verificar si el usuario ya generó una idea hoy
         const reachedLimit = await hasReachedDailyLimit(req.session.userId);
         if (reachedLimit) {
-          return res.status(403).json({ 
-            message: "Has alcanzado el límite diario de ideas gratuitas. Actualiza a premium para generar más ideas.",
-            limitReached: true
+          return res.status(403).json({
+            message:
+              "Has alcanzado el límite diario de ideas gratuitas. Actualiza a premium para generar más ideas.",
+            limitReached: true,
           });
         }
       }
-      
+
       // Generar y guardar la idea
       const generatedIdea = await generateVideoIdea(params);
-      
+
       await storage.createVideoIdea({
         userId: req.session.userId,
         title: generatedIdea.title,
         category: params.category,
         subcategory: params.subcategory,
         videoLength: params.videoLength,
-        content: generatedIdea
+        content: generatedIdea,
       });
-      
+
       res.json(generatedIdea);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Invalid input", errors: error.errors });
+        res
+          .status(400)
+          .json({ message: "Invalid input", errors: error.errors });
       } else {
         console.error("Error generating idea:", error);
         res.status(500).json({ message: "Error generating video idea" });
@@ -362,16 +434,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/video-ideas/:id", requireAuth, async (req, res) => {
     try {
       const idea = await storage.getVideoIdea(parseInt(req.params.id));
-      
+
       if (!idea) {
         return res.status(404).json({ message: "Video idea not found" });
       }
-      
+
       // Check if the idea belongs to the authenticated user
       if (idea.userId !== req.session.userId) {
-        return res.status(403).json({ message: "Not authorized to view this idea" });
+        return res
+          .status(403)
+          .json({ message: "Not authorized to view this idea" });
       }
-      
+
       res.json(idea);
     } catch (error) {
       res.status(500).json({ message: "Error fetching video idea" });
@@ -381,60 +455,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/video-ideas/:id", requireAuth, async (req, res) => {
     try {
       const idea = await storage.getVideoIdea(parseInt(req.params.id));
-      
+
       if (!idea) {
         return res.status(404).json({ message: "Video idea not found" });
       }
-      
+
       // Check if the idea belongs to the authenticated user
       if (idea.userId !== req.session.userId) {
-        return res.status(403).json({ message: "Not authorized to delete this idea" });
+        return res
+          .status(403)
+          .json({ message: "Not authorized to delete this idea" });
       }
-      
+
       await storage.deleteVideoIdea(parseInt(req.params.id));
       res.json({ message: "Video idea deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Error deleting video idea" });
     }
   });
-  
+
   // Generar ideas para toda una semana (disponible para usuarios gratuitos)
   app.post("/api/generate-ideas/week", requireAuth, async (req, res) => {
     try {
       const params = generationRequestSchema.parse(req.body);
       const userId = req.session.userId!;
-      
+
       // Los usuarios gratuitos pueden generar ideas para toda la semana
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
-      
+
       // Generar 7 ideas para la semana
       const ideas: VideoIdeaContent[] = [];
       const storedIdeas = [];
       const today = new Date();
-      
+
       // Crear ideas para cada día de la semana
       for (let i = 0; i < 7; i++) {
         try {
           // Crear una nueva fecha añadiendo i días a la fecha actual
           const ideaDate = new Date(today);
           ideaDate.setDate(today.getDate() + i);
-          
+
           // Formato de fecha en español
-          const fechaFormateada = new Intl.DateTimeFormat('es-ES', {
-            day: 'numeric',
-            month: 'numeric',
-            year: 'numeric'
+          const fechaFormateada = new Intl.DateTimeFormat("es-ES", {
+            day: "numeric",
+            month: "numeric",
+            year: "numeric",
           }).format(ideaDate);
-          
+
           // Generar idea con enfoque específico para ese día
           const generatedIdea = await generateVideoIdea({
             ...params,
-            videoFocus: `${params.videoFocus} (Día ${i+1} de 7, ${fechaFormateada})`
+            videoFocus: `${params.videoFocus} (Día ${i + 1} de 7, ${fechaFormateada})`,
           });
-          
+
           // Guardar la idea en la base de datos
           const videoIdea = await storage.createVideoIdea({
             userId,
@@ -442,52 +518,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
             category: params.category,
             subcategory: params.subcategory,
             videoLength: params.videoLength,
-            content: generatedIdea
+            content: generatedIdea,
           });
-          
+
           storedIdeas.push(videoIdea);
           ideas.push(generatedIdea);
         } catch (error) {
-          console.error(`Error generando idea para el día ${i+1}:`, error);
+          console.error(`Error generando idea para el día ${i + 1}:`, error);
         }
       }
-      
+
       res.json({
         message: "Ideas generadas para toda la semana",
         count: ideas.length,
-        ideas
+        ideas,
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Invalid input", errors: error.errors });
+        res
+          .status(400)
+          .json({ message: "Invalid input", errors: error.errors });
       } else {
         console.error("Error generating weekly ideas:", error);
         res.status(500).json({ message: "Error generating weekly ideas" });
       }
     }
   });
-  
+
   // Generar ideas para todo un mes (solo para usuarios premium)
   app.post("/api/generate-ideas/month", requirePremium, async (req, res) => {
     try {
       const params = generationRequestSchema.parse(req.body);
       const userId = req.session.userId!;
-      
+
       // Esta ruta solo está disponible para usuarios premium (verificado por middleware)
       const today = new Date();
-      const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+      const daysInMonth = new Date(
+        today.getFullYear(),
+        today.getMonth() + 1,
+        0,
+      ).getDate();
       const ideas: VideoIdeaContent[] = [];
       const storedIdeas = [];
-      
+
       // Generar ideas para cada día del mes actual
       for (let i = 0; i < daysInMonth; i++) {
         try {
-          const ideaDate = new Date(today.getFullYear(), today.getMonth(), i + 1);
+          const ideaDate = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            i + 1,
+          );
           const generatedIdea = await generateVideoIdea({
             ...params,
-            videoFocus: `${params.videoFocus} (Día ${i+1} de ${daysInMonth}, ${ideaDate.toLocaleDateString('es-ES')})`
+            videoFocus: `${params.videoFocus} (Día ${i + 1} de ${daysInMonth}, ${ideaDate.toLocaleDateString("es-ES")})`,
           });
-          
+
           // Guardar la idea en la base de datos
           const videoIdea = await storage.createVideoIdea({
             userId,
@@ -495,24 +581,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             category: params.category,
             subcategory: params.subcategory,
             videoLength: params.videoLength,
-            content: generatedIdea
+            content: generatedIdea,
           });
-          
+
           storedIdeas.push(videoIdea);
           ideas.push(generatedIdea);
         } catch (error) {
-          console.error(`Error generando idea para el día ${i+1}:`, error);
+          console.error(`Error generando idea para el día ${i + 1}:`, error);
         }
       }
-      
-      res.json({ 
-        message: "Ideas generadas para todo el mes", 
+
+      res.json({
+        message: "Ideas generadas para todo el mes",
         count: ideas.length,
-        ideas 
+        ideas,
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Invalid input", errors: error.errors });
+        res
+          .status(400)
+          .json({ message: "Invalid input", errors: error.errors });
       } else {
         console.error("Error generating monthly ideas:", error);
         res.status(500).json({ message: "Error generating monthly ideas" });
@@ -525,14 +613,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const calendarData = insertCalendarEntrySchema.parse({
         ...req.body,
-        userId: req.session.userId
+        userId: req.session.userId,
       });
-      
+
       const entry = await storage.createCalendarEntry(calendarData);
       res.status(201).json(entry);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Invalid input", errors: error.errors });
+        res
+          .status(400)
+          .json({ message: "Invalid input", errors: error.errors });
       } else {
         res.status(500).json({ message: "Error creating calendar entry" });
       }
@@ -541,7 +631,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/calendar", requireAuth, async (req, res) => {
     try {
-      const entries = await storage.getCalendarEntriesByUser(req.session.userId!);
+      const entries = await storage.getCalendarEntriesByUser(
+        req.session.userId!,
+      );
       res.json(entries);
     } catch (error) {
       res.status(500).json({ message: "Error fetching calendar entries" });
@@ -550,10 +642,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/calendar/month", requireAuth, async (req, res) => {
     try {
-      const year = parseInt(req.query.year as string || new Date().getFullYear().toString());
-      const month = parseInt(req.query.month as string || new Date().getMonth().toString());
-      
-      const entries = await storage.getCalendarEntriesByMonth(req.session.userId!, year, month);
+      const year = parseInt(
+        (req.query.year as string) || new Date().getFullYear().toString(),
+      );
+      const month = parseInt(
+        (req.query.month as string) || new Date().getMonth().toString(),
+      );
+
+      const entries = await storage.getCalendarEntriesByMonth(
+        req.session.userId!,
+        year,
+        month,
+      );
       res.json(entries);
     } catch (error) {
       res.status(500).json({ message: "Error fetching calendar entries" });
@@ -564,16 +664,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const entryId = parseInt(req.params.id);
       const entry = await storage.getCalendarEntry(entryId);
-      
+
       if (!entry) {
         return res.status(404).json({ message: "Calendar entry not found" });
       }
-      
+
       // Check if the entry belongs to the authenticated user
       if (entry.userId !== req.session.userId) {
-        return res.status(403).json({ message: "Not authorized to update this entry" });
+        return res
+          .status(403)
+          .json({ message: "Not authorized to update this entry" });
       }
-      
+
       const updatedEntry = await storage.updateCalendarEntry(entryId, req.body);
       res.json(updatedEntry);
     } catch (error) {
@@ -585,16 +687,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const entryId = parseInt(req.params.id);
       const entry = await storage.getCalendarEntry(entryId);
-      
+
       if (!entry) {
         return res.status(404).json({ message: "Calendar entry not found" });
       }
-      
+
       // Check if the entry belongs to the authenticated user
       if (entry.userId !== req.session.userId) {
-        return res.status(403).json({ message: "Not authorized to delete this entry" });
+        return res
+          .status(403)
+          .json({ message: "Not authorized to delete this entry" });
       }
-      
+
       await storage.deleteCalendarEntry(entryId);
       res.json({ message: "Calendar entry deleted successfully" });
     } catch (error) {
@@ -609,13 +713,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       const { subscriptionId, clientSecret } = await createMonthlySubscription(
-        user.id, 
-        user.email, 
-        user.username
+        user.id,
+        user.email,
+        user.username,
       );
-      
+
       res.json({ subscriptionId, clientSecret });
     } catch (error) {
       console.error("Error creating monthly subscription:", error);
@@ -629,13 +733,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       const { clientSecret } = await createLifetimePayment(
-        user.id, 
-        user.email, 
-        user.username
+        user.id,
+        user.email,
+        user.username,
       );
-      
+
       res.json({ clientSecret });
     } catch (error) {
       console.error("Error creating lifetime payment:", error);
@@ -646,12 +750,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe webhook
   app.post("/api/webhook", async (req, res) => {
     let event: Stripe.Event;
-    
+
     // Verify the event
     try {
-      const sig = req.headers['stripe-signature'];
+      const sig = req.headers["stripe-signature"];
       const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-      
+
       if (!sig || !endpointSecret) {
         // Just parse the raw body in development
         event = req.body;
@@ -661,15 +765,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           apiVersion: "2025-03-31.basil",
         });
         event = stripe.webhooks.constructEvent(
-          (req as any).rawBody, 
-          sig, 
-          endpointSecret
+          (req as any).rawBody,
+          sig,
+          endpointSecret,
         );
       }
-      
+
       // Handle the event
       await handleWebhook(event);
-      
+
       res.json({ received: true });
     } catch (error) {
       console.error("Webhook error:", error);
@@ -678,39 +782,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ==== USER VIDEOS MANAGEMENT ====
-  
-  // Upload video file
-  app.post("/api/upload-video", requireAuth, videoUpload.single("video"), async (req, res) => {
-    try {
-      // Check if file was uploaded
-      if (!req.file) {
-        return res.status(400).json({ message: "No se subió ningún archivo de video" });
-      }
 
-      const file = req.file;
-      const { name = "Video sin título", description = "" } = req.body;
-      
-      // Create video record in database
-      const video = await storage.createUserVideo({
-        userId: req.session.userId!,
-        title: name,
-        description: description || null,
-        fileName: file.filename,
-        filePath: file.path,
-        fileSize: file.size,
-        mimeType: file.mimetype,
-        duration: null, // Se podría calcular con ffmpeg en una implementación más avanzada
-        thumbnailPath: null, // Se podría generar con ffmpeg
-        isPublic: false
-      });
-      
-      res.status(201).json({ message: "Video subido exitosamente", video });
-    } catch (error) {
-      console.error("Error uploading video:", error);
-      res.status(500).json({ message: "Error al subir video" });
-    }
-  });
-  
+  // Upload video file
+  app.post(
+    "/api/upload-video",
+    requireAuth,
+    videoUpload.single("video"),
+    async (req, res) => {
+      try {
+        // Check if file was uploaded
+        if (!req.file) {
+          return res
+            .status(400)
+            .json({ message: "No se subió ningún archivo de video" });
+        }
+
+        const file = req.file;
+        const { name = "Video sin título", description = "" } = req.body;
+
+        // Create video record in database
+        const video = await storage.createUserVideo({
+          userId: req.session.userId!,
+          title: name,
+          description: description || null,
+          fileName: file.filename,
+          filePath: file.path,
+          fileSize: file.size,
+          mimeType: file.mimetype,
+          duration: null, // Se podría calcular con ffmpeg en una implementación más avanzada
+          thumbnailPath: null, // Se podría generar con ffmpeg
+          isPublic: false,
+        });
+
+        res.status(201).json({ message: "Video subido exitosamente", video });
+      } catch (error) {
+        console.error("Error uploading video:", error);
+        res.status(500).json({ message: "Error al subir video" });
+      }
+    },
+  );
+
   // Get user videos
   app.get("/api/videos", requireAuth, async (req, res) => {
     try {
@@ -720,140 +831,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error al obtener videos" });
     }
   });
-  
+
   // Get single video
   app.get("/api/videos/:id", requireAuth, async (req, res) => {
     try {
       const videoId = parseInt(req.params.id);
       const video = await storage.getUserVideo(videoId);
-      
+
       if (!video) {
         return res.status(404).json({ message: "Video no encontrado" });
       }
-      
+
       if (video.userId !== req.session.userId) {
-        return res.status(403).json({ message: "No autorizado para ver este video" });
+        return res
+          .status(403)
+          .json({ message: "No autorizado para ver este video" });
       }
-      
+
       res.json(video);
     } catch (error) {
       res.status(500).json({ message: "Error al obtener video" });
     }
   });
-  
+
   // Delete video
   app.delete("/api/videos/:id", requireAuth, async (req, res) => {
     try {
       const videoId = parseInt(req.params.id);
       const video = await storage.getUserVideo(videoId);
-      
+
       if (!video) {
         return res.status(404).json({ message: "Video no encontrado" });
       }
-      
+
       if (video.userId !== req.session.userId) {
-        return res.status(403).json({ message: "No autorizado para eliminar este video" });
+        return res
+          .status(403)
+          .json({ message: "No autorizado para eliminar este video" });
       }
-      
+
       // Delete file from filesystem
       try {
         if (fs.existsSync(video.filePath)) {
           fs.unlinkSync(video.filePath);
         }
-        
+
         if (video.thumbnailPath && fs.existsSync(video.thumbnailPath)) {
           fs.unlinkSync(video.thumbnailPath);
         }
       } catch (fsError) {
         console.error("Error deleting video files:", fsError);
       }
-      
+
       // Delete from database
       await storage.deleteUserVideo(videoId);
-      
+
       res.json({ message: "Video eliminado correctamente" });
     } catch (error) {
       res.status(500).json({ message: "Error al eliminar video" });
     }
   });
-  
+
   // Update video details
   app.patch("/api/videos/:id", requireAuth, async (req, res) => {
     try {
       const videoId = parseInt(req.params.id);
       const video = await storage.getUserVideo(videoId);
-      
+
       if (!video) {
         return res.status(404).json({ message: "Video no encontrado" });
       }
-      
+
       if (video.userId !== req.session.userId) {
-        return res.status(403).json({ message: "No autorizado para actualizar este video" });
+        return res
+          .status(403)
+          .json({ message: "No autorizado para actualizar este video" });
       }
-      
+
       const { title, description, isPublic } = req.body;
       const updates: Partial<UserVideo> = {};
-      
+
       if (title !== undefined) updates.title = title;
       if (description !== undefined) updates.description = description;
       if (isPublic !== undefined) updates.isPublic = isPublic;
-      
+
       const updatedVideo = await storage.updateUserVideo(videoId, updates);
-      
+
       res.json(updatedVideo);
     } catch (error) {
       res.status(500).json({ message: "Error al actualizar video" });
     }
   });
-  
+
   // Serve video file
   app.get("/api/videos/:id/content", requireAuth, async (req, res) => {
     try {
       const videoId = parseInt(req.params.id);
       const video = await storage.getUserVideo(videoId);
-      
+
       if (!video) {
         return res.status(404).json({ message: "Video no encontrado" });
       }
-      
+
       // Check authorization - allow access to owner and to public videos
       if (video.userId !== req.session.userId && !video.isPublic) {
-        return res.status(403).json({ message: "No autorizado para ver este video" });
+        return res
+          .status(403)
+          .json({ message: "No autorizado para ver este video" });
       }
-      
+
       // Verify file exists
       if (!fs.existsSync(video.filePath)) {
-        return res.status(404).json({ message: "Archivo de video no encontrado" });
+        return res
+          .status(404)
+          .json({ message: "Archivo de video no encontrado" });
       }
-      
+
       // Get file stats
       const stat = fs.statSync(video.filePath);
       const fileSize = stat.size;
       const range = req.headers.range;
-      
+
       // Handle range requests for video streaming
       if (range) {
         const parts = range.replace(/bytes=/, "").split("-");
         const start = parseInt(parts[0], 10);
         const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-        const chunksize = (end - start) + 1;
+        const chunksize = end - start + 1;
         const file = fs.createReadStream(video.filePath, { start, end });
-        
+
         res.writeHead(206, {
-          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-          'Accept-Ranges': 'bytes',
-          'Content-Length': chunksize,
-          'Content-Type': video.mimeType,
+          "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+          "Accept-Ranges": "bytes",
+          "Content-Length": chunksize,
+          "Content-Type": video.mimeType,
         });
-        
+
         file.pipe(res);
       } else {
         // Send whole file if no range is specified
         res.writeHead(200, {
-          'Content-Length': fileSize,
-          'Content-Type': video.mimeType,
+          "Content-Length": fileSize,
+          "Content-Type": video.mimeType,
         });
-        
+
         fs.createReadStream(video.filePath).pipe(res);
       }
     } catch (error) {
@@ -861,27 +982,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error al reproducir video" });
     }
   });
-  
+
   // Serve thumbnail
   app.get("/api/videos/:id/thumbnail", requireAuth, async (req, res) => {
     try {
       const videoId = parseInt(req.params.id);
       const video = await storage.getUserVideo(videoId);
-      
+
       if (!video) {
         return res.status(404).json({ message: "Video no encontrado" });
       }
-      
+
       // Check authorization - allow access to owner and to public videos
       if (video.userId !== req.session.userId && !video.isPublic) {
-        return res.status(403).json({ message: "No autorizado para ver este video" });
+        return res
+          .status(403)
+          .json({ message: "No autorizado para ver este video" });
       }
-      
+
       // If no thumbnail exists, send a 404
       if (!video.thumbnailPath || !fs.existsSync(video.thumbnailPath)) {
         return res.status(404).json({ message: "Miniatura no encontrada" });
       }
-      
+
       res.sendFile(video.thumbnailPath);
     } catch (error) {
       res.status(500).json({ message: "Error al obtener miniatura" });
@@ -889,50 +1012,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ==== END USER VIDEOS MANAGEMENT ====
-  
+
   // ==== AGREGAR IDEA A CALENDARIO ====
-  
+
   // Add a video idea to the calendar
-  app.post("/api/video-ideas/:id/add-to-calendar", requireAuth, async (req, res) => {
-    try {
-      const ideaId = parseInt(req.params.id);
-      const { date } = req.body;
-      
-      if (!date) {
-        return res.status(400).json({ message: "Se requiere una fecha" });
+  app.post(
+    "/api/video-ideas/:id/add-to-calendar",
+    requireAuth,
+    async (req, res) => {
+      try {
+        const ideaId = parseInt(req.params.id);
+        const { date } = req.body;
+
+        if (!date) {
+          return res.status(400).json({ message: "Se requiere una fecha" });
+        }
+
+        // Get the video idea
+        const idea = await storage.getVideoIdea(ideaId);
+
+        if (!idea) {
+          return res.status(404).json({ message: "Idea no encontrada" });
+        }
+
+        // Check if the idea belongs to the user
+        if (idea.userId !== req.session.userId) {
+          return res
+            .status(403)
+            .json({ message: "No autorizado para usar esta idea" });
+        }
+
+        // Create calendar entry
+        const calendarEntry = await storage.createCalendarEntry({
+          userId: req.session.userId,
+          videoIdeaId: ideaId,
+          title: idea.title,
+          date: new Date(date),
+          completed: false,
+        });
+
+        res.status(201).json({
+          message: "Idea agregada al calendario",
+          calendarEntry,
+        });
+      } catch (error) {
+        console.error("Error adding idea to calendar:", error);
+        res
+          .status(500)
+          .json({ message: "Error al agregar idea al calendario" });
       }
-      
-      // Get the video idea
-      const idea = await storage.getVideoIdea(ideaId);
-      
-      if (!idea) {
-        return res.status(404).json({ message: "Idea no encontrada" });
-      }
-      
-      // Check if the idea belongs to the user
-      if (idea.userId !== req.session.userId) {
-        return res.status(403).json({ message: "No autorizado para usar esta idea" });
-      }
-      
-      // Create calendar entry
-      const calendarEntry = await storage.createCalendarEntry({
-        userId: req.session.userId,
-        videoIdeaId: ideaId,
-        title: idea.title,
-        date: new Date(date),
-        completed: false
-      });
-      
-      res.status(201).json({
-        message: "Idea agregada al calendario",
-        calendarEntry
-      });
-    } catch (error) {
-      console.error("Error adding idea to calendar:", error);
-      res.status(500).json({ message: "Error al agregar idea al calendario" });
-    }
-  });
-  
+    },
+  );
+
   // ==== END AGREGAR IDEA A CALENDARIO ====
 
   const httpServer = createServer(app);
