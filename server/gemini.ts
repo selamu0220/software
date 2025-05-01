@@ -1,10 +1,19 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GenerationRequest } from "@shared/schema";
+import { z } from "zod";
 
 // Verificar si la clave API de Gemini está configurada
 if (!process.env.GEMINI_API_KEY) {
   console.warn("GEMINI_API_KEY no está configurada. Usando generación simulada.");
 }
+
+// Esquema para las solicitudes de asistencia de IA
+export const aiAssistRequestSchema = z.object({
+  prompt: z.string().min(1, "Se requiere un prompt"),
+  content: z.string().optional(),
+  entireScript: z.boolean().default(false),
+  geminiApiKey: z.string().optional(),
+});
 
 // Inicializar el cliente de Google Generative AI con la clave por defecto
 // La clave personalizada se utilizará por solicitud
@@ -208,4 +217,56 @@ function getMockVideoIdea(params: GenerationRequest): VideoIdeaContent {
     subcategory,
     videoLength
   };
+}
+
+/**
+ * Asistente de IA para generar o mejorar contenido basado en un prompt
+ */
+export async function aiAssistant(params: z.infer<typeof aiAssistRequestSchema>): Promise<{ content: string }> {
+  const { prompt, content, entireScript, geminiApiKey } = params;
+  
+  // Usar la API key proporcionada o la del entorno
+  const apiKey = geminiApiKey || process.env.GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error("Se requiere una API key de Gemini para usar el asistente de IA");
+  }
+
+  try {
+    // Inicializar cliente de Gemini
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    
+    // Construir el prompt contextual dependiendo del escenario
+    let systemPrompt: string;
+    let userPrompt: string;
+    
+    if (entireScript && content) {
+      // Mejorar el script completo
+      systemPrompt = "Eres un asistente de redacción profesional especializado en guiones para videos de YouTube. Tu tarea es reformular, mejorar o regenerar el contenido de scripts según las instrucciones proporcionadas. Mantén el formato HTML del documento.";
+      userPrompt = `INSTRUCCIONES: ${prompt}\n\nCONTENIDO ORIGINAL:\n${content}\n\nGenera una versión mejorada manteniendo la estructura HTML pero mejorando el texto según las instrucciones.`;
+    } else {
+      // Mejorar solo un fragmento o generar nuevo contenido
+      systemPrompt = "Eres un asistente de redacción profesional especializado en contenido para creadores de video digital. Ayudas a mejorar textos, generar ideas, y reformular contenido para hacerlo más atractivo y profesional.";
+      userPrompt = prompt;
+    }
+    
+    // Generar respuesta
+    const result = await model.generateContent({
+      contents: [
+        { role: "system", parts: [{ text: systemPrompt }] },
+        { role: "user", parts: [{ text: userPrompt }] }
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2048,
+      }
+    });
+    
+    return { content: result.response.text() };
+    
+  } catch (error) {
+    console.error("Error en asistente de IA:", error);
+    throw new Error(`Error al generar contenido con IA: ${error.message || "Error desconocido"}`);
+  }
 }
