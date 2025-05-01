@@ -461,6 +461,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
+  
+  // Endpoint para asistencia de IA con el editor de texto
+  app.post("/api/ai-assist", async (req, res) => {
+    try {
+      // Validar el esquema de la solicitud
+      const { prompt, content, geminiApiKey } = aiAssistRequestSchema.parse(req.body);
+      
+      // Llamar a la función del asistente de IA
+      const result = await aiAssistant({
+        prompt,
+        content,
+        geminiApiKey
+      });
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error en asistente de IA:", error);
+      res.status(500).json({
+        message: "Error al procesar la solicitud de asistencia",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
 
   // Video Ideas Management
   app.get("/api/video-ideas", requireAuth, async (req, res) => {
