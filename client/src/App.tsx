@@ -12,6 +12,7 @@ import Profile from "@/pages/profile";
 import Subscribe from "@/pages/subscribe";
 import Teleprompter from "@/pages/teleprompter";
 import Recording from "@/pages/recording";
+import Metrics from "@/pages/metrics";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AssistantSidebar } from "@/components/ui/assistant-sidebar";
@@ -84,6 +85,7 @@ function App() {
             <Route path="/subscribe" component={() => <Subscribe user={user} onSubscriptionUpdate={setUser} />} />
             <Route path="/teleprompter" component={() => <Teleprompter user={user} />} />
             <Route path="/recording" component={() => <Recording user={user} />} />
+            <Route path="/metrics" component={() => <Metrics />} />
             <Route component={NotFound} />
           </Switch>
         </main>

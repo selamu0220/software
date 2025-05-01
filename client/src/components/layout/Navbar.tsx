@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video } from "lucide-react";
+import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video, BarChart3 } from "lucide-react";
 
 interface NavbarProps {
   user: User | null;
@@ -25,6 +25,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
     { name: "Calendario", href: "/calendar" },
     { name: "Teleprompter", href: "/teleprompter" },
     { name: "Grabación", href: "/recording" },
+    { name: "Métricas", href: "/metrics" },
     { name: "Plantillas", href: "/#templates" },
     { name: "Precios", href: "/#pricing" },
   ];
@@ -95,6 +96,12 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     <Link href="/recording" className="flex items-center">
                       <Video className="mr-2 h-4 w-4" />
                       Grabación
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/metrics" className="flex items-center">
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      Métricas
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

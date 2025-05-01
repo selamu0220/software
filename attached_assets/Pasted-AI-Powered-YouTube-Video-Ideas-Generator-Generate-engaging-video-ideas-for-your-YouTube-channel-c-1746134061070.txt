@@ -1,0 +1,145 @@
+AI-Powered YouTube
+Video Ideas Generator
+Generate engaging video ideas for your YouTube channel, create a content calendar, and never run out of inspiration again.
+
+Generate Ideas
+View Pricing
+Generator
+Create Engaging YouTube Video Ideas
+
+Generate one idea for free, or sign up for unlimited ideas and monthly content planning.
+
+Idea Diaria
+Plan Semanal
+Plan Mensual
+Premium
+Channel Type
+Usar subcategorías
+
+
+Gaming
+Subcategory
+Game Reviews
+Video Focus
+e.g., Video Editing, AI Tools, Web Development
+Video Length
+Short (1-3 min)
+Template Style
+Listicle
+Content Tone
+Professional
+Plantilla de Título
+CICLADO DE VIDEOS: Top [Número] Secretos que Nadie te Cuenta sobre [Tema]
+La plantilla se personalizará con el tema de tu video. Las variables como [Número], [Tema], [Acción] serán reemplazadas automáticamente.
+
+Tipo de Contenido
+Guión completo
+Selecciona el tipo de contenido que quieres generar para tu video.
+
+Incluir tiempos detallados
+Sí
+Incluir tiempos específicos para cada parte del guión.
+
+API Key de Gemini (opcional)
+No configurada
+Introduce tu API Key de Gemini para usar tu propio servicio
+Si proporcionas tu propia API Key de Gemini, se usará para las generaciones en lugar del servicio predeterminado.Obtener API Key
+
+Generate 1 idea for free without signing up
+Reset
+Generar Idea
+Plan Semanal de Contenido
+Genera un plan completo para toda tu semana
+Crea 7 ideas para toda la semana, con guiones completos y detalles para cada día. ¡Te ahorrarás horas de planificación!
+
+Plan Personalizado
+Plan Rápido (1-clic)
+Se generará un plan completo con 7 guiones para toda la semana. Este proceso puede tardar un minuto.
+
+Calendario de Contenido
+Planifica Todo Tu Mes
+
+Organiza tus ideas de videos en un calendario de contenido para mantener un ritmo constante de publicación.
+
+May 2025
+
+
+Dom
+Lun
+Mar
+Mié
+Jue
+Vie
+Sáb
+27
+28
+29
+30
+1
+2
+Top 5 Herramientas IA
+3
+4
+5
+Tutorial de edición
+6
+7
+8
+9
+Guía de desarrollo web
+10
+Calendario disponible para usuarios registrados
+Templates
+Proven YouTube Title Formulas
+
+Our AI uses these templates to generate compelling video ideas for any niche.
+
+The Listicle Format
+Perfect for generating curiosity and providing concrete value.
+
+"Top [Number] [Topic] That Will [Benefit]"
+
+Examples:
+
+"Top 7 AI Tools That Will Save You 10+ Hours Per Week"
+
+"Top 5 Editing Mistakes That Are Killing Your YouTube Growth"
+
+The How-To Guide
+Demonstrates expertise and provides actionable value.
+
+"How to [Achieve Result] in [Timeframe] Without [Common Obstacle]"
+
+Examples:
+
+"How to Edit YouTube Videos in 30 Minutes Without Expensive Software"
+
+"How to Grow Your Channel in 2023 Without Showing Your Face"
+
+The Tutorial Format
+Positions you as an expert while providing value.
+
+"[Number] Steps to [Achieve Specific Goal] (Even If You're a Beginner)"
+
+Examples:
+
+"5 Steps to Create a Website with Framer (Even If You're a Beginner)"
+
+"7 Steps to Record Professional Audio for YouTube (Even With Cheap Equipment)"
+
+Bonus
+Ideas de Thumbnails
+
+Conceptos de miniaturas de alto rendimiento para tus ideas de videos.
+
+"La Cara de Asombro"
+La Cara de Asombro thumbnail concept
+Muestra sorpresa genuina ante las herramientas o resultados increíbles que estás compartiendo.
+
+"Antes/Después"
+Antes/Después thumbnail concept
+Demuestra la transformación que promete tu contenido de video con un contraste visual claro.
+
+"El Número Destacado"
+El Número Destacado thumbnail concept
+Presenta un número en negrita (ej: "7 Herramientas" o "5 Pasos") para atraer espectadores con claridad.

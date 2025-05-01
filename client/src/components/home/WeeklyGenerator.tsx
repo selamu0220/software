@@ -161,54 +161,54 @@ export default function WeeklyGenerator({
             </Button>
 
             <Button 
-              onClick={() => {
-                // Crear parámetros rápidos para generación semanal
-                const quickParams: GenerationRequest = {
-                  category: "Gaming",
-                  subcategory: "Game Reviews",
-                  videoFocus: "Game Reviews sin mostrar la cara",
-                  videoLength: "Medium (5-10 min)",
-                  templateStyle: "Listicle",
-                  contentTone: "Enthusiastic",
-                  titleTemplate: "CICLADO DE VIDEOS: Top [Número] Secretos que Nadie te Cuenta sobre [Tema]",
-                  contentType: "fullScript",
-                  timingDetail: true,
-                  useSubcategory: true,
-                  customChannelType: "",
-                  geminiApiKey: generationParams?.geminiApiKey || "",
-                };
-                
-                // Actualizar los parámetros y ejecutar la generación
-                setIsGenerating(true);
-                setError(null);
-                
-                // Aseguramos que contentType sea "fullScript" para generar guiones completos
-                apiRequest("POST", "/api/generate-ideas/week", quickParams)
-                  .then(async response => {
-                    if (!response.ok) {
-                      const errorData = await response.json();
-                      throw new Error(errorData.message || "Error al generar ideas semanales");
-                    }
-                    return response.json();
-                  })
-                  .then(result => {
-                    toast({
-                      title: "¡Plan semanal generado!",
-                      description: `Se generaron ${result.count} ideas para esta semana`,
-                    });
-                    onSuccess(result);
-                  })
-                  .catch(error => {
-                    setError(error.message || "Error al generar ideas semanales");
-                    toast({
-                      title: "Error",
-                      description: error.message || "No se pudieron generar las ideas semanales",
-                      variant: "destructive"
-                    });
-                  })
-                  .finally(() => {
-                    setIsGenerating(false);
+              onClick={async () => {
+                try {
+                  // Crear parámetros rápidos para generación semanal
+                  const quickParams: GenerationRequest = {
+                    category: "Gaming",
+                    subcategory: "Game Reviews",
+                    videoFocus: "Game Reviews sin mostrar la cara",
+                    videoLength: "Medium (5-10 min)",
+                    templateStyle: "Listicle",
+                    contentTone: "Enthusiastic",
+                    titleTemplate: "CICLADO DE VIDEOS: Top [Número] Secretos que Nadie te Cuenta sobre [Tema]",
+                    contentType: "fullScript",
+                    timingDetail: true,
+                    useSubcategory: true,
+                    customChannelType: "",
+                    geminiApiKey: generationParams?.geminiApiKey || "",
+                  };
+                  
+                  // Actualizar los parámetros y ejecutar la generación
+                  setIsGenerating(true);
+                  setError(null);
+                  
+                  // Usamos la API para generar ideas semanales
+                  const response = await apiRequest("POST", "/api/generate-ideas/week", quickParams);
+                  
+                  if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || "Error al generar ideas semanales");
+                  }
+                  
+                  const result = await response.json();
+                  
+                  toast({
+                    title: "¡Plan semanal generado!",
+                    description: `Se generaron ${result.count} ideas para esta semana`,
                   });
+                  
+                  onSuccess(result);
+                } catch (err: any) {
+                  setError(err.message || "Error al generar ideas semanales");
+                  toast({
+                    title: "Error",
+                    description: err.message || "No se pudieron generar las ideas semanales",
+                    variant: "destructive"
+                  });
+                } finally {
+                  setIsGenerating(false);
+                }
               }}
               disabled={isGenerating} 
               className="sm:w-auto"
