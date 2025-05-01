@@ -4,12 +4,14 @@ import { VideoIdeaContent } from "@/lib/openai";
 import Hero from "@/components/home/Hero";
 import Generator from "@/components/home/Generator";
 import ResultView from "@/components/home/ResultView";
+import WeeklyGenerator from "@/components/home/WeeklyGenerator";
 import CalendarPreview from "@/components/home/CalendarPreview";
 import Templates from "@/components/home/Templates";
 import ThumbnailIdeas from "@/components/home/ThumbnailIdeas";
 import Pricing from "@/components/home/Pricing";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { GenerationRequest } from "@shared/schema";
 
 interface HomeProps {
   user: User | null;
@@ -17,12 +19,23 @@ interface HomeProps {
 
 export default function Home({ user }: HomeProps) {
   const [generatedIdea, setGeneratedIdea] = useState<VideoIdeaContent | null>(null);
+  const [weeklyIdeas, setWeeklyIdeas] = useState<VideoIdeaContent[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [savedIdeaId, setSavedIdeaId] = useState<number | null>(null);
+  const [generationParams, setGenerationParams] = useState<GenerationRequest | null>(null);
   const { toast } = useToast();
 
-  const handleIdeaGenerated = (idea: VideoIdeaContent) => {
+  const handleIdeaGenerated = (idea: VideoIdeaContent, params: GenerationRequest) => {
     setGeneratedIdea(idea);
+    setGenerationParams(params);
+  };
+  
+  const handleWeeklyIdeasGenerated = (ideas: VideoIdeaContent[]) => {
+    setWeeklyIdeas(ideas);
+    // Si hay ideas generadas, mostrar la primera
+    if (ideas.length > 0) {
+      setGeneratedIdea(ideas[0]);
+    }
   };
 
   const saveIdeaToProfile = async (idea: VideoIdeaContent) => {
