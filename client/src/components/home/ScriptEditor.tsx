@@ -92,7 +92,8 @@ export default function ScriptEditor({
   };
 
   // Convertir la lista de puntos en texto para el editor
-  const outlineToText = (outline: string[]): string => {
+  const outlineToText = (outline: string[] | undefined | null): string => {
+    if (!outline || !Array.isArray(outline)) return '';
     return outline.map((point, index) => `${index + 1}. ${point}`).join('\n\n');
   };
 
