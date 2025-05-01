@@ -21,10 +21,12 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: "Generator", href: "/" },
-    { name: "Calendar", href: "/calendar" },
-    { name: "Templates", href: "/#templates" },
-    { name: "Pricing", href: "/#pricing" },
+    { name: "Generador", href: "/" },
+    { name: "Calendario", href: "/calendar" },
+    { name: "Teleprompter", href: "/teleprompter" },
+    { name: "Grabación", href: "/recording" },
+    { name: "Plantillas", href: "/#templates" },
+    { name: "Precios", href: "/#pricing" },
   ];
 
   return (
@@ -35,7 +37,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
             <div className="flex-shrink-0 flex items-center">
               <Link href="/">
                 <span className="text-foreground font-heading font-bold text-xl cursor-pointer">
-                  TubeIdeaGen
+                  Red Creativa Gen
                 </span>
               </Link>
               <span className="beta-badge">BETA</span>
@@ -67,7 +69,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <div className="px-4 py-2">
-                    <p className="text-xs text-muted-foreground">Signed in as</p>
+                    <p className="text-xs text-muted-foreground">Conectado como</p>
                     <p className="text-sm font-medium truncate">{user.username}</p>
                   </div>
                   <DropdownMenuSeparator />
@@ -75,23 +77,29 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     <Link href="/dashboard">Dashboard</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/calendar">Calendar</Link>
+                    <Link href="/calendar">Calendario</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/profile">Profile</Link>
+                    <Link href="/teleprompter">Teleprompter</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/recording">Grabación</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">Perfil</Link>
                   </DropdownMenuItem>
                   {!user.isPremium && !user.lifetimeAccess && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link href="/subscribe">Upgrade to Premium</Link>
+                        <Link href="/subscribe">Actualizar a Premium</Link>
                       </DropdownMenuItem>
                     </>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={onLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
+                    <span>Cerrar sesión</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -99,12 +107,12 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
               <>
                 <Link href="/login">
                   <Button variant="ghost" size="sm" className="text-sm font-medium">
-                    Sign In
+                    Iniciar sesión
                   </Button>
                 </Link>
                 <Link href="/register">
                   <Button variant="default" size="sm" className="text-sm font-medium">
-                    Get Started
+                    Registrarse
                   </Button>
                 </Link>
               </>
@@ -176,7 +184,25 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   >
                     <div className="flex items-center">
                       <Calendar className="mr-2 h-4 w-4" />
-                      <span>Calendar</span>
+                      <span>Calendario</span>
+                    </div>
+                  </Link>
+                  <Link
+                    href="/teleprompter"
+                    className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="flex items-center">
+                      <span>Teleprompter</span>
+                    </div>
+                  </Link>
+                  <Link
+                    href="/recording"
+                    className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="flex items-center">
+                      <span>Grabación</span>
                     </div>
                   </Link>
                   <Link
@@ -186,7 +212,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   >
                     <div className="flex items-center">
                       <Settings className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
+                      <span>Perfil</span>
                     </div>
                   </Link>
                   {!user.isPremium && !user.lifetimeAccess && (
@@ -195,7 +221,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                       className="block px-4 py-2 text-sm font-medium text-primary/90 hover:text-primary hover:bg-secondary/20"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Upgrade to Premium
+                      Actualizar a Premium
                     </Link>
                   )}
                   <button
@@ -207,7 +233,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   >
                     <div className="flex items-center">
                       <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
+                      <span>Cerrar sesión</span>
                     </div>
                   </button>
                 </div>
