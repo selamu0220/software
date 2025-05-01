@@ -7,6 +7,7 @@ import ResultView from "@/components/home/ResultView";
 import WeeklyGenerator from "@/components/home/WeeklyGenerator";
 import WeeklyPlanView from "@/components/home/WeeklyPlanView";
 import ScriptViewer from "@/components/home/ScriptViewer";
+import IdeasViewer from "@/components/home/IdeasViewer";
 import CalendarPreview from "@/components/home/CalendarPreview";
 import Templates from "@/components/home/Templates";
 import ThumbnailIdeas from "@/components/home/ThumbnailIdeas";
@@ -107,12 +108,53 @@ export default function Home({ user }: HomeProps) {
       />
       
       {generatedIdea && (
-        <ResultView 
-          ideaData={generatedIdea} 
-          onSave={saveIdeaToProfile}
-          user={user} 
-          videoIdeaId={savedIdeaId || undefined}
-        />
+        <>
+          <IdeasViewer 
+            idea={generatedIdea} 
+            generationParams={generationParams}
+            onAddToCalendar={async (idea, date) => {
+              if (!user) {
+                toast({
+                  title: "Necesitas iniciar sesión",
+                  description: "Debes iniciar sesión para agregar ideas al calendario",
+                  variant: "destructive",
+                });
+                return;
+              }
+              
+              try {
+                await apiRequest("POST", "/api/calendar", {
+                  title: idea.title,
+                  videoIdeaId: savedIdeaId,
+                  date,
+                  completed: false
+                });
+                
+                toast({
+                  title: "Añadido al calendario",
+                  description: `Contenido programado para ${date.toLocaleDateString()}`,
+                });
+              } catch (error) {
+                toast({
+                  title: "Error",
+                  description: "No se pudo añadir al calendario",
+                  variant: "destructive"
+                });
+              }
+            }}
+            geminiApiKey={generationParams?.geminiApiKey}
+          />
+          
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 mb-8 flex justify-center">
+            <button 
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 disabled:opacity-50"
+              onClick={() => saveIdeaToProfile(generatedIdea)}
+              disabled={!user}
+            >
+              {savedIdeaId ? "Guardado ✓" : "Guardar Idea"}
+            </button>
+          </div>
+        </>
       )}
       
       {/* Generación de ideas semanales */}

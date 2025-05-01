@@ -5,6 +5,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Función para desplazarse a un elemento específico
+export function scrollToElement(elementId: string, behavior: ScrollBehavior = 'smooth') {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.scrollIntoView({ behavior, block: 'start' });
+  }
+}
+
 // Format date to display in UI
 export function formatDate(date: Date | string): string {
   const d = new Date(date);
