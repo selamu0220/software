@@ -6,8 +6,8 @@ if (!process.env.GEMINI_API_KEY) {
   console.warn("GEMINI_API_KEY no está configurada. Usando generación simulada.");
 }
 
-// Inicializar el cliente de Google Generative AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "mock-key");
+// Inicializar el cliente de Google Generative AI con la clave por defecto
+// La clave personalizada se utilizará por solicitud
 
 // Formatos para la generación de ideas de videos
 const IDEA_TEMPLATES = [
@@ -44,14 +44,21 @@ export type VideoIdeaContent = {
  * Genera una idea de video de YouTube basada en parámetros del usuario
  */
 export async function generateVideoIdea(params: GenerationRequest): Promise<VideoIdeaContent> {
-  // Si no hay clave API, devuelve una idea simulada (solo en desarrollo)
-  if (!process.env.GEMINI_API_KEY) {
+  // Determinar qué API key usar (la proporcionada por el usuario o la del entorno)
+  const apiKey = params.geminiApiKey || process.env.GEMINI_API_KEY;
+  
+  // Si no hay clave API disponible, devuelve una idea simulada
+  if (!apiKey) {
+    console.warn("Sin API key de Gemini disponible. Usando generación simulada.");
     return getMockVideoIdea(params);
   }
 
   const prompt = buildPrompt(params);
 
   try {
+    // Inicializar cliente con la API key correspondiente
+    const genAI = new GoogleGenerativeAI(apiKey);
+    
     // Obtener el modelo de texto Gemini más avanzado disponible
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
@@ -93,6 +100,9 @@ export async function generateVideoIdea(params: GenerationRequest): Promise<Vide
     }
   } catch (error) {
     console.error("Error al generar idea de video con Gemini:", error);
+    if (params.geminiApiKey) {
+      console.error("Error con API key personalizada. Puede ser inválida o estar expirada.");
+    }
     return getMockVideoIdea(params);
   }
 }

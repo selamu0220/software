@@ -95,8 +95,12 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
     }
     
     // Verificar que todos los campos requeridos estén presentes
-    if (!formData.category || !formData.subcategory || !formData.videoLength || 
-        !formData.templateStyle || !formData.contentTone) {
+    if (!formData.category || 
+        (formData.useSubcategory && !formData.subcategory) || 
+        (!formData.useSubcategory && !formData.customChannelType) || 
+        !formData.videoLength || 
+        !formData.templateStyle || 
+        !formData.contentTone) {
       toast({
         title: "Missing fields",
         description: "Please fill in all required fields",
@@ -482,6 +486,30 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
                       </Select>
                       <p className="mt-1 text-xs text-muted-foreground">
                         Incluir tiempos específicos para cada parte del guión.
+                      </p>
+                    </div>
+                    
+                    <div className="sm:col-span-6 mt-4 pt-4 border-t">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="gemini-api-key">API Key de Gemini (opcional)</Label>
+                        <span className="text-xs text-muted-foreground">
+                          {formData.geminiApiKey ? "Configurada ✓" : "No configurada"}
+                        </span>
+                      </div>
+                      <Input
+                        id="gemini-api-key"
+                        type="password"
+                        placeholder="Introduce tu API Key de Gemini para usar tu propio servicio"
+                        value={formData.geminiApiKey || ""}
+                        onChange={(e) => handleChange("geminiApiKey", e.target.value)}
+                        className="mt-1"
+                        disabled={isGenerating}
+                      />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Si proporcionas tu propia API Key de Gemini, se usará para las generaciones en lugar del servicio predeterminado.
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline ml-1">
+                          Obtener API Key
+                        </a>
                       </p>
                     </div>
                   </div>
