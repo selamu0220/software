@@ -235,21 +235,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("Límite diario temporalmente desactivado para pruebas");
     return false;
     
-    /*
+    /* Código original comentado
     const today = new Date();
     const startOfToday = startOfDay(today);
     const endOfToday = endOfDay(today);
 
     // Get ideas created today
     const ideas = await storage.getVideoIdeasByDateRange(
-    */
       userId,
       startOfToday,
       endOfToday,
     );
+    */
 
     // Free users can create 1 idea per day
-    return ideas.length >= 1;
+    // Código original comentado
+    return false;
   };
 
   // Authentication APIs
@@ -431,6 +432,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Los usuarios premium no tienen límite diario
       const isPremium = user.isPremium || user.lifetimeAccess;
 
+      // TEMPORAL: Desactivar temporalmente la limitación para usuarios no premium
+      console.log("Desactivando temporalmente límite diario para usuarios no premium");
+      /*
       if (!isPremium) {
         // Verificar si el usuario ya generó una idea hoy
         const reachedLimit = await hasReachedDailyLimit(req.session.userId);
@@ -442,6 +446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
+      */
 
       // Generar y guardar la idea
       const generatedIdea = await generateVideoIdea(params);
