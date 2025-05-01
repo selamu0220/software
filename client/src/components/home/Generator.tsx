@@ -44,8 +44,10 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
     templateStyle: TEMPLATE_STYLES[0] || "Educational",
     contentTone: CONTENT_TONES[0] || "Informative",
     titleTemplate: VIDEO_TITLE_TEMPLATES[0] || "",
-    contentType: "fullScript", // Cambiado de "idea" a "fullScript" para generar guiones completos por defecto
-    timingDetail: true, // Cambiado a true para incluir tiempos en los guiones
+    contentType: "fullScript", // Guiones completos por defecto
+    timingDetail: true, // Incluir tiempos en los guiones
+    customChannelType: "", // Campo para tipo de canal personalizado
+    useSubcategory: true, // Opción para usar subcategorías
   });
 
   // Update subcategories when category changes
@@ -67,8 +69,10 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
       templateStyle: TEMPLATE_STYLES[0] || "Educational",
       contentTone: CONTENT_TONES[0] || "Informative",
       titleTemplate: VIDEO_TITLE_TEMPLATES[0] || "",
-      contentType: "fullScript", // Ahora también el reset mantiene el tipo de contenido como script completo
+      contentType: "fullScript", // Guiones completos por defecto
       timingDetail: true,
+      customChannelType: "", // Campo para tipo de canal personalizado
+      useSubcategory: true, // Opción para usar subcategorías
     });
   };
 
@@ -278,7 +282,20 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
                 <div className="px-4 py-5 sm:p-6">
                   <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                     <div className="sm:col-span-3">
-                      <Label htmlFor="category">Channel Type</Label>
+                      <div className="flex justify-between">
+                        <Label htmlFor="category">Channel Type</Label>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs text-muted-foreground">Usar subcategorías</span>
+                          <input
+                            type="checkbox"
+                            id="use-subcategory"
+                            checked={formData.useSubcategory}
+                            onChange={(e) => handleChange("useSubcategory", e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300"
+                            disabled={isGenerating}
+                          />
+                        </div>
+                      </div>
                       <Select
                         value={formData.category}
                         onValueChange={(value) => handleChange("category", value)}
@@ -297,26 +314,40 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
                       </Select>
                     </div>
 
-                    <div className="sm:col-span-3">
-                      <Label htmlFor="subcategory">Subcategory</Label>
-                      <Select
-                        value={formData.subcategory}
-                        onValueChange={(value) => handleChange("subcategory", value)}
-                        disabled={isGenerating}
-                      >
-                        <SelectTrigger id="subcategory" className="mt-1">
-                          <SelectValue placeholder="Select subcategory" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {formData.category &&
-                            VIDEO_SUBCATEGORIES[formData.category]?.map((subcategory) => (
-                              <SelectItem key={subcategory} value={subcategory}>
-                                {subcategory}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {formData.useSubcategory ? (
+                      <div className="sm:col-span-3">
+                        <Label htmlFor="subcategory">Subcategory</Label>
+                        <Select
+                          value={formData.subcategory}
+                          onValueChange={(value) => handleChange("subcategory", value)}
+                          disabled={isGenerating}
+                        >
+                          <SelectTrigger id="subcategory" className="mt-1">
+                            <SelectValue placeholder="Select subcategory" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {formData.category &&
+                              VIDEO_SUBCATEGORIES[formData.category]?.map((subcategory) => (
+                                <SelectItem key={subcategory} value={subcategory}>
+                                  {subcategory}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <div className="sm:col-span-3">
+                        <Label htmlFor="custom-channel-type">Tipo de Canal Personalizado</Label>
+                        <Input
+                          id="custom-channel-type"
+                          placeholder="Ej: Canal de reseñas de juegos"
+                          value={formData.customChannelType || ""}
+                          onChange={(e) => handleChange("customChannelType", e.target.value)}
+                          className="mt-1"
+                          disabled={isGenerating}
+                        />
+                      </div>
+                    )}
 
                     <div className="sm:col-span-6">
                       <Label htmlFor="video-focus">Video Focus</Label>

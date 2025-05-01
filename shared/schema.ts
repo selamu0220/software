@@ -144,6 +144,9 @@ export const generationRequestSchema = z.object({
   titleTemplate: z.string().optional(),
   contentType: z.enum(["idea", "keypoints", "fullScript"]).default("idea"),
   timingDetail: z.boolean().default(false),
+  customChannelType: z.string().optional(),
+  useSubcategory: z.boolean().default(true),
+  geminiApiKey: z.string().optional(),
 });
 
 // Types
