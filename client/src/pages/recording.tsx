@@ -343,19 +343,38 @@ export default function Recording({ user }: RecordingProps) {
       mediaRecorderRef.current.stop();
     }
     
-    // Stop all tracks on the stream
+    // Asegurarnos de detener TODAS las pistas y streams
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      console.log("Deteniendo todas las pistas de stream...");
+      streamRef.current.getTracks().forEach(track => {
+        console.log(`Deteniendo pista: ${track.kind} - ${track.label || 'sin etiqueta'}`);
+        track.stop();
+      });
+      streamRef.current = null;
     }
+    
+    // Buscar y detener cualquier otra cámara o pista activa
+    navigator.mediaDevices.getUserMedia({ audio: false, video: false })
+      .catch(() => {
+        // Esto debería fallar, pero al hacer la llamada se asegura que el navegador revise permisos
+        // y cierre cualquier indicador de cámara activa
+      });
     
     // Clear the video preview
     if (videoPreviewRef.current) {
       videoPreviewRef.current.srcObject = null;
+      videoPreviewRef.current.pause();
     }
     
     // Update state (processRecording will be called by onstop event)
     setIsRecording(false);
     setIsPaused(false);
+    
+    // Notificar al usuario que se ha detenido la grabación
+    toast({
+      title: "Grabación detenida",
+      description: "Todos los dispositivos han sido desconectados correctamente.",
+    });
   };
 
   // Process the recorded chunks

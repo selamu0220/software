@@ -33,6 +33,7 @@ import {
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import * as youtubeService from './youtube';
 
 // Configure multer for video uploads
 const uploadDir = path.join(process.cwd(), "uploads");
