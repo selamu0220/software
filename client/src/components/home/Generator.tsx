@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { VIDEO_CATEGORIES, VIDEO_SUBCATEGORIES, VIDEO_LENGTHS, TEMPLATE_STYLES, CONTENT_TONES } from "@/lib/utils";
+import { VIDEO_CATEGORIES, VIDEO_SUBCATEGORIES, VIDEO_LENGTHS, TEMPLATE_STYLES, CONTENT_TONES, VIDEO_TITLE_TEMPLATES } from "@/lib/utils";
 import { 
   generateVideoIdea, 
   generateWeeklyIdeas, 
@@ -43,6 +43,7 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
     videoLength: VIDEO_LENGTHS[0] || "10-15min",
     templateStyle: TEMPLATE_STYLES[0] || "Educational",
     contentTone: CONTENT_TONES[0] || "Informative",
+    titleTemplate: VIDEO_TITLE_TEMPLATES[0] || "",
   });
 
   // Update subcategories when category changes
@@ -63,6 +64,7 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
       videoLength: VIDEO_LENGTHS[0] || "10-15min",
       templateStyle: TEMPLATE_STYLES[0] || "Educational",
       contentTone: CONTENT_TONES[0] || "Informative",
+      titleTemplate: VIDEO_TITLE_TEMPLATES[0] || "",
     });
   };
 
@@ -382,6 +384,29 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+
+                    <div className="sm:col-span-6 mt-4">
+                      <Label htmlFor="title-template">Plantilla de Título</Label>
+                      <Select
+                        value={formData.titleTemplate || ""}
+                        onValueChange={(value) => handleChange("titleTemplate", value)}
+                        disabled={isGenerating}
+                      >
+                        <SelectTrigger id="title-template" className="mt-1">
+                          <SelectValue placeholder="Seleccionar plantilla de título" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {VIDEO_TITLE_TEMPLATES.map((template) => (
+                            <SelectItem key={template} value={template}>
+                              {template}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        La plantilla se personalizará con el tema de tu video. Las variables como [Número], [Tema], [Acción] serán reemplazadas automáticamente.
+                      </p>
                     </div>
                   </div>
                 </div>
