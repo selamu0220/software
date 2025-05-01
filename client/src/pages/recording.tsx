@@ -562,7 +562,7 @@ export default function Recording({ user }: RecordingProps) {
                   {isRecording && recordingType !== "camera" && (
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="text-center p-4 bg-black/50 rounded-lg">
-                        <MonitorPlay className="h-12 w-12 mx-auto mb-2 text-primary/60" />
+                        <Mic className="h-12 w-12 mx-auto mb-2 text-primary/60" />
                         <p className="text-white/70">Compartiendo pantalla</p>
                       </div>
                     </div>
@@ -571,7 +571,7 @@ export default function Recording({ user }: RecordingProps) {
                   {!isRecording && recordingType !== "camera" && (
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="text-center p-4">
-                        <MonitorPlay className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                        <Video className="h-12 w-12 mx-auto mb-2 opacity-20" />
                         <p className="text-muted-foreground">La pantalla se mostrará aquí al iniciar la grabación</p>
                       </div>
                     </div>
