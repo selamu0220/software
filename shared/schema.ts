@@ -13,6 +13,10 @@ export const users = pgTable("users", {
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   lifetimeAccess: boolean("lifetime_access").default(false).notNull(),
+  // YouTube integration
+  youtubeAccessToken: text("youtube_access_token"),
+  youtubeRefreshToken: text("youtube_refresh_token"),
+  youtubeTokenExpiry: timestamp("youtube_token_expiry"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -44,12 +48,15 @@ export const userVideos = pgTable("user_videos", {
   userId: integer("user_id").references(() => users.id).notNull(),
   title: text("title").notNull(),
   description: text("description"),
-  fileName: text("file_name").notNull(),
-  filePath: text("file_path").notNull(),
-  fileSize: integer("file_size").notNull(),
-  mimeType: varchar("mime_type", { length: 255 }).notNull(),
+  fileName: text("file_name"),
+  filePath: text("file_path"),
+  fileSize: integer("file_size"),
+  mimeType: varchar("mime_type", { length: 255 }),
   duration: integer("duration"),
   thumbnailPath: text("thumbnail_path"),
+  // YouTube integration
+  youtubeId: text("youtube_id"),
+  youtubeUrl: text("youtube_url"),
   uploadDate: timestamp("upload_date").defaultNow().notNull(),
   isPublic: boolean("is_public").default(false).notNull(),
 });
@@ -121,6 +128,8 @@ export const insertUserVideoSchema = createInsertSchema(userVideos).pick({
   mimeType: true,
   duration: true,
   thumbnailPath: true,
+  youtubeId: true,
+  youtubeUrl: true,
   isPublic: true,
 });
 
