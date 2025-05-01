@@ -8,7 +8,8 @@ import {
   insertUserSchema, 
   generationRequestSchema, 
   insertCalendarEntrySchema,
-  updateUserSchema
+  updateUserSchema,
+  insertUserVideoSchema
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import session from "express-session";
@@ -16,6 +17,43 @@ import MemoryStore from "memorystore";
 import { z } from "zod";
 import Stripe from "stripe";
 import { addDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+// Configure multer for video uploads
+const uploadDir = path.join(process.cwd(), 'uploads');
+// Ensure uploads directory exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const videoStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const videoUpload = multer({
+  storage: videoStorage,
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB max file size
+  },
+  fileFilter: (req, file, cb) => {
+    const filetypes = /webm|mp4|mov|avi/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error("Error: Solo se permiten videos (webm, mp4, mov, avi)"));
+  }
+});
 
 declare module "express-session" {
   interface SessionData {
@@ -596,6 +634,264 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ message: "Webhook error" });
     }
   });
+
+  // ==== USER VIDEOS MANAGEMENT ====
+  
+  // Upload video file
+  app.post("/api/upload-video", requireAuth, videoUpload.single("video"), async (req, res) => {
+    try {
+      // Check if file was uploaded
+      if (!req.file) {
+        return res.status(400).json({ message: "No se subió ningún archivo de video" });
+      }
+
+      const file = req.file;
+      const { name = "Video sin título", description = "" } = req.body;
+      
+      // Create video record in database
+      const video = await storage.createUserVideo({
+        userId: req.session.userId!,
+        title: name,
+        description: description || null,
+        fileName: file.filename,
+        filePath: file.path,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        duration: null, // Se podría calcular con ffmpeg en una implementación más avanzada
+        thumbnailPath: null, // Se podría generar con ffmpeg
+        isPublic: false
+      });
+      
+      res.status(201).json({ message: "Video subido exitosamente", video });
+    } catch (error) {
+      console.error("Error uploading video:", error);
+      res.status(500).json({ message: "Error al subir video" });
+    }
+  });
+  
+  // Get user videos
+  app.get("/api/videos", requireAuth, async (req, res) => {
+    try {
+      const videos = await storage.getUserVideosByUser(req.session.userId!);
+      res.json(videos);
+    } catch (error) {
+      res.status(500).json({ message: "Error al obtener videos" });
+    }
+  });
+  
+  // Get single video
+  app.get("/api/videos/:id", requireAuth, async (req, res) => {
+    try {
+      const videoId = parseInt(req.params.id);
+      const video = await storage.getUserVideo(videoId);
+      
+      if (!video) {
+        return res.status(404).json({ message: "Video no encontrado" });
+      }
+      
+      if (video.userId !== req.session.userId) {
+        return res.status(403).json({ message: "No autorizado para ver este video" });
+      }
+      
+      res.json(video);
+    } catch (error) {
+      res.status(500).json({ message: "Error al obtener video" });
+    }
+  });
+  
+  // Delete video
+  app.delete("/api/videos/:id", requireAuth, async (req, res) => {
+    try {
+      const videoId = parseInt(req.params.id);
+      const video = await storage.getUserVideo(videoId);
+      
+      if (!video) {
+        return res.status(404).json({ message: "Video no encontrado" });
+      }
+      
+      if (video.userId !== req.session.userId) {
+        return res.status(403).json({ message: "No autorizado para eliminar este video" });
+      }
+      
+      // Delete file from filesystem
+      try {
+        if (fs.existsSync(video.filePath)) {
+          fs.unlinkSync(video.filePath);
+        }
+        
+        if (video.thumbnailPath && fs.existsSync(video.thumbnailPath)) {
+          fs.unlinkSync(video.thumbnailPath);
+        }
+      } catch (fsError) {
+        console.error("Error deleting video files:", fsError);
+      }
+      
+      // Delete from database
+      await storage.deleteUserVideo(videoId);
+      
+      res.json({ message: "Video eliminado correctamente" });
+    } catch (error) {
+      res.status(500).json({ message: "Error al eliminar video" });
+    }
+  });
+  
+  // Update video details
+  app.patch("/api/videos/:id", requireAuth, async (req, res) => {
+    try {
+      const videoId = parseInt(req.params.id);
+      const video = await storage.getUserVideo(videoId);
+      
+      if (!video) {
+        return res.status(404).json({ message: "Video no encontrado" });
+      }
+      
+      if (video.userId !== req.session.userId) {
+        return res.status(403).json({ message: "No autorizado para actualizar este video" });
+      }
+      
+      const { title, description, isPublic } = req.body;
+      const updates: Partial<UserVideo> = {};
+      
+      if (title !== undefined) updates.title = title;
+      if (description !== undefined) updates.description = description;
+      if (isPublic !== undefined) updates.isPublic = isPublic;
+      
+      const updatedVideo = await storage.updateUserVideo(videoId, updates);
+      
+      res.json(updatedVideo);
+    } catch (error) {
+      res.status(500).json({ message: "Error al actualizar video" });
+    }
+  });
+  
+  // Serve video file
+  app.get("/api/videos/:id/content", requireAuth, async (req, res) => {
+    try {
+      const videoId = parseInt(req.params.id);
+      const video = await storage.getUserVideo(videoId);
+      
+      if (!video) {
+        return res.status(404).json({ message: "Video no encontrado" });
+      }
+      
+      // Check authorization - allow access to owner and to public videos
+      if (video.userId !== req.session.userId && !video.isPublic) {
+        return res.status(403).json({ message: "No autorizado para ver este video" });
+      }
+      
+      // Verify file exists
+      if (!fs.existsSync(video.filePath)) {
+        return res.status(404).json({ message: "Archivo de video no encontrado" });
+      }
+      
+      // Get file stats
+      const stat = fs.statSync(video.filePath);
+      const fileSize = stat.size;
+      const range = req.headers.range;
+      
+      // Handle range requests for video streaming
+      if (range) {
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        const chunksize = (end - start) + 1;
+        const file = fs.createReadStream(video.filePath, { start, end });
+        
+        res.writeHead(206, {
+          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunksize,
+          'Content-Type': video.mimeType,
+        });
+        
+        file.pipe(res);
+      } else {
+        // Send whole file if no range is specified
+        res.writeHead(200, {
+          'Content-Length': fileSize,
+          'Content-Type': video.mimeType,
+        });
+        
+        fs.createReadStream(video.filePath).pipe(res);
+      }
+    } catch (error) {
+      console.error("Error serving video:", error);
+      res.status(500).json({ message: "Error al reproducir video" });
+    }
+  });
+  
+  // Serve thumbnail
+  app.get("/api/videos/:id/thumbnail", requireAuth, async (req, res) => {
+    try {
+      const videoId = parseInt(req.params.id);
+      const video = await storage.getUserVideo(videoId);
+      
+      if (!video) {
+        return res.status(404).json({ message: "Video no encontrado" });
+      }
+      
+      // Check authorization - allow access to owner and to public videos
+      if (video.userId !== req.session.userId && !video.isPublic) {
+        return res.status(403).json({ message: "No autorizado para ver este video" });
+      }
+      
+      // If no thumbnail exists, send a 404
+      if (!video.thumbnailPath || !fs.existsSync(video.thumbnailPath)) {
+        return res.status(404).json({ message: "Miniatura no encontrada" });
+      }
+      
+      res.sendFile(video.thumbnailPath);
+    } catch (error) {
+      res.status(500).json({ message: "Error al obtener miniatura" });
+    }
+  });
+
+  // ==== END USER VIDEOS MANAGEMENT ====
+  
+  // ==== AGREGAR IDEA A CALENDARIO ====
+  
+  // Add a video idea to the calendar
+  app.post("/api/video-ideas/:id/add-to-calendar", requireAuth, async (req, res) => {
+    try {
+      const ideaId = parseInt(req.params.id);
+      const { date } = req.body;
+      
+      if (!date) {
+        return res.status(400).json({ message: "Se requiere una fecha" });
+      }
+      
+      // Get the video idea
+      const idea = await storage.getVideoIdea(ideaId);
+      
+      if (!idea) {
+        return res.status(404).json({ message: "Idea no encontrada" });
+      }
+      
+      // Check if the idea belongs to the user
+      if (idea.userId !== req.session.userId) {
+        return res.status(403).json({ message: "No autorizado para usar esta idea" });
+      }
+      
+      // Create calendar entry
+      const calendarEntry = await storage.createCalendarEntry({
+        userId: req.session.userId,
+        videoIdeaId: ideaId,
+        title: idea.title,
+        date: new Date(date),
+        completed: false
+      });
+      
+      res.status(201).json({
+        message: "Idea agregada al calendario",
+        calendarEntry
+      });
+    } catch (error) {
+      console.error("Error adding idea to calendar:", error);
+      res.status(500).json({ message: "Error al agregar idea al calendario" });
+    }
+  });
+  
+  // ==== END AGREGAR IDEA A CALENDARIO ====
 
   const httpServer = createServer(app);
   return httpServer;

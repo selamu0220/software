@@ -409,6 +409,9 @@ export default function Recording({ user }: RecordingProps) {
       // Remove from local list
       setRecordedVideos(prev => prev.filter(v => v.id !== videoId));
       
+      // Invalidate videos cache to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['/api/videos'] });
+      
     } catch (error) {
       console.error("Error uploading video:", error);
       toast({
