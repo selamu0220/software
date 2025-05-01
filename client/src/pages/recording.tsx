@@ -18,15 +18,16 @@ import {
   Share2,
   Settings,
   Copy,
-  StopCircle,
-  AlertCircle,
-  Loader2,
   PlayCircle,
   PauseCircle,
-  MonitorPlay,
+  StopCircle,
+  Loader2,
+  ExternalLink
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { nanoid } from "@/lib/utils";
+import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 
 interface RecordingProps {
   user: User | null;
@@ -358,92 +359,69 @@ export default function Recording({ user }: RecordingProps) {
     // Buscar y detener cualquier otra cámara o pista activa
     navigator.mediaDevices.getUserMedia({ audio: false, video: false })
       .catch(() => {
-        // Esto debería fallar, pero al hacer la llamada se asegura que el navegador revise permisos
-        // y cierre cualquier indicador de cámara activa
+        // Este error es esperado, solo queríamos usar esto para asegurarnos de detener pistas
       });
     
-    // Clear the video preview
-    if (videoPreviewRef.current) {
-      videoPreviewRef.current.srcObject = null;
-      videoPreviewRef.current.pause();
-    }
-    
-    // Update state (processRecording will be called by onstop event)
+    // Update state
     setIsRecording(false);
     setIsPaused(false);
     
-    // Notificar al usuario que se ha detenido la grabación
-    toast({
-      title: "Grabación detenida",
-      description: "Todos los dispositivos han sido desconectados correctamente.",
-    });
-  };
-
-  // Process the recorded chunks
-  const processRecording = async () => {
+    // Si no tenemos chunks, no procesamos nada
     if (chunksRef.current.length === 0) {
+      console.log("No hay chunks para procesar, la grabación fue demasiado breve o hubo un problema");
       toast({
-        title: "Error",
-        description: "No hay datos de video para procesar.",
+        title: "Grabación vacía",
+        description: "No se pudo completar la grabación porque no se capturaron datos.",
         variant: "destructive",
       });
-      return;
     }
-    
+  };
+
+  // Process the recorded video
+  const processRecording = () => {
     setIsProcessing(true);
+    console.log("Procesando grabación...");
     
     try {
-      console.log("Procesando grabación con", chunksRef.current.length, "chunks");
-      
       // Create a blob from the chunks
       const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-      console.log("Blob creado:", blob.size, "bytes");
       
-      // Create object URL
+      // Get size in MB for info
+      const sizeMB = blob.size / (1024 * 1024);
+      console.log(`Video grabado: ${sizeMB.toFixed(2)} MB`);
+      
+      // Create a URL for the blob
       const url = URL.createObjectURL(blob);
       
-      // Generate video name
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const generatedName = videoName.trim() || `grabacion-${timestamp}`;
+      // Generate an ID and name for the recording
+      const id = nanoid();
+      const recordingName = videoName || `Grabación ${new Date().toLocaleString()}`;
       
       // Add to recorded videos
-      const newVideo = {
-        id: Date.now().toString(),
-        name: generatedName,
-        url: url,
-        date: new Date()
-      };
-      
-      setRecordedVideos(prev => [newVideo, ...prev]);
-      
-      // Intentar visualizar automáticamente la pestaña de videos grabados
-      setTimeout(() => {
-        const storedVideosTab = document.querySelector('[value="videos"]');
-        if (storedVideosTab && 'click' in storedVideosTab) {
-          (storedVideosTab as HTMLElement).click();
+      setRecordedVideos(prev => [
+        ...prev,
+        {
+          id,
+          name: recordingName,
+          url,
+          date: new Date()
         }
-        
-        // Y dentro de eso, seleccionar la pestaña local
-        setTimeout(() => {
-          const localVideosTab = document.querySelector('[value="local"]');
-          if (localVideosTab && 'click' in localVideosTab) {
-            (localVideosTab as HTMLElement).click();
-          }
-        }, 100);
-      }, 500);
+      ]);
       
-      // Reset chunks
-      chunksRef.current = [];
-      
+      // Notify
       toast({
         title: "Grabación completada",
-        description: "El video está listo para ser descargado o compartido.",
+        description: `El video de ${sizeMB.toFixed(2)} MB está listo para ser descargado o subido.`,
       });
+      
+      // Reset
+      chunksRef.current = [];
+      setVideoName("");
     } catch (error) {
       console.error("Error processing recording:", error);
       toast({
-        title: "Error al procesar grabación",
-        description: "No se pudo procesar el video grabado.",
+        title: "Error al procesar video",
+        description: "No se pudo procesar la grabación. Inténtalo de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -533,6 +511,83 @@ export default function Recording({ user }: RecordingProps) {
       setIsProcessing(false);
     }
   };
+  
+  // Publish to YouTube
+  const publishToYouTube = (videoId: string) => {
+    const video = recordedVideos.find(v => v.id === videoId);
+    if (!video) return;
+    
+    if (!user) {
+      toast({
+        title: "Inicio de sesión requerido",
+        description: "Debes iniciar sesión para publicar en YouTube.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!youtubeTokens) {
+      toast({
+        title: "Conexión requerida",
+        description: "Conecta tu cuenta de YouTube primero para publicar videos.",
+        variant: "destructive",
+      });
+      
+      // Cambiar a la pestaña de YouTube
+      setTimeout(() => {
+        const storedTab = document.querySelector('[value="stored"]');
+        if (storedTab && 'click' in storedTab) {
+          (storedTab as HTMLElement).click();
+        }
+      }, 100);
+      
+      return;
+    }
+    
+    // Crear y disparar evento personalizado para abrir el diálogo de publicación
+    const publishEvent = new CustomEvent('openYouTubePublish', {
+      detail: { video }
+    });
+    window.dispatchEvent(publishEvent);
+  };
+  
+  // Escuchar eventos de éxito/error de la publicación en YouTube
+  useEffect(() => {
+    const onYouTubeUploadSuccess = (event: CustomEvent<{videoId: string, videoUrl: string}>) => {
+      toast({
+        title: "Publicación exitosa",
+        description: (
+          <div>
+            Tu video ha sido publicado en YouTube. 
+            <a 
+              href={event.detail.videoUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="ml-2 text-blue-500 hover:underline"
+            >
+              Ver video
+            </a>
+          </div>
+        ),
+      });
+    };
+    
+    const onYouTubeUploadError = (event: CustomEvent<{error: string}>) => {
+      toast({
+        title: "Error de publicación",
+        description: event.detail.error || "No se pudo publicar el video en YouTube.",
+        variant: "destructive",
+      });
+    };
+    
+    window.addEventListener('youtubeUploadSuccess', onYouTubeUploadSuccess as EventListener);
+    window.addEventListener('youtubeUploadError', onYouTubeUploadError as EventListener);
+    
+    return () => {
+      window.removeEventListener('youtubeUploadSuccess', onYouTubeUploadSuccess as EventListener);
+      window.removeEventListener('youtubeUploadError', onYouTubeUploadError as EventListener);
+    };
+  }, [toast]);
 
   // Delete recorded video
   const deleteVideo = (videoId: string) => {
@@ -792,22 +847,22 @@ export default function Recording({ user }: RecordingProps) {
                         onCheckedChange={setIncludeAudio}
                         disabled={isRecording || isProcessing}
                       />
-                      <Label htmlFor="include-audio">Incluir audio</Label>
+                      <Label htmlFor="include-audio">Incluir audio del micrófono</Label>
                     </div>
                   </div>
                   
                   <div className="space-y-3">
-                    <Label htmlFor="camera-select">Seleccionar cámara</Label>
+                    <Label htmlFor="camera-select">Cámara</Label>
                     <Select 
                       value={selectedCameraId} 
                       onValueChange={setSelectedCameraId}
                       disabled={isRecording || isProcessing || availableCameras.length === 0}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona una cámara" />
+                        <SelectValue placeholder="Seleccionar cámara" />
                       </SelectTrigger>
                       <SelectContent>
-                        {availableCameras.map((camera) => (
+                        {availableCameras.map(camera => (
                           <SelectItem key={camera.deviceId} value={camera.deviceId}>
                             {camera.label || `Cámara ${camera.deviceId.slice(0, 5)}...`}
                           </SelectItem>
@@ -817,17 +872,17 @@ export default function Recording({ user }: RecordingProps) {
                   </div>
                   
                   <div className="space-y-3">
-                    <Label htmlFor="mic-select">Seleccionar micrófono</Label>
+                    <Label htmlFor="microphone-select">Micrófono</Label>
                     <Select 
                       value={selectedMicrophoneId} 
                       onValueChange={setSelectedMicrophoneId}
                       disabled={isRecording || isProcessing || !includeAudio || availableMicrophones.length === 0}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona un micrófono" />
+                        <SelectValue placeholder="Seleccionar micrófono" />
                       </SelectTrigger>
                       <SelectContent>
-                        {availableMicrophones.map((mic) => (
+                        {availableMicrophones.map(mic => (
                           <SelectItem key={mic.deviceId} value={mic.deviceId}>
                             {mic.label || `Micrófono ${mic.deviceId.slice(0, 5)}...`}
                           </SelectItem>
@@ -839,106 +894,128 @@ export default function Recording({ user }: RecordingProps) {
               </Card>
             </div>
             
-            {!availableCameras.length && (
-              <div className="p-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10 flex items-center gap-3 text-yellow-300">
-                <AlertCircle className="h-5 w-5 flex-shrink-0" />
-                <p>No se detectaron cámaras. Por favor, concede permisos para usar la cámara.</p>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="videos" className="space-y-6">
-            <Tabs defaultValue="local" className="w-full">
-              <TabsList className="grid grid-cols-2 max-w-[400px] mx-auto mb-4">
-                <TabsTrigger value="local" className="flex items-center gap-1">
-                  <Camera className="h-4 w-4" />
-                  Grabaciones Locales
-                </TabsTrigger>
-                <TabsTrigger value="stored" className="flex items-center gap-1">
-                  <Upload className="h-4 w-4" />
-                  Videos Subidos
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="local" className="space-y-6">
-                {recordedVideos.length === 0 ? (
-                  <div className="p-12 text-center rounded-lg border border-border bg-muted/20">
-                    <Video className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
-                    <h3 className="text-lg font-medium mb-2">No hay videos grabados</h3>
-                    <p className="text-muted-foreground">
-                      Los videos que grabes aparecerán aquí para que puedas descargarlos o compartirlos.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4">
+            {/* Local Recordings */}
+            {recordedVideos.length > 0 && (
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Video className="h-5 w-5" />
+                    Videos Grabados Localmente
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
                     {recordedVideos.map(video => (
-                      <Card key={video.id} className="overflow-hidden">
-                        <div className="grid md:grid-cols-[300px,1fr] grid-cols-1">
-                          <div className="aspect-video bg-black flex items-center justify-center overflow-hidden">
-                            <video 
-                              src={video.url} 
-                              controls 
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                          <div className="p-4 flex flex-col">
-                            <div className="mb-2">
-                              <h3 className="text-lg font-medium truncate">{video.name}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {video.date.toLocaleString()}
-                              </p>
+                      <div key={video.id} className="flex flex-col space-y-4 p-4 rounded-lg border">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="bg-black/10 p-2 rounded-full">
+                              <Video className="h-6 w-6" />
                             </div>
-                            
-                            <div className="flex flex-wrap gap-2 mt-auto pt-4">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => downloadVideo(video.url, video.name)}
-                              >
-                                <Download className="h-4 w-4 mr-1" />
-                                Descargar
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => copyVideoLink(video.url)}
-                              >
-                                <Copy className="h-4 w-4 mr-1" />
-                                Copiar Link
-                              </Button>
-                              {user && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => uploadToServer(video.id)}
-                                  disabled={isProcessing}
-                                >
-                                  {isProcessing ? (
-                                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                                  ) : (
-                                    <Upload className="h-4 w-4 mr-1" />
-                                  )}
-                                  Subir
-                                </Button>
-                              )}
-                              <Button 
-                                variant="destructive" 
-                                size="sm"
-                                onClick={() => deleteVideo(video.id)}
-                              >
-                                Eliminar
-                              </Button>
+                            <div>
+                              <h4 className="font-medium text-base">{video.name}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {new Date(video.date).toLocaleString()}
+                              </p>
                             </div>
                           </div>
                         </div>
-                      </Card>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-center justify-center aspect-video bg-black/95 rounded overflow-hidden">
+                            <video 
+                              src={video.url} 
+                              controls 
+                              className="w-full h-full"
+                            />
+                          </div>
+                          
+                          <div className="flex flex-col items-start justify-center gap-3">
+                            <Button 
+                              onClick={() => downloadVideo(video.url, video.name)}
+                              variant="outline"
+                              className="w-full justify-start"
+                            >
+                              <Download className="mr-2 h-4 w-4" />
+                              Descargar Video
+                            </Button>
+                            <Button 
+                              onClick={() => uploadToServer(video.id)}
+                              className="w-full justify-start"
+                              disabled={isProcessing || !user}
+                            >
+                              <Upload className="mr-2 h-4 w-4" />
+                              Subir a Mi Cuenta
+                            </Button>
+                            <Button 
+                              onClick={() => publishToYouTube(video.id)}
+                              className="w-full justify-start"
+                              variant="outline"
+                              disabled={isProcessing || !user}
+                            >
+                              <ExternalLink className="mr-2 h-4 w-4" />
+                              Publicar en YouTube
+                            </Button>
+                            <Button 
+                              onClick={() => copyVideoLink(video.url)}
+                              variant="outline"
+                              className="w-full justify-start"
+                            >
+                              <Copy className="mr-2 h-4 w-4" />
+                              Copiar Enlace
+                            </Button>
+                            <Button 
+                              onClick={() => deleteVideo(video.id)}
+                              variant="destructive"
+                              className="w-full justify-start"
+                              disabled={isProcessing}
+                            >
+                              <StopCircle className="mr-2 h-4 w-4" />
+                              Eliminar Video
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="videos">
+            <Tabs defaultValue="uploaded" className="w-full">
+              <TabsList className="grid grid-cols-2 max-w-[400px] mx-auto mb-8">
+                <TabsTrigger value="uploaded">Videos Guardados</TabsTrigger>
+                <TabsTrigger value="stored">YouTube</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="uploaded" className="space-y-6">
+                {user ? (
+                  <StoredVideos userId={user?.id} />
+                ) : (
+                  <div className="text-center py-8">
+                    <h3 className="text-xl font-medium mb-2">Inicia sesión para ver tus videos</h3>
+                    <p className="text-muted-foreground">
+                      Necesitas iniciar sesión para ver los videos guardados en tu cuenta.
+                    </p>
                   </div>
                 )}
               </TabsContent>
               
               <TabsContent value="stored" className="space-y-6">
                 <StoredVideos userId={user?.id} />
+                
+                {user && (
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium mb-4">Publicación en YouTube</h3>
+                    <YouTubeConnect 
+                      tokens={youtubeTokens}
+                      onConnect={(tokens) => setYoutubeTokens(tokens)}
+                      onDisconnect={() => setYoutubeTokens(undefined)}
+                    />
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </TabsContent>

@@ -138,6 +138,16 @@ export function truncateText(text: string, maxLength: number): string {
   return text.slice(0, maxLength) + '...';
 }
 
+// Generador de IDs únicos
+export function nanoid(size = 21): string {
+  const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  let id = '';
+  for (let i = 0; i < size; i++) {
+    id += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return id;
+}
+
 // Video category options for select
 export const VIDEO_CATEGORIES = [
   "Gaming",
