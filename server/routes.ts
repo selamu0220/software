@@ -856,9 +856,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user videos
   app.get("/api/videos", requireAuth, async (req, res) => {
     try {
-      const videos = await storage.getUserVideosByUser(req.session.userId!);
+      // Verificar que el usuario esté autenticado
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+
+      // Obtener todos los videos del usuario
+      const videos = await storage.getUserVideosByUser(req.session.userId);
+      
+      // Log para depuración
+      console.log(`Retrieved ${videos.length} videos for user ${req.session.userId}`);
+      
       res.json(videos);
     } catch (error) {
+      console.error("Error retrieving videos:", error);
       res.status(500).json({ message: "Error al obtener videos" });
     }
   });
