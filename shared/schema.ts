@@ -96,6 +96,8 @@ export const generationRequestSchema = z.object({
   templateStyle: z.string(),
   contentTone: z.string(),
   titleTemplate: z.string().optional(),
+  contentType: z.enum(["idea", "keypoints", "fullScript"]).default("idea"),
+  timingDetail: z.boolean().default(false),
 });
 
 // Types

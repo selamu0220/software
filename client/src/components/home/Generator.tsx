@@ -44,6 +44,8 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
     templateStyle: TEMPLATE_STYLES[0] || "Educational",
     contentTone: CONTENT_TONES[0] || "Informative",
     titleTemplate: VIDEO_TITLE_TEMPLATES[0] || "",
+    contentType: "idea",
+    timingDetail: false,
   });
 
   // Update subcategories when category changes
@@ -65,10 +67,12 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
       templateStyle: TEMPLATE_STYLES[0] || "Educational",
       contentTone: CONTENT_TONES[0] || "Informative",
       titleTemplate: VIDEO_TITLE_TEMPLATES[0] || "",
+      contentType: "idea",
+      timingDetail: false,
     });
   };
 
-  const handleChange = (name: keyof GenerationRequest, value: string) => {
+  const handleChange = (name: keyof GenerationRequest, value: any) => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -406,6 +410,47 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
                       </Select>
                       <p className="mt-1 text-xs text-muted-foreground">
                         La plantilla se personalizará con el tema de tu video. Las variables como [Número], [Tema], [Acción] serán reemplazadas automáticamente.
+                      </p>
+                    </div>
+                    
+                    <div className="sm:col-span-4 mt-4">
+                      <Label htmlFor="content-type">Tipo de Contenido</Label>
+                      <Select
+                        value={formData.contentType || "idea"}
+                        onValueChange={(value) => handleChange("contentType", value as "idea" | "keypoints" | "fullScript")}
+                        disabled={isGenerating}
+                      >
+                        <SelectTrigger id="content-type" className="mt-1">
+                          <SelectValue placeholder="Seleccionar tipo de contenido" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="idea">Idea de video</SelectItem>
+                          <SelectItem value="keypoints">Puntos clave (keypoints)</SelectItem>
+                          <SelectItem value="fullScript">Guión completo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Selecciona el tipo de contenido que quieres generar para tu video.
+                      </p>
+                    </div>
+
+                    <div className="sm:col-span-2 mt-4">
+                      <Label htmlFor="timing-detail">Incluir tiempos detallados</Label>
+                      <Select
+                        value={formData.timingDetail ? "true" : "false"}
+                        onValueChange={(value) => handleChange("timingDetail", value === "true")}
+                        disabled={isGenerating || formData.contentType === "idea"}
+                      >
+                        <SelectTrigger id="timing-detail" className="mt-1">
+                          <SelectValue placeholder="¿Incluir tiempos?" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="true">Sí</SelectItem>
+                          <SelectItem value="false">No</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Incluir tiempos específicos para cada parte del guión.
                       </p>
                     </div>
                   </div>
