@@ -161,10 +161,24 @@ Responde ÚNICAMENTE con JSON válido, sin texto adicional.
  * Función de respaldo para obtener una idea de video simulada
  */
 function getMockVideoIdea(params: GenerationRequest): VideoIdeaContent {
-  const { category, subcategory, videoLength } = params;
+  const { category, subcategory, videoLength, titleTemplate } = params;
+  
+  // Si hay una plantilla de título seleccionada, úsala o proporciona una por defecto
+  const titleBase = titleTemplate || "Top [Número] Secretos que Nadie te Cuenta sobre [Tema]";
+  const formattedTitle = titleBase
+    .replace("[Número]", "7")
+    .replace("[Tema]", "EDICIÓN de Video")
+    .replace("[Acción]", "mejorar tus videos")
+    .replace("[Objetivo]", "crear mejores videos")
+    .replace("[Obstáculo]", "perder tiempo")
+    .replace("[Aspecto de Vida]", "contenido")
+    .replace("[Área de Vida]", "canal de YouTube")
+    .replace("[Meta]", "crecimiento en YouTube")
+    .replace("[Resultado]", "videos profesionales")
+    .replace("[Resultado brutal]", "ediciones perfectas");
   
   return {
-    title: `7 SECRETOS de EDICIÓN de Video que NADIE te CUENTA`,
+    title: formattedTitle,
     outline: [
       "Presentación del problema: Demasiado tiempo editando videos",
       "Secreto #1: Configuración de atajos de teclado personalizados para DaVinci Resolve",
