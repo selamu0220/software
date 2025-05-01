@@ -56,94 +56,123 @@ export async function generateVideoIdea(params: GenerationRequest): Promise<Vide
   // Determinar qué API key usar (la proporcionada por el usuario o la del entorno)
   const apiKey = params.geminiApiKey || process.env.GEMINI_API_KEY;
   
-  // Si no hay clave API disponible, devuelve una idea simulada
+  // Si no hay clave API disponible, lanzar error
   if (!apiKey) {
-    console.warn("Sin API key de Gemini disponible. Usando generación simulada.");
-    return getMockVideoIdea(params);
+    console.error("No hay API key de Gemini disponible.");
+    throw new Error("API key de Gemini no configurada. Por favor, configura GEMINI_API_KEY en las variables de entorno.");
   }
 
+  // Construir el prompt para la generación
   const prompt = buildPrompt(params);
+  console.log("Iniciando generación de idea con Gemini...");
 
-  try {
-    // Inicializar cliente con la API key correspondiente
-    const genAI = new GoogleGenerativeAI(apiKey);
-    
-    // Obtener el modelo de texto Gemini más avanzado disponible
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+  // Configurar reintentos
+  const maxRetries = 2;
+  let retryCount = 0;
+  let lastError: any = null;
 
-    // Generar la respuesta
-    const result = await model.generateContent({
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: "Eres un generador de ideas de videos de YouTube especializado en crear ideas de contenido atractivas adaptadas a nichos específicos. Tus ideas deben incluir un título llamativo, un esquema y menciones sugeridas. Responde usando JSON." },
-            { text: prompt }
-          ]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 1024,
-      }
-    });
-
-    const response = result.response;
-    const textContent = response.text();
-    
-    // Extraer el JSON de la respuesta de texto
-    const jsonMatch = textContent.match(/```json\n([\s\S]*?)\n```/) || 
-                      textContent.match(/{[\s\S]*}/) || 
-                      [null, textContent];
-
-    const jsonString = jsonMatch[1] || textContent;
-    
+  while (retryCount <= maxRetries) {
     try {
-      // Intentar analizar el JSON
-      const content = JSON.parse(jsonString);
-      return content;
-    } catch (parseError) {
-      console.error("Error al analizar JSON desde Gemini:", parseError);
-      console.log("Respuesta de Gemini:", textContent);
-      return getMockVideoIdea(params);
-    }
-  } catch (error) {
-    console.error("Error al generar idea de video con Gemini:", error);
-    
-    // Verificar si es un error de cuota o de API key
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorString = errorMessage.toLowerCase();
-    const isQuotaError = errorString.includes('quota') || errorString.includes('429') || errorString.includes('too many requests');
-    const isAuthError = errorString.includes('auth') || errorString.includes('key') || errorString.includes('401') || errorString.includes('403');
-    
-    if (params.geminiApiKey) {
-      console.error("Error con API key personalizada. Puede ser inválida, estar expirada o haber alcanzado su cuota.");
-    }
-    
-    if (isQuotaError) {
-      console.warn("Se ha excedido la cuota de la API de Gemini. Se usará una generación alternativa.");
+      console.log(`Intento ${retryCount + 1}/${maxRetries + 1} de generación con Gemini...`);
       
-      // Intentar usar OpenAI si está configurada cuando hay error de cuota
-      if (process.env.OPENAI_API_KEY) {
-        try {
-          console.log("Intentando generación con OpenAI como alternativa...");
-          const openaiGen = await import('./openai');
-          return await openaiGen.generateVideoIdea(params);
-        } catch (openaiError) {
-          console.error("Error al generar idea de video con OpenAI:", openaiError);
-          // Si OpenAI también falla, usar generación simulada
+      // Inicializar cliente con la API key correspondiente
+      const genAI = new GoogleGenerativeAI(apiKey);
+      
+      // Obtener el modelo de texto Gemini más avanzado disponible
+      // Usar gemini-pro como respaldo si gemini-1.5-pro no funciona
+      const modelName = retryCount === 0 ? "gemini-1.5-pro" : "gemini-pro";
+      console.log(`Usando modelo: ${modelName}`);
+      
+      const model = genAI.getGenerativeModel({ 
+        model: modelName,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1024,
+        }
+      });
+
+      // Generar la respuesta con formato específico
+      const result = await model.generateContent({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: "Eres un generador de ideas de videos de YouTube especializado en crear ideas de contenido atractivas. Devuelve ÚNICAMENTE un objeto JSON con los siguientes campos obligatorios: title (string), outline (array de strings), midVideoMention (string), endVideoMention (string), thumbnailIdea (string), interactionQuestion (string), category (string), subcategory (string), videoLength (string). Asegúrate de que outline sea un array de strings y no un string." },
+              { text: prompt }
+            ]
+          }
+        ]
+      });
+
+      const response = result.response;
+      const textContent = response.text();
+      
+      console.log(`Contenido recibido de Gemini (${textContent.length} caracteres)`);
+      
+      // Extraer el JSON de la respuesta
+      let jsonString = textContent;
+      const jsonBlockMatch = textContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (jsonBlockMatch && jsonBlockMatch[1]) {
+        jsonString = jsonBlockMatch[1];
+      }
+
+      try {
+        // Intentar analizar el JSON
+        const content = JSON.parse(jsonString);
+        
+        // Validar que el contenido tenga la estructura esperada
+        if (!content.title || !content.outline || !Array.isArray(content.outline)) {
+          console.warn("Respuesta de Gemini incompleta o incorrecta. Estructura incorrecta:", content);
+          
+          // Si outline no es un array, convertirlo en uno
+          if (content.outline && !Array.isArray(content.outline)) {
+            if (typeof content.outline === 'string') {
+              content.outline = content.outline.split('\n\n').filter(item => item.trim() !== '');
+              console.log("Se ha convertido outline de string a array:", content.outline);
+            }
+          }
+          
+          // Si sigue sin ser un array, crear uno básico
+          if (!Array.isArray(content.outline)) {
+            content.outline = ["Punto 1 del esquema", "Punto 2 del esquema", "Punto 3 del esquema"];
+          }
+        }
+        
+        console.log("Idea generada exitosamente:", content.title);
+        return content as VideoIdeaContent;
+      } catch (parseError) {
+        console.error("Error al analizar JSON desde Gemini:", parseError);
+        retryCount++;
+        lastError = parseError;
+        
+        // Esperar antes del siguiente intento (tiempo exponencial)
+        if (retryCount <= maxRetries) {
+          const waitTime = Math.pow(2, retryCount) * 1000;
+          console.log(`Esperando ${waitTime}ms antes del siguiente intento...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
         }
       }
+    } catch (error) {
+      console.error("Error al generar idea de video con Gemini:", error);
+      
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.log("Mensaje de error completo:", errorMessage);
+      
+      retryCount++;
+      lastError = error;
+      
+      // Esperar antes del siguiente intento (a menos que sea el último)
+      if (retryCount <= maxRetries) {
+        const waitTime = Math.pow(2, retryCount) * 1000;
+        console.log(`Esperando ${waitTime}ms antes del siguiente intento...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
     }
-    
-    if (isAuthError) {
-      console.warn("Error de autenticación con la API de Gemini. Verifique su API key.");
-    }
-    
-    // Como último recurso, usar la generación simulada
-    console.warn("Usando generación simulada como último recurso.");
-    return getMockVideoIdea(params);
   }
+  
+  // Si todos los intentos fallaron, propagar el error
+  console.error(`Fallaron todos los intentos (${maxRetries + 1}) de generación con Gemini`);
+  throw new Error("No se pudo generar la idea de video después de múltiples intentos");
 }
 
 /**

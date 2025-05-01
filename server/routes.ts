@@ -231,12 +231,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const hasReachedDailyLimit = async (userId: number): Promise<boolean> => {
     if (!userId) return false;
 
+    // TEMPORAL: Desactivar la limitación para pruebas
+    console.log("Límite diario temporalmente desactivado para pruebas");
+    return false;
+    
+    /*
     const today = new Date();
     const startOfToday = startOfDay(today);
     const endOfToday = endOfDay(today);
 
     // Get ideas created today
     const ideas = await storage.getVideoIdeasByDateRange(
+    */
       userId,
       startOfToday,
       endOfToday,
