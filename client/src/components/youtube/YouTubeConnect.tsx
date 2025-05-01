@@ -309,14 +309,38 @@ export default function YouTubeConnect({ tokens, onConnect, onDisconnect }: YouT
               </div>
             </div>
           ) : (
-            <div className="text-center py-6">
-              <p className="text-muted-foreground mb-6">
-                Conecta tu cuenta de YouTube para publicar videos directamente desde la plataforma.
+            <div className="py-6 space-y-6">
+              <div className="text-center">
+                <p className="text-muted-foreground mb-6">
+                  Conecta tu cuenta de YouTube para publicar videos directamente desde la plataforma.
+                </p>
+              </div>
+              
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <h3 className="font-medium mb-2">Instrucciones para la configuración:</h3>
+                <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                  <li>Ve a la <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-primary underline">Google Cloud Console</a></li>
+                  <li>Crea un nuevo proyecto</li>
+                  <li>Habilita la API de YouTube Data v3</li>
+                  <li>Crea credenciales OAuth para una aplicación web</li>
+                  <li>Añade como URL de redirección: <code className="bg-muted px-1 py-0.5 rounded text-xs">{window.location.origin}/api/youtube/callback</code></li>
+                  <li>Configura las credenciales de API en los ajustes de tu aplicación</li>
+                </ol>
+              </div>
+              
+              <div className="flex justify-center">
+                <Button 
+                  onClick={handleConnect} 
+                  className="gap-2"
+                  disabled={!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET}
+                >
+                  <Youtube className="h-4 w-4" />
+                  Conectar con YouTube
+                </Button>
+              </div>
+              <p className="text-xs text-center text-muted-foreground mt-2">
+                (Requiere configuración previa de credenciales de Google API)
               </p>
-              <Button onClick={handleConnect} className="gap-2">
-                <Youtube className="h-4 w-4" />
-                Conectar con YouTube
-              </Button>
             </div>
           )}
         </CardContent>
