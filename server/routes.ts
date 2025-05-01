@@ -468,11 +468,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validar el esquema de la solicitud
       const { prompt, content, geminiApiKey } = aiAssistRequestSchema.parse(req.body);
       
-      // Llamar a la función del asistente de IA
+      // Llamar a la función del asistente de IA con parámetro entireScript requerido
       const result = await aiAssistant({
         prompt,
         content,
-        geminiApiKey
+        geminiApiKey,
+        entireScript: false // por defecto, no estamos procesando un script completo
       });
       
       res.json(result);
@@ -555,40 +556,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const storedIdeas = [];
       const today = new Date();
 
-      // Crear ideas para cada día de la semana
+      // Crear ideas para cada día de la semana con reintentos
       for (let i = 0; i < 7; i++) {
-        try {
-          // Crear una nueva fecha añadiendo i días a la fecha actual
-          const ideaDate = new Date(today);
-          ideaDate.setDate(today.getDate() + i);
-
-          // Formato de fecha en español
-          const fechaFormateada = new Intl.DateTimeFormat("es-ES", {
-            day: "numeric",
-            month: "numeric",
-            year: "numeric",
-          }).format(ideaDate);
-
-          // Generar idea con enfoque específico para ese día y usando la API key personalizada si existe
-          const generatedIdea = await generateVideoIdea({
-            ...params,
-            videoFocus: `${params.videoFocus} (Día ${i + 1} de 7, ${fechaFormateada})`,
-          });
-
-          // Guardar la idea en la base de datos
-          const videoIdea = await storage.createVideoIdea({
-            userId,
-            title: generatedIdea.title,
-            category: params.category,
-            subcategory: params.subcategory,
-            videoLength: params.videoLength,
-            content: generatedIdea,
-          });
-
-          storedIdeas.push(videoIdea);
-          ideas.push(generatedIdea);
-        } catch (error) {
-          console.error(`Error generando idea para el día ${i + 1}:`, error);
+        let retryCount = 0;
+        const maxRetries = 2; // Número máximo de reintentos por día
+        let success = false;
+        
+        while (retryCount <= maxRetries && !success) {
+          try {
+            // Crear una nueva fecha añadiendo i días a la fecha actual
+            const ideaDate = new Date(today);
+            ideaDate.setDate(today.getDate() + i);
+  
+            // Formato de fecha en español
+            const fechaFormateada = new Intl.DateTimeFormat("es-ES", {
+              day: "numeric",
+              month: "numeric",
+              year: "numeric",
+            }).format(ideaDate);
+  
+            console.log(`Generando idea para el día ${i + 1} de 7 (${fechaFormateada}), intento ${retryCount + 1}...`);
+            
+            // Generar idea con enfoque específico para ese día
+            const generatedIdea = await generateVideoIdea({
+              ...params,
+              videoFocus: `${params.videoFocus} (Día ${i + 1} de 7, ${fechaFormateada})`,
+              geminiApiKey: params.geminiApiKey, // Pasar la API key personalizada si existe
+            });
+  
+            // Guardar la idea en la base de datos
+            const videoIdea = await storage.createVideoIdea({
+              userId,
+              title: generatedIdea.title,
+              category: params.category,
+              subcategory: params.subcategory,
+              videoLength: params.videoLength,
+              content: generatedIdea,
+            });
+  
+            storedIdeas.push(videoIdea);
+            ideas.push(generatedIdea);
+            success = true;
+            console.log(`Idea generada con éxito para el día ${i + 1} de 7`);
+            
+          } catch (error) {
+            retryCount++;
+            console.error(`Error generando idea para el día ${i + 1}, intento ${retryCount}:`, error);
+            
+            if (retryCount > maxRetries) {
+              console.warn(`Se alcanzó el máximo de reintentos para el día ${i + 1}. Continuando con el siguiente día.`);
+              // Si todos los reintentos fallan, intentamos generar una idea simulada
+              try {
+                const ideaDate = new Date(today);
+                ideaDate.setDate(today.getDate() + i);
+                const fechaFormateada = ideaDate.toLocaleDateString("es-ES");
+                
+                // Usar la función getMockVideoIdea de gemini.ts que exportamos directamente
+                const gemini = await import('./gemini');
+                const mockIdea = gemini.getMockVideoIdea({
+                  ...params,
+                  videoFocus: `${params.videoFocus} (Día ${i + 1} de 7, ${fechaFormateada})`,
+                });
+                
+                // Personalizar el título con el día
+                mockIdea.title = `Día ${i + 1}: ${mockIdea.title}`;
+                
+                // Guardar la idea simulada
+                const videoIdea = await storage.createVideoIdea({
+                  userId,
+                  title: mockIdea.title,
+                  category: params.category,
+                  subcategory: params.subcategory,
+                  videoLength: params.videoLength,
+                  content: mockIdea,
+                });
+                
+                storedIdeas.push(videoIdea);
+                ideas.push(mockIdea);
+                console.log(`Idea simulada generada para el día ${i + 1} después de fallos en la API`);
+              } catch (mockError) {
+                console.error(`Error al generar idea simulada para el día ${i + 1}:`, mockError);
+              }
+            } else {
+              // Esperar un poco antes del siguiente reintento
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
         }
       }
 
@@ -625,34 +678,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ideas: VideoIdeaContent[] = [];
       const storedIdeas = [];
 
-      // Generar ideas para cada día del mes actual
+      // Generar ideas para cada día del mes actual con reintentos
       for (let i = 0; i < daysInMonth; i++) {
-        try {
-          const ideaDate = new Date(
-            today.getFullYear(),
-            today.getMonth(),
-            i + 1,
-          );
-          // Generar idea con enfoque específico para ese día y usando la API key personalizada si existe
-          const generatedIdea = await generateVideoIdea({
-            ...params,
-            videoFocus: `${params.videoFocus} (Día ${i + 1} de ${daysInMonth}, ${ideaDate.toLocaleDateString("es-ES")})`,
-          });
-
-          // Guardar la idea en la base de datos
-          const videoIdea = await storage.createVideoIdea({
-            userId,
-            title: generatedIdea.title,
-            category: params.category,
-            subcategory: params.subcategory,
-            videoLength: params.videoLength,
-            content: generatedIdea,
-          });
-
-          storedIdeas.push(videoIdea);
-          ideas.push(generatedIdea);
-        } catch (error) {
-          console.error(`Error generando idea para el día ${i + 1}:`, error);
+        let retryCount = 0;
+        const maxRetries = 2; // Número máximo de reintentos por día
+        let success = false;
+        
+        while (retryCount <= maxRetries && !success) {
+          try {
+            const ideaDate = new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              i + 1,
+            );
+            
+            // Formato de fecha en español
+            const fechaFormateada = ideaDate.toLocaleDateString("es-ES");
+            
+            console.log(`Generando idea para el día ${i + 1} de ${daysInMonth} (${fechaFormateada}), intento ${retryCount + 1}...`);
+            
+            // Generar idea con enfoque específico para ese día
+            const generatedIdea = await generateVideoIdea({
+              ...params,
+              videoFocus: `${params.videoFocus} (Día ${i + 1} de ${daysInMonth}, ${fechaFormateada})`,
+              geminiApiKey: params.geminiApiKey, // Pasar la API key personalizada si existe
+            });
+  
+            // Guardar la idea en la base de datos
+            const videoIdea = await storage.createVideoIdea({
+              userId,
+              title: generatedIdea.title,
+              category: params.category,
+              subcategory: params.subcategory,
+              videoLength: params.videoLength,
+              content: generatedIdea,
+            });
+  
+            storedIdeas.push(videoIdea);
+            ideas.push(generatedIdea);
+            success = true;
+            console.log(`Idea generada con éxito para el día ${i + 1} de ${daysInMonth}`);
+            
+          } catch (error) {
+            retryCount++;
+            console.error(`Error generando idea para el día ${i + 1}, intento ${retryCount}:`, error);
+            
+            if (retryCount > maxRetries) {
+              console.warn(`Se alcanzó el máximo de reintentos para el día ${i + 1}. Continuando con el siguiente día.`);
+              // Si todos los reintentos fallan, intentamos generar una idea simulada
+              try {
+                const ideaDate = new Date(
+                  today.getFullYear(),
+                  today.getMonth(),
+                  i + 1,
+                );
+                const fechaFormateada = ideaDate.toLocaleDateString("es-ES");
+                
+                // Usar la función getMockVideoIdea de gemini.ts a través del módulo importado
+                const gemini = await import('./gemini');
+                const mockIdea = gemini.getMockVideoIdea({
+                  ...params,
+                  videoFocus: `${params.videoFocus} (Día ${i + 1} de ${daysInMonth}, ${fechaFormateada})`,
+                });
+                
+                // Personalizar el título con el día
+                mockIdea.title = `Día ${i + 1}: ${mockIdea.title}`;
+                
+                // Guardar la idea simulada
+                const videoIdea = await storage.createVideoIdea({
+                  userId,
+                  title: mockIdea.title,
+                  category: params.category,
+                  subcategory: params.subcategory,
+                  videoLength: params.videoLength,
+                  content: mockIdea,
+                });
+                
+                storedIdeas.push(videoIdea);
+                ideas.push(mockIdea);
+                console.log(`Idea simulada generada para el día ${i + 1} después de fallos en la API`);
+              } catch (mockError) {
+                console.error(`Error al generar idea simulada para el día ${i + 1}:`, mockError);
+              }
+            } else {
+              // Esperar un poco antes del siguiente reintento
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
         }
       }
 

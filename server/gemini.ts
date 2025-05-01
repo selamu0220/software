@@ -109,9 +109,39 @@ export async function generateVideoIdea(params: GenerationRequest): Promise<Vide
     }
   } catch (error) {
     console.error("Error al generar idea de video con Gemini:", error);
+    
+    // Verificar si es un error de cuota o de API key
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorString = errorMessage.toLowerCase();
+    const isQuotaError = errorString.includes('quota') || errorString.includes('429') || errorString.includes('too many requests');
+    const isAuthError = errorString.includes('auth') || errorString.includes('key') || errorString.includes('401') || errorString.includes('403');
+    
     if (params.geminiApiKey) {
-      console.error("Error con API key personalizada. Puede ser inválida o estar expirada.");
+      console.error("Error con API key personalizada. Puede ser inválida, estar expirada o haber alcanzado su cuota.");
     }
+    
+    if (isQuotaError) {
+      console.warn("Se ha excedido la cuota de la API de Gemini. Se usará una generación alternativa.");
+      
+      // Intentar usar OpenAI si está configurada cuando hay error de cuota
+      if (process.env.OPENAI_API_KEY) {
+        try {
+          console.log("Intentando generación con OpenAI como alternativa...");
+          const openaiGen = await import('./openai');
+          return await openaiGen.generateVideoIdea(params);
+        } catch (openaiError) {
+          console.error("Error al generar idea de video con OpenAI:", openaiError);
+          // Si OpenAI también falla, usar generación simulada
+        }
+      }
+    }
+    
+    if (isAuthError) {
+      console.warn("Error de autenticación con la API de Gemini. Verifique su API key.");
+    }
+    
+    // Como último recurso, usar la generación simulada
+    console.warn("Usando generación simulada como último recurso.");
     return getMockVideoIdea(params);
   }
 }
@@ -178,8 +208,9 @@ Responde ÚNICAMENTE con JSON válido, sin texto adicional.
 
 /**
  * Función de respaldo para obtener una idea de video simulada
+ * Exportada para poder ser usada como alternativa cuando falla la API
  */
-function getMockVideoIdea(params: GenerationRequest): VideoIdeaContent {
+export function getMockVideoIdea(params: GenerationRequest): VideoIdeaContent {
   const { category, subcategory, videoLength, titleTemplate } = params;
   
   // Si hay una plantilla de título seleccionada, úsala o proporciona una por defecto
