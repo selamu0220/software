@@ -12,14 +12,16 @@ import { CopyIcon, DownloadIcon, SaveIcon, Share2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { VideoIdeaContent } from "@/lib/openai";
+import AddToCalendarButton from "@/components/ideas/AddToCalendarButton";
 
 interface ResultViewProps {
   ideaData: VideoIdeaContent | null;
   onSave: (idea: VideoIdeaContent) => void;
   user: any;
+  videoIdeaId?: number;
 }
 
-export default function ResultView({ ideaData, onSave, user }: ResultViewProps) {
+export default function ResultView({ ideaData, onSave, user, videoIdeaId }: ResultViewProps) {
   const { toast } = useToast();
 
   if (!ideaData) {
