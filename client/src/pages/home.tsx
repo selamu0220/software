@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { User, VideoIdea } from "@shared/schema";
-import { VideoIdeaContent } from "@/lib/openai";
+import { VideoIdeaContent, MultiGenerationResponse } from "@/lib/openai";
 import Hero from "@/components/home/Hero";
 import Generator from "@/components/home/Generator";
 import ResultView from "@/components/home/ResultView";
 import WeeklyGenerator from "@/components/home/WeeklyGenerator";
+import WeeklyPlanView from "@/components/home/WeeklyPlanView";
+import ScriptViewer from "@/components/home/ScriptViewer";
 import CalendarPreview from "@/components/home/CalendarPreview";
 import Templates from "@/components/home/Templates";
 import ThumbnailIdeas from "@/components/home/ThumbnailIdeas";
@@ -19,10 +21,12 @@ interface HomeProps {
 
 export default function Home({ user }: HomeProps) {
   const [generatedIdea, setGeneratedIdea] = useState<VideoIdeaContent | null>(null);
-  const [weeklyIdeas, setWeeklyIdeas] = useState<VideoIdeaContent[]>([]);
+  const [weeklyPlan, setWeeklyPlan] = useState<MultiGenerationResponse | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [savedIdeaId, setSavedIdeaId] = useState<number | null>(null);
   const [generationParams, setGenerationParams] = useState<GenerationRequest | null>(null);
+  const [selectedScriptViewerOpen, setSelectedScriptViewerOpen] = useState(false);
+  const [selectedScript, setSelectedScript] = useState<VideoIdeaContent | null>(null);
   const { toast } = useToast();
 
   const handleIdeaGenerated = (idea: VideoIdeaContent, params: GenerationRequest) => {
@@ -30,12 +34,24 @@ export default function Home({ user }: HomeProps) {
     setGenerationParams(params);
   };
   
-  const handleWeeklyIdeasGenerated = (ideas: VideoIdeaContent[]) => {
-    setWeeklyIdeas(ideas);
+  const handleWeeklyIdeasGenerated = (weeklyPlanData: MultiGenerationResponse) => {
+    // Actualizar el estado con el plan semanal
+    setWeeklyPlan(weeklyPlanData);
+    
     // Si hay ideas generadas, mostrar la primera
-    if (ideas.length > 0) {
-      setGeneratedIdea(ideas[0]);
+    if (weeklyPlanData.ideas && weeklyPlanData.ideas.length > 0) {
+      setGeneratedIdea(weeklyPlanData.ideas[0]);
     }
+  };
+  
+  const handleSelectIdea = (idea: VideoIdeaContent) => {
+    setGeneratedIdea(idea);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  const openScriptViewer = (idea: VideoIdeaContent) => {
+    setSelectedScript(idea);
+    setSelectedScriptViewerOpen(true);
   };
 
   const saveIdeaToProfile = async (idea: VideoIdeaContent) => {

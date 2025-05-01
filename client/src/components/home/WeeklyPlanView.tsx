@@ -57,7 +57,7 @@ export default function WeeklyPlanView({ weeklyPlan, onSelectIdea }: WeeklyPlanV
       });
       
       // Invalidar caché para refrescar el calendario
-      queryClient.invalidateQueries(['/api/calendar']);
+      queryClient.invalidateQueries({ queryKey: ['/api/calendar'] });
       
       toast({
         title: 'Añadido al calendario',
@@ -117,7 +117,7 @@ export default function WeeklyPlanView({ weeklyPlan, onSelectIdea }: WeeklyPlanV
       }
       
       // Invalidar caché para refrescar el calendario
-      queryClient.invalidateQueries(['/api/calendar']);
+      queryClient.invalidateQueries({ queryKey: ['/api/calendar'] });
       
       toast({
         title: 'Plan semanal añadido',
