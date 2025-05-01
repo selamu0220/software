@@ -1,13 +1,16 @@
 import { 
   users, 
   videoIdeas, 
-  calendarEntries, 
+  calendarEntries,
+  userVideos,
   type User, 
   type InsertUser, 
   type VideoIdea, 
   type InsertVideoIdea, 
   type CalendarEntry, 
   type InsertCalendarEntry,
+  type UserVideo,
+  type InsertUserVideo,
   type UpdateUser
 } from "@shared/schema";
 import { db } from "./db";
@@ -39,23 +42,34 @@ export interface IStorage {
   getCalendarEntriesByMonth(userId: number, year: number, month: number): Promise<CalendarEntry[]>;
   updateCalendarEntry(id: number, updates: Partial<CalendarEntry>): Promise<CalendarEntry>;
   deleteCalendarEntry(id: number): Promise<boolean>;
+  
+  // User videos operations
+  createUserVideo(video: InsertUserVideo): Promise<UserVideo>;
+  getUserVideo(id: number): Promise<UserVideo | undefined>;
+  getUserVideosByUser(userId: number): Promise<UserVideo[]>;
+  deleteUserVideo(id: number): Promise<boolean>;
+  updateUserVideo(id: number, updates: Partial<UserVideo>): Promise<UserVideo>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private videoIdeas: Map<number, VideoIdea>;
   private calendarEntries: Map<number, CalendarEntry>;
+  private userVideos: Map<number, UserVideo>;
   private userIdCounter: number;
   private videoIdeaIdCounter: number;
   private calendarEntryIdCounter: number;
+  private userVideoIdCounter: number;
 
   constructor() {
     this.users = new Map();
     this.videoIdeas = new Map();
     this.calendarEntries = new Map();
+    this.userVideos = new Map();
     this.userIdCounter = 1;
     this.videoIdeaIdCounter = 1;
     this.calendarEntryIdCounter = 1;
+    this.userVideoIdCounter = 1;
   }
 
   // User operations
@@ -140,7 +154,13 @@ export class MemStorage implements IStorage {
   async createVideoIdea(idea: InsertVideoIdea): Promise<VideoIdea> {
     const id = this.videoIdeaIdCounter++;
     const now = new Date();
-    const videoIdea: VideoIdea = { ...idea, id, createdAt: now };
+    // Ensure userId is always defined as required by VideoIdea type
+    const videoIdea: VideoIdea = { 
+      ...idea, 
+      id, 
+      createdAt: now,
+      userId: idea.userId || null 
+    };
     this.videoIdeas.set(id, videoIdea);
     return videoIdea;
   }
@@ -170,7 +190,13 @@ export class MemStorage implements IStorage {
   // Calendar entries operations
   async createCalendarEntry(entry: InsertCalendarEntry): Promise<CalendarEntry> {
     const id = this.calendarEntryIdCounter++;
-    const calendarEntry: CalendarEntry = { ...entry, id };
+    // Ensure optional fields are properly set for CalendarEntry type
+    const calendarEntry: CalendarEntry = { 
+      ...entry, 
+      id,
+      videoIdeaId: entry.videoIdeaId || null,
+      completed: entry.completed ?? false
+    };
     this.calendarEntries.set(id, calendarEntry);
     return calendarEntry;
   }
@@ -205,6 +231,48 @@ export class MemStorage implements IStorage {
 
   async deleteCalendarEntry(id: number): Promise<boolean> {
     return this.calendarEntries.delete(id);
+  }
+  
+  // User videos operations
+  async createUserVideo(video: InsertUserVideo): Promise<UserVideo> {
+    const id = this.userVideoIdCounter++;
+    const now = new Date();
+    // Ensure optional fields are properly set for UserVideo type
+    const userVideo: UserVideo = { 
+      ...video, 
+      id, 
+      uploadDate: now,
+      description: video.description || null,
+      duration: video.duration || null,
+      thumbnailPath: video.thumbnailPath || null,
+      isPublic: video.isPublic ?? false
+    };
+    this.userVideos.set(id, userVideo);
+    return userVideo;
+  }
+
+  async getUserVideo(id: number): Promise<UserVideo | undefined> {
+    return this.userVideos.get(id);
+  }
+
+  async getUserVideosByUser(userId: number): Promise<UserVideo[]> {
+    return Array.from(this.userVideos.values()).filter(
+      (video) => video.userId === userId,
+    );
+  }
+
+  async deleteUserVideo(id: number): Promise<boolean> {
+    return this.userVideos.delete(id);
+  }
+
+  async updateUserVideo(id: number, updates: Partial<UserVideo>): Promise<UserVideo> {
+    const video = await this.getUserVideo(id);
+    if (!video) {
+      throw new Error(`User video with id ${id} not found`);
+    }
+    const updatedVideo = { ...video, ...updates };
+    this.userVideos.set(id, updatedVideo);
+    return updatedVideo;
   }
 }
 
@@ -391,6 +459,50 @@ export class DatabaseStorage implements IStorage {
       .returning({ id: calendarEntries.id });
     
     return result.length > 0;
+  }
+  
+  // User videos operations
+  async createUserVideo(video: InsertUserVideo): Promise<UserVideo> {
+    const [userVideo] = await db.insert(userVideos)
+      .values(video)
+      .returning();
+    
+    return userVideo;
+  }
+
+  async getUserVideo(id: number): Promise<UserVideo | undefined> {
+    const [video] = await db.select()
+      .from(userVideos)
+      .where(eq(userVideos.id, id));
+    
+    return video;
+  }
+
+  async getUserVideosByUser(userId: number): Promise<UserVideo[]> {
+    return db.select()
+      .from(userVideos)
+      .where(eq(userVideos.userId, userId));
+  }
+
+  async deleteUserVideo(id: number): Promise<boolean> {
+    const result = await db.delete(userVideos)
+      .where(eq(userVideos.id, id))
+      .returning({ id: userVideos.id });
+    
+    return result.length > 0;
+  }
+
+  async updateUserVideo(id: number, updates: Partial<UserVideo>): Promise<UserVideo> {
+    const [video] = await db.update(userVideos)
+      .set(updates)
+      .where(eq(userVideos.id, id))
+      .returning();
+    
+    if (!video) {
+      throw new Error(`User video with id ${id} not found`);
+    }
+    
+    return video;
   }
 }
 
