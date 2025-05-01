@@ -119,67 +119,114 @@ export default function Recording({ user }: RecordingProps) {
   // Start recording function
   const startRecording = async () => {
     try {
-      // Reset chunks
+      // Reset chunks and recording time
       chunksRef.current = [];
+      setRecordingTime(0);
       
       let audioStream: MediaStream | null = null;
       let videoStream: MediaStream | null = null;
       let screenStream: MediaStream | null = null;
       const combinedTracks: MediaStreamTrack[] = [];
       
+      // Detener cualquier stream anterior
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      
       // Get audio if needed
       if (includeAudio) {
-        const audioConstraints: MediaTrackConstraints = {};
-        if (selectedMicrophoneId) {
-          audioConstraints.deviceId = { exact: selectedMicrophoneId };
+        try {
+          const audioConstraints: MediaTrackConstraints = {};
+          if (selectedMicrophoneId) {
+            audioConstraints.deviceId = { exact: selectedMicrophoneId };
+          }
+          
+          audioStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: audioConstraints,
+            video: false
+          });
+          
+          combinedTracks.push(...audioStream.getAudioTracks());
+          console.log("Audio tracks added:", audioStream.getAudioTracks().length);
+        } catch (err) {
+          console.error("Error accediendo al micrófono:", err);
+          toast({
+            title: "Error de micrófono",
+            description: "No se pudo acceder al micrófono. Revisa los permisos.",
+            variant: "destructive",
+          });
         }
-        
-        audioStream = await navigator.mediaDevices.getUserMedia({ 
-          audio: audioConstraints,
-          video: false
-        });
-        
-        combinedTracks.push(...audioStream.getAudioTracks());
       }
       
       // Get video based on selected type
       if (recordingType === "camera" || recordingType === "both") {
-        const videoConstraints: MediaTrackConstraints = {
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        };
-        
-        if (selectedCameraId) {
-          videoConstraints.deviceId = { exact: selectedCameraId };
-        }
-        
-        videoStream = await navigator.mediaDevices.getUserMedia({
-          video: videoConstraints,
-          audio: false
-        });
-        
-        combinedTracks.push(...videoStream.getVideoTracks());
-        
-        // If only camera is selected, display it in the preview
-        if (recordingType === "camera" && videoPreviewRef.current) {
-          videoPreviewRef.current.srcObject = videoStream;
-          videoPreviewRef.current.play().catch(e => console.error("Error playing video:", e));
+        try {
+          const videoConstraints: MediaTrackConstraints = {
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          };
+          
+          if (selectedCameraId) {
+            videoConstraints.deviceId = { exact: selectedCameraId };
+          }
+          
+          videoStream = await navigator.mediaDevices.getUserMedia({
+            video: videoConstraints,
+            audio: false
+          });
+          
+          combinedTracks.push(...videoStream.getVideoTracks());
+          console.log("Video tracks added:", videoStream.getVideoTracks().length);
+          
+          // Display camera in the preview
+          if (videoPreviewRef.current) {
+            videoPreviewRef.current.srcObject = videoStream;
+            await videoPreviewRef.current.play().catch(e => console.error("Error playing video:", e));
+          }
+        } catch (err) {
+          console.error("Error accediendo a la cámara:", err);
+          toast({
+            title: "Error de cámara",
+            description: "No se pudo acceder a la cámara. Revisa los permisos.",
+            variant: "destructive",
+          });
+          if (recordingType === "camera") {
+            throw new Error("No se pudo acceder a la cámara para grabar");
+          }
         }
       }
       
       // Get screen if needed
       if (recordingType === "screen" || recordingType === "both") {
-        screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-          audio: false
-        });
-        
-        combinedTracks.push(...screenStream.getVideoTracks());
-        
-        // Add handler for when user stops sharing screen
-        screenStream.getVideoTracks()[0].onended = () => {
-          stopRecording();
-        };
+        try {
+          screenStream = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: false
+          });
+          
+          combinedTracks.push(...screenStream.getVideoTracks());
+          console.log("Screen tracks added:", screenStream.getVideoTracks().length);
+          
+          // Add handler for when user stops sharing screen
+          screenStream.getVideoTracks()[0].onended = () => {
+            toast({
+              title: "Compartir pantalla cancelado",
+              description: "La grabación se ha detenido porque se canceló la compartición de pantalla.",
+            });
+            stopRecording();
+          };
+        } catch (err) {
+          console.error("Error compartiendo pantalla:", err);
+          toast({
+            title: "Error de pantalla",
+            description: "No se pudo acceder a la pantalla. El usuario canceló o no dio permisos.",
+            variant: "destructive",
+          });
+          if (recordingType === "screen") {
+            throw new Error("No se pudo acceder a la pantalla para grabar");
+          }
+        }
       }
       
       // Create a combined stream
@@ -291,7 +338,7 @@ export default function Recording({ user }: RecordingProps) {
   };
 
   // Process the recorded chunks
-  const processRecording = () => {
+  const processRecording = async () => {
     if (chunksRef.current.length === 0) {
       toast({
         title: "Error",
@@ -304,8 +351,11 @@ export default function Recording({ user }: RecordingProps) {
     setIsProcessing(true);
     
     try {
+      console.log("Procesando grabación con", chunksRef.current.length, "chunks");
+      
       // Create a blob from the chunks
       const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+      console.log("Blob creado:", blob.size, "bytes");
       
       // Create object URL
       const url = URL.createObjectURL(blob);
@@ -323,6 +373,22 @@ export default function Recording({ user }: RecordingProps) {
       };
       
       setRecordedVideos(prev => [newVideo, ...prev]);
+      
+      // Intentar visualizar automáticamente la pestaña de videos grabados
+      setTimeout(() => {
+        const storedVideosTab = document.querySelector('[value="videos"]');
+        if (storedVideosTab && 'click' in storedVideosTab) {
+          (storedVideosTab as HTMLElement).click();
+        }
+        
+        // Y dentro de eso, seleccionar la pestaña local
+        setTimeout(() => {
+          const localVideosTab = document.querySelector('[value="local"]');
+          if (localVideosTab && 'click' in localVideosTab) {
+            (localVideosTab as HTMLElement).click();
+          }
+        }, 100);
+      }, 500);
       
       // Reset chunks
       chunksRef.current = [];
@@ -479,6 +545,31 @@ export default function Recording({ user }: RecordingProps) {
                 <div className="text-muted-foreground text-center p-8">
                   <Camera className="h-16 w-16 mx-auto mb-4 opacity-20" />
                   <p>Vista previa de cámara (disponible durante la grabación)</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => {
+                      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                        .then(stream => {
+                          if (videoPreviewRef.current) {
+                            videoPreviewRef.current.srcObject = stream;
+                            videoPreviewRef.current.play().catch(e => console.error("Error playing video:", e));
+                          }
+                          // No detenemos el stream para que el usuario pueda verse
+                          streamRef.current = stream;
+                        })
+                        .catch(err => {
+                          console.error("Error al obtener acceso a la cámara:", err);
+                          toast({
+                            title: "Error de permisos",
+                            description: "Por favor, concede permisos de cámara y micrófono para usar esta función.",
+                            variant: "destructive",
+                          });
+                        });
+                    }}
+                  >
+                    Ver cámara
+                  </Button>
                 </div>
               )}
               
