@@ -448,6 +448,8 @@ export default function Recording({ user }: RecordingProps) {
       const response = await fetch(video.url);
       const blob = await response.blob();
       
+      console.log("Preparando archivo para subir:", blob.size, "bytes");
+      
       // Create FormData
       const formData = new FormData();
       formData.append('video', blob, `${video.name}.webm`);
@@ -455,18 +457,17 @@ export default function Recording({ user }: RecordingProps) {
       
       setIsProcessing(true);
       
-      // Upload video
-      const uploadResponse = await fetch('/api/upload-video', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
-      });
+      // Upload video usando la API
+      console.log("Iniciando subida del video...");
       
-      if (!uploadResponse.ok) {
-        throw new Error('Error uploading video');
-      }
+      const result = await apiRequest(
+        'POST', 
+        '/api/upload-video', 
+        formData, 
+        true // enviamos como FormData en lugar de JSON
+      );
       
-      const result = await uploadResponse.json();
+      console.log("Resultado de la subida:", result);
       
       toast({
         title: "Video subido",
