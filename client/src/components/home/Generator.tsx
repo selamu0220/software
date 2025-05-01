@@ -44,8 +44,8 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
     templateStyle: TEMPLATE_STYLES[0] || "Educational",
     contentTone: CONTENT_TONES[0] || "Informative",
     titleTemplate: VIDEO_TITLE_TEMPLATES[0] || "",
-    contentType: "idea",
-    timingDetail: false,
+    contentType: "fullScript", // Cambiado de "idea" a "fullScript" para generar guiones completos por defecto
+    timingDetail: true, // Cambiado a true para incluir tiempos en los guiones
   });
 
   // Update subcategories when category changes
@@ -67,8 +67,8 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
       templateStyle: TEMPLATE_STYLES[0] || "Educational",
       contentTone: CONTENT_TONES[0] || "Informative",
       titleTemplate: VIDEO_TITLE_TEMPLATES[0] || "",
-      contentType: "idea",
-      timingDetail: false,
+      contentType: "fullScript", // Ahora también el reset mantiene el tipo de contenido como script completo
+      timingDetail: true,
     });
   };
 

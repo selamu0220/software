@@ -20,6 +20,8 @@ export type VideoIdeaContent = {
   conclusion?: string;
   fullScript?: string | { [section: string]: string };
   timings?: { [section: string]: string } | string[];
+  scriptDuration?: number; // Duración del script en minutos
+  wordCount?: number; // Número aproximado de palabras
 };
 
 /**
@@ -38,7 +40,7 @@ export async function generateVideoIdea(
         if (errorData.limitReached) {
           throw new Error("DAILY_LIMIT_REACHED");
         }
-      } catch (e) {
+      } catch (e: any) {
         if (e.message === "DAILY_LIMIT_REACHED") {
           throw e;
         }
