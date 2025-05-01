@@ -99,6 +99,15 @@ export default function Home({ user }: HomeProps) {
         />
       )}
       
+      {/* Generación de ideas semanales */}
+      {user && (
+        <WeeklyGenerator 
+          user={user}
+          generationParams={generationParams}
+          onSuccess={handleWeeklyIdeasGenerated}
+        />
+      )}
+      
       {!user && generatedIdea && (
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 mb-12">
           <div className="bg-muted/30 border border-border rounded-lg p-6 text-center">

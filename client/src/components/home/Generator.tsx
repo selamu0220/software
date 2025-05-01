@@ -24,7 +24,7 @@ import {
 import { User } from "@shared/schema";
 
 interface GeneratorProps {
-  onIdeaGenerated: (idea: VideoIdeaContent) => void;
+  onIdeaGenerated: (idea: VideoIdeaContent, params: GenerationRequest) => void;
   isGenerating: boolean;
   setIsGenerating: (isGenerating: boolean) => void;
   user: User | null;
@@ -114,7 +114,7 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
       setIsGenerating(true);
       
       const generatedIdea = await generateVideoIdea(formData);
-      onIdeaGenerated(generatedIdea);
+      onIdeaGenerated(generatedIdea, formData);
       
       // Limpiar resultados anteriores
       setWeeklyResult(null);
@@ -163,7 +163,7 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
       
       // Mostrar primera idea en la vista principal
       if (result.ideas && result.ideas.length > 0) {
-        onIdeaGenerated(result.ideas[0]);
+        onIdeaGenerated(result.ideas[0], formData);
       }
       
       toast({
@@ -205,7 +205,7 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
       
       // Mostrar primera idea en la vista principal
       if (result.ideas && result.ideas.length > 0) {
-        onIdeaGenerated(result.ideas[0]);
+        onIdeaGenerated(result.ideas[0], formData);
       }
       
       toast({
@@ -511,7 +511,7 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
                     {(weeklyResult?.ideas || monthlyResult?.ideas)?.map((idea, index) => (
                       <div key={index} 
                            className="border border-border rounded-md p-4 hover:bg-muted/50 transition-colors cursor-pointer idea-card"
-                           onClick={() => onIdeaGenerated(idea)}>
+                           onClick={() => onIdeaGenerated(idea, formData)}>
                         <p className="text-xs font-medium text-primary/90 mb-1 font-mono">DÍA {index + 1}</p>
                         <h4 className="font-semibold font-heading mb-2">{idea.title}</h4>
                         <p className="text-sm text-muted-foreground line-clamp-2">
