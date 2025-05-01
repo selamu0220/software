@@ -7,12 +7,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { User } from "@shared/schema";
 import { GenerationRequest } from "@shared/schema";
-import { VideoIdeaContent } from "@/lib/openai";
+import { VideoIdeaContent, MultiGenerationResponse } from "@/lib/openai";
 
 interface WeeklyGeneratorProps {
   user: User | null;
   generationParams: GenerationRequest | null;
-  onSuccess: (ideas: VideoIdeaContent[]) => void;
+  onSuccess: (response: MultiGenerationResponse) => void;
 }
 
 export default function WeeklyGenerator({ 
@@ -72,7 +72,7 @@ export default function WeeklyGenerator({
         description: `Se generaron ${result.count} ideas para esta semana`,
       });
 
-      onSuccess(result.ideas);
+      onSuccess(result);
     } catch (error: any) {
       setError(error.message || "Error al generar ideas semanales");
       toast({

@@ -117,11 +117,28 @@ export default function Home({ user }: HomeProps) {
       
       {/* Generación de ideas semanales */}
       {user && (
-        <WeeklyGenerator 
-          user={user}
-          generationParams={generationParams}
-          onSuccess={handleWeeklyIdeasGenerated}
-        />
+        <>
+          <WeeklyGenerator 
+            user={user}
+            generationParams={generationParams}
+            onSuccess={handleWeeklyIdeasGenerated}
+          />
+          
+          {weeklyPlan && weeklyPlan.ideas && weeklyPlan.ideas.length > 0 && (
+            <WeeklyPlanView 
+              weeklyPlan={weeklyPlan} 
+              onSelectIdea={handleSelectIdea}
+            />
+          )}
+          
+          {selectedScript && (
+            <ScriptViewer
+              videoIdea={selectedScript}
+              isOpen={selectedScriptViewerOpen}
+              onClose={() => setSelectedScriptViewerOpen(false)}
+            />
+          )}
+        </>
       )}
       
       {!user && generatedIdea && (
