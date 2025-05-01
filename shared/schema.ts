@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -38,10 +38,27 @@ export const calendarEntries = pgTable("calendar_entries", {
   completed: boolean("completed").default(false).notNull(),
 });
 
+// User videos model
+export const userVideos = pgTable("user_videos", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  fileName: text("file_name").notNull(),
+  filePath: text("file_path").notNull(),
+  fileSize: integer("file_size").notNull(),
+  mimeType: varchar("mime_type", { length: 255 }).notNull(),
+  duration: integer("duration"),
+  thumbnailPath: text("thumbnail_path"),
+  uploadDate: timestamp("upload_date").defaultNow().notNull(),
+  isPublic: boolean("is_public").default(false).notNull(),
+});
+
 // Define relations
 export const usersRelations = relations(users, ({ many }) => ({
   videoIdeas: many(videoIdeas),
   calendarEntries: many(calendarEntries),
+  userVideos: many(userVideos),
 }));
 
 export const videoIdeasRelations = relations(videoIdeas, ({ one, many }) => ({
@@ -60,6 +77,13 @@ export const calendarEntriesRelations = relations(calendarEntries, ({ one }) => 
   videoIdea: one(videoIdeas, {
     fields: [calendarEntries.videoIdeaId],
     references: [videoIdeas.id],
+  }),
+}));
+
+export const userVideosRelations = relations(userVideos, ({ one }) => ({
+  user: one(users, {
+    fields: [userVideos.userId],
+    references: [users.id],
   }),
 }));
 
@@ -87,6 +111,19 @@ export const insertCalendarEntrySchema = createInsertSchema(calendarEntries).pic
   completed: true,
 });
 
+export const insertUserVideoSchema = createInsertSchema(userVideos).pick({
+  userId: true,
+  title: true,
+  description: true,
+  fileName: true,
+  filePath: true,
+  fileSize: true,
+  mimeType: true,
+  duration: true,
+  thumbnailPath: true,
+  isPublic: true,
+});
+
 // Generation schema - for requesting idea generation
 export const generationRequestSchema = z.object({
   category: z.string(),
@@ -107,6 +144,8 @@ export type InsertVideoIdea = z.infer<typeof insertVideoIdeaSchema>;
 export type VideoIdea = typeof videoIdeas.$inferSelect;
 export type InsertCalendarEntry = z.infer<typeof insertCalendarEntrySchema>;
 export type CalendarEntry = typeof calendarEntries.$inferSelect;
+export type InsertUserVideo = z.infer<typeof insertUserVideoSchema>;
+export type UserVideo = typeof userVideos.$inferSelect;
 export type GenerationRequest = z.infer<typeof generationRequestSchema>;
 
 // User profile update schema

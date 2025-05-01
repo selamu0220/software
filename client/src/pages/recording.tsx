@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  MicrophoneIcon, 
+  Mic, 
   Camera, 
   Video, 
   Upload, 
@@ -169,10 +169,7 @@ export default function Recording({ user }: RecordingProps) {
       // Get screen if needed
       if (recordingType === "screen" || recordingType === "both") {
         screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: {
-            cursor: "always",
-            displaySurface: "monitor"
-          },
+          video: true,
           audio: false
         });
         
