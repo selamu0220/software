@@ -271,3 +271,37 @@ export const CONTENT_TONES = [
   "Serious",
   "Inspirational"
 ];
+
+// Plantillas de títulos personalizados
+export const VIDEO_TITLE_TEMPLATES = [
+  "Top [Número] Secretos que Nadie te Cuenta sobre [Tema]",
+  "10 Mejores Maneras de [Acción] sin [Obstáculo]",
+  "[Número] Tips para [Objetivo] como Profesional",
+  "Top [Número] Errores que Debes Evitar en [Tema]",
+  "10 Trucos Geniales para [Acción] que Cambiarán tu [Aspecto de Vida]",
+  "[Número] Cosas que Debes Saber Antes de [Acción/Tema]",
+  "Top [Número] Ideas Creativas para [Objetivo]",
+  "[Número] Hábitos que te Harán Mejor en [Tema]",
+  "Top [Número] Tendencias en [Tema] que Debes Conocer",
+  "[Número] Razones por las que [Acción/Tema] está arruinando tu vida (y cómo arreglarlo)",
+  "¿Quieres [Resultado]? Aquí tienes [Número] pasos que realmente funcionan",
+  "[Número] Secretos que usan los expertos en [Tema] (y tú no)",
+  "[Número] Cosas que JAMÁS deberías hacer si quieres [Objetivo]",
+  "[Número] Trucos psicológicos para [Acción] sin darte cuenta",
+  "Lo que NADIE te dice sobre [Tema] (y deberías saber YA)",
+  "[Número] Métodos poco conocidos para [Resultado brutal]",
+  "[Número] Señales de que lo estás haciendo MAL en [Tema]",
+  "[Número] Estrategias ridículamente fáciles para [Acción]",
+  "[Número] Cambios pequeños que transformarán tu [Área de Vida]",
+  "[Número] errores que estás cometiendo sin saberlo en [Tema]",
+  "Si haces esto, estás saboteando tu [Meta]. Haz esto en su lugar",
+  "[Número] Hacks que solo los pros usan para [Acción]",
+  "La guía DEFINITIVA para [Acción/Tema] en [Año]",
+  "[Número] formas de [Acción] en menos de [X minutos]",
+  "¿Vale la pena [Acción]? Esto es lo que descubrí (spoiler: flipas)",
+  "[Número] mitos sobre [Tema] que están jodiéndote la vida",
+  "[Número] verdades incómodas sobre [Tema] que necesitas oír",
+  "[Número] Cosas que Desearía Haber Sabido Antes de Empezar en [Tema]",
+  "Haz Esto Durante [Tiempo Corto] y Verás Cambios Brutales en [Resultado]",
+  "¿Estás Estancado en [Tema]? Prueba Estos [Número] Cambios Urgentes"
+];

@@ -95,6 +95,7 @@ export const generationRequestSchema = z.object({
   videoLength: z.string(),
   templateStyle: z.string(),
   contentTone: z.string(),
+  titleTemplate: z.string().optional(),
 });
 
 // Types
