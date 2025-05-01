@@ -312,8 +312,7 @@ export default function ResultView({ ideaData, onSave, user, videoIdeaId }: Resu
             </Button>
             {user && videoIdeaId && (
               <AddToCalendarButton 
-                videoIdeaId={videoIdeaId} 
-                title={ideaData.title} 
+                videoIdeaId={videoIdeaId}
               />
             )}
           </div>

@@ -1,85 +1,41 @@
-import { useLocation } from "wouter";
 import { useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLocation } from "wouter";
 import { User } from "@shared/schema";
 import ContentCalendar from "@/components/calendar/ContentCalendar";
-import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Clock, Info } from "lucide-react";
 
 interface CalendarPageProps {
   user: User | null;
 }
 
-export default function CalendarPage({ user }: CalendarPageProps) {
-  const [location, setLocation] = useLocation();
+export default function Calendar({ user }: CalendarPageProps) {
+  const [, setLocation] = useLocation();
 
   // Redirect to login if not authenticated
-  if (!user) {
-    // Use useEffect para redirigir después del renderizado
-    useEffect(() => {
-      setLocation('/login');
-    }, []);
-    return null;
+  useEffect(() => {
+    if (user === null) {
+      setLocation("/login");
+    }
+  }, [user, setLocation]);
+
+  // If user is null, we're redirecting, don't render anything yet
+  if (user === null) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
-  const isPremium = user.isPremium || user.lifetimeAccess;
-
   return (
-    <div className="container py-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold font-heading">Content Calendar</h1>
-          <p className="text-muted-foreground">
-            Plan and organize your YouTube content schedule
-          </p>
-        </div>
+    <div className="bg-background min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <h1 className="text-3xl font-bold tracking-tight">Calendario de Contenido</h1>
+        <p className="text-muted-foreground mt-2 mb-8">
+          Organiza y programa tu contenido para mantener una estrategia constante.
+        </p>
         
-        {!isPremium && (
-          <Link href="/subscribe">
-            <Button>
-              Upgrade to Premium
-            </Button>
-          </Link>
-        )}
+        <ContentCalendar user={user} />
       </div>
-      
-      <ContentCalendar userId={user.id} />
-      
-      {!isPremium && (
-        <div className="mt-8">
-          <Card className="border border-primary bg-black/5">
-            <CardHeader>
-              <CardTitle>Get More with Premium</CardTitle>
-              <CardDescription>
-                Upgrade to premium for unlimited idea generation and monthly content planning
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-start gap-4">
-                <Info className="h-6 w-6 text-primary mt-1" />
-                <div>
-                  <h3 className="font-medium">Premium benefits:</h3>
-                  <ul className="list-disc pl-5 mt-2 space-y-1 text-sm">
-                    <li>Unlimited daily idea generation</li>
-                    <li>Monthly content planning (30+ ideas at once)</li>
-                    <li>Advanced analytics and performance tracking</li>
-                    <li>Priority customer support</li>
-                  </ul>
-                </div>
-              </div>
-              
-              <div className="text-center">
-                <Link href="/subscribe">
-                  <Button size="lg">
-                    Upgrade Now
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

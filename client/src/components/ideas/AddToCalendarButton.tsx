@@ -1,140 +1,104 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon, Loader2 } from "lucide-react";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddToCalendarButtonProps {
   videoIdeaId: number;
-  title: string;
+  disabled?: boolean;
 }
 
-const AddToCalendarButton = ({ videoIdeaId, title }: AddToCalendarButtonProps) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+export default function AddToCalendarButton({ videoIdeaId, disabled = false }: AddToCalendarButtonProps) {
   const [date, setDate] = useState<Date>();
+  const [isAdding, setIsAdding] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
-  const addToCalendarMutation = useMutation({
-    mutationFn: async ({ ideaId, date }: { ideaId: number; date: Date }) => {
-      return await apiRequest(
-        "POST", 
-        `/api/video-ideas/${ideaId}/add-to-calendar`,
-        { date: date.toISOString() }
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar'] });
-      toast({
-        title: "Idea agregada al calendario",
-        description: "La idea de video ha sido programada exitosamente",
-      });
-      setIsDialogOpen(false);
-    },
-    onError: (error) => {
-      console.error("Error adding to calendar:", error);
-      toast({
-        title: "Error al agregar al calendario",
-        description: "No se pudo agregar la idea al calendario. Intenta de nuevo más tarde.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const handleAddToCalendar = () => {
+  const handleAddToCalendar = async () => {
     if (!date) {
       toast({
-        title: "Fecha requerida",
-        description: "Por favor selecciona una fecha para programar este video",
+        title: "Error",
+        description: "Por favor selecciona una fecha",
         variant: "destructive",
       });
       return;
     }
 
-    addToCalendarMutation.mutate({ ideaId: videoIdeaId, date });
+    setIsAdding(true);
+    try {
+      const response = await apiRequest(
+        "POST", 
+        `/api/video-ideas/${videoIdeaId}/add-to-calendar`,
+        { date: date.toISOString() }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to add to calendar");
+      }
+
+      toast({
+        title: "¡Agregado al calendario!",
+        description: `Contenido agendado para el ${format(date, 'PPPP', { locale: es })}`,
+      });
+      
+      setIsOpen(false);
+    } catch (error) {
+      console.error("Error adding to calendar:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo agregar al calendario. Inténtalo nuevamente más tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <CalendarIcon className="h-4 w-4 mr-1" />
-          Agregar al Calendario
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button 
+          variant="outline" 
+          className="mt-2 w-full sm:w-auto"
+          disabled={disabled}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          Agregar al calendario
         </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Agregar al Calendario</DialogTitle>
-          <DialogDescription>
-            Programa la idea "{title}" en tu calendario de contenido.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP", { locale: es }) : "Selecciona una fecha"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  disabled={(date) => date < new Date()}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-            Cancelar
-          </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <div className="p-3">
+          <h3 className="font-medium mb-2">
+            Selecciona una fecha para este contenido
+          </h3>
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={setDate}
+            locale={es}
+            initialFocus
+          />
           <Button 
-            onClick={handleAddToCalendar}
-            disabled={addToCalendarMutation.isPending || !date}
+            onClick={handleAddToCalendar} 
+            className="w-full mt-2"
+            disabled={!date || isAdding}
           >
-            {addToCalendarMutation.isPending ? (
+            {isAdding ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
                 Agregando...
               </>
             ) : (
-              "Agregar al Calendario"
+              'Confirmar'
             )}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
-};
-
-export default AddToCalendarButton;
+}

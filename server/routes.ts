@@ -148,6 +148,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch calendar entries" });
     }
   });
+  
+  // Update calendar entry (mark as completed/uncompleted)
+  app.patch("/api/calendar/entry/:id", requireAuth, async (req, res) => {
+    try {
+      const entryId = parseInt(req.params.id);
+      const { completed } = req.body;
+      
+      if (typeof completed !== "boolean") {
+        return res.status(400).json({ message: "Valid 'completed' field is required" });
+      }
+      
+      // Get the calendar entry
+      const entry = await storage.getCalendarEntry(entryId);
+      if (!entry) {
+        return res.status(404).json({ message: "Calendar entry not found" });
+      }
+      
+      // Check if the entry belongs to the user
+      if (entry.userId !== req.session.userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      // Update the entry
+      const updatedEntry = await storage.updateCalendarEntry(entryId, { completed });
+      
+      res.json(updatedEntry);
+    } catch (error) {
+      console.error("Error updating calendar entry:", error);
+      res.status(500).json({ message: "Failed to update calendar entry" });
+    }
+  });
 
   // Add video idea to calendar
   app.post(
