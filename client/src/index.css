@@ -120,6 +120,11 @@
   @apply px-2 py-1 rounded-md bg-primary text-primary-foreground border border-primary/70 text-xs truncate hover:bg-primary/90 transition-colors font-semibold shadow-sm;
 }
 
+/* Calendar day with content */
+.withContent {
+  @apply bg-primary/10 text-primary font-medium rounded-full;
+}
+
 /* For video idea cards */
 .idea-card {
   @apply transition-all duration-300 hover:bg-accent bg-card border border-border;
