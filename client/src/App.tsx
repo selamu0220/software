@@ -12,7 +12,7 @@ import Profile from "@/pages/profile";
 import Subscribe from "@/pages/subscribe";
 import Teleprompter from "@/pages/teleprompter";
 import Recording from "@/pages/recording";
-import Metrics from "@/pages/metrics";
+import MetricsCreator from "@/pages/metrics";
 import Recursos from "@/pages/recursos";
 import RecursoDetalle from "@/pages/recurso-detalle";
 import SubirRecurso from "@/pages/subir-recurso";
@@ -88,7 +88,7 @@ function App() {
             <Route path="/subscribe" component={() => <Subscribe user={user} onSubscriptionUpdate={setUser} />} />
             <Route path="/teleprompter" component={() => <Teleprompter user={user} />} />
             <Route path="/recording" component={() => <Recording user={user} />} />
-            <Route path="/metrics" component={() => <Metrics />} />
+            <Route path="/metrics" component={() => <MetricsCreator />} />
             
             {/* Nuevas rutas para la biblioteca de recursos */}
             <Route path="/recursos" component={() => <Recursos />} />

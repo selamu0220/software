@@ -584,58 +584,6 @@ function GrowthMetrics({ viewsData, subscribersData }: { viewsData: any[], subsc
   );
 }
 
-function EngagementMetrics({ data }: { data: any[] }) {
-  return (
-    <div className="h-[300px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-          <XAxis dataKey="name" stroke="#888" />
-          <YAxis stroke="#888" />
-          <Tooltip 
-            contentStyle={{ backgroundColor: '#333', border: 'none' }}
-            itemStyle={{ color: '#fff' }}
-          />
-          <Legend />
-          <Bar dataKey="likes" fill="#8884d8" radius={[4, 4, 0, 0]} name="Likes" />
-          <Bar dataKey="comments" fill="#82ca9d" radius={[4, 4, 0, 0]} name="Comentarios" />
-          <Bar dataKey="shares" fill="#ffc658" radius={[4, 4, 0, 0]} name="Compartidos" />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function AudienceMetrics({ data }: { data: any[] }) {
-  return (
-    <div className="h-[300px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            labelLine={false}
-            outerRadius={120}
-            fill="#8884d8"
-            dataKey="value"
-            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip 
-            contentStyle={{ backgroundColor: '#333', border: 'none' }}
-            itemStyle={{ color: '#fff' }}
-            formatter={(value) => [`${value}%`, 'Audiencia']}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
 function ContentAnalysis({ topVideos, contentPerformance }: { topVideos: any[], contentPerformance: any[] }) {
   return (
     <Tabs defaultValue="performance">
