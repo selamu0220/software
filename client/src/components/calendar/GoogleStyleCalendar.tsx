@@ -460,7 +460,7 @@ export default function GoogleStyleCalendar({ user }: GoogleStyleCalendarProps) 
                                 className={`
                                   px-2 py-1 rounded text-xs truncate 
                                   ${entry.completed ? 'bg-green-500/20 text-green-500' : 'bg-blue-500/20 text-blue-500'}`}
-                                style={{ backgroundColor: `${entry.color}20`, color: entry.color }}
+                                style={{ backgroundColor: entry.color ? `${entry.color}20` : undefined, color: entry.color || undefined }}
                               >
                                 {entry.title}
                               </div>
@@ -742,7 +742,7 @@ export default function GoogleStyleCalendar({ user }: GoogleStyleCalendarProps) 
                       <div 
                         key={entry.id}
                         className="p-3 rounded-md border border-border hover:bg-muted/50"
-                        style={{ borderLeftColor: entry.color, borderLeftWidth: '4px' }}
+                        style={{ borderLeftColor: entry.color || undefined, borderLeftWidth: '4px' }}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex items-center">

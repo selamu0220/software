@@ -1,8 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateVideoIdea, aiAssistant, aiAssistRequestSchema } from "./gemini";
-import { VideoIdeaContent } from "@/lib/openai";
+import { generateVideoIdea, aiAssistant, aiAssistRequestSchema, VideoIdeaContent } from "./gemini";
 import {
   createMonthlySubscription,
   createLifetimePayment,
