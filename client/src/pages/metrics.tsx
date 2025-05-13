@@ -28,7 +28,7 @@ import { Separator } from "@/components/ui/separator";
 // Colores para gráficos
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
-// Página de creador de métricas
+// Página de creador de gráficos y elementos para videos
 export default function MetricsCreator() {
   const [channelName, setChannelName] = useState('Mi Canal');
   const [selectedChart, setSelectedChart] = useState('views');
@@ -139,30 +139,42 @@ export default function MetricsCreator() {
     }, 1000);
   };
 
-  // Función para exportar gráficos como imágenes (simulada)
+  // Función para exportar elementos como video MP4 con fondo verde (simulada)
   const exportChart = () => {
     toast({
       title: "Exportación iniciada",
-      description: "Exportando gráfico actual como imagen...",
+      description: "Renderizando elemento con fondo verde en formato MP4...",
     });
     
+    // Simulamos el tiempo de renderizado
     setTimeout(() => {
+      // En una implementación real, aquí generaríamos el video con ffmpeg
       toast({
-        title: "Exportación completada",
-        description: "El gráfico ha sido guardado como imagen",
+        title: "Renderizado completado",
+        description: "El elemento ha sido exportado como video_elemento.mp4",
+        duration: 3000,
       });
-    }, 1500);
+      
+      // Simulamos la descarga del archivo
+      setTimeout(() => {
+        toast({
+          title: "Descarga iniciada",
+          description: "Descargando video_elemento.mp4",
+          duration: 2000,
+        });
+      }, 500);
+    }, 2500);
   };
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-4xl font-bold mb-8 text-center">Creador de Métricas</h1>
+      <h1 className="text-4xl font-bold mb-8 text-center">Creador de Gráficos para Videos</h1>
       
       <div className="mb-8 max-w-4xl mx-auto">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Personaliza tus métricas</span>
+              <span>Crea elementos gráficos para tus videos</span>
               <div className="flex space-x-2">
                 <Button
                   variant="outline"
@@ -181,36 +193,36 @@ export default function MetricsCreator() {
                   disabled={isLoading}
                 >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
-                  {isLoading ? "Generando..." : "Generar Datos"}
+                  {isLoading ? "Generando..." : "Generar Elementos"}
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   className="h-8"
                   onClick={exportChart}
                 >
                   <Download className="h-4 w-4 mr-1" />
-                  Exportar
+                  Exportar MP4
                 </Button>
               </div>
             </CardTitle>
             <CardDescription>
-              Crea, personaliza y visualiza métricas para tu canal
+              Crea gráficos, títulos y elementos con fondo verde para incluir en tus videos
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
               <div className="col-span-1">
-                <Label htmlFor="channel-name" className="mb-2 block">Nombre del Canal</Label>
+                <Label htmlFor="channel-name" className="mb-2 block">Nombre del Proyecto</Label>
                 <Input
                   id="channel-name"
-                  placeholder="Nombre de tu canal"
+                  placeholder="Nombre de tu proyecto o video"
                   value={channelName}
                   onChange={(e) => setChannelName(e.target.value)}
                   className="mb-4"
                 />
                 
-                <Label className="mb-2 block">Tipo de Gráfico</Label>
+                <Label className="mb-2 block">Tipo de Elemento</Label>
                 <Select
                   value={chartType}
                   onValueChange={setChartType}
@@ -219,14 +231,17 @@ export default function MetricsCreator() {
                     <SelectValue placeholder="Selecciona un tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="area">Área</SelectItem>
-                    <SelectItem value="line">Línea</SelectItem>
-                    <SelectItem value="bar">Barras</SelectItem>
+                    <SelectItem value="area">Gráfico de Área</SelectItem>
+                    <SelectItem value="line">Gráfico de Línea</SelectItem>
+                    <SelectItem value="bar">Gráfico de Barras</SelectItem>
+                    <SelectItem value="text">Texto/Título</SelectItem>
+                    <SelectItem value="subtitle">Subtítulo</SelectItem>
+                    <SelectItem value="overlay">Overlay animado</SelectItem>
                   </SelectContent>
                 </Select>
                 
                 <div className="mt-4">
-                  <Label className="mb-2 block">Datos a mostrar</Label>
+                  <Label className="mb-2 block">Estilo de Contenido</Label>
                   <div className="flex flex-col space-y-2">
                     <Button
                       variant={selectedChart === 'views' ? 'default' : 'outline'}
@@ -235,7 +250,7 @@ export default function MetricsCreator() {
                       className="justify-start"
                     >
                       <BarChart2 className="h-4 w-4 mr-2" />
-                      Visualizaciones
+                      Gráficos Estadísticos
                     </Button>
                     <Button
                       variant={selectedChart === 'subscribers' ? 'default' : 'outline'}
@@ -244,7 +259,7 @@ export default function MetricsCreator() {
                       className="justify-start"
                     >
                       <UserCheck className="h-4 w-4 mr-2" />
-                      Suscriptores
+                      Infográficos
                     </Button>
                     <Button
                       variant={selectedChart === 'engagement' ? 'default' : 'outline'}
@@ -253,7 +268,7 @@ export default function MetricsCreator() {
                       className="justify-start"
                     >
                       <Target className="h-4 w-4 mr-2" />
-                      Engagement
+                      Textos Animados
                     </Button>
                     <Button
                       variant={selectedChart === 'audience' ? 'default' : 'outline'}
@@ -262,14 +277,174 @@ export default function MetricsCreator() {
                       className="justify-start"
                     >
                       <PieChartIcon className="h-4 w-4 mr-2" />
-                      Audiencia
+                      Lower Thirds
                     </Button>
                   </div>
                 </div>
               </div>
               
               <div className="col-span-3 h-[400px]">
-                {customizingData && (selectedChart === 'views' || selectedChart === 'subscribers') ? (
+                {chartType === 'overlay' ? (
+                  <div className="h-full flex flex-col">
+                    <h3 className="text-lg font-medium mb-4">
+                      Crea un overlay animado con fondo verde
+                    </h3>
+                    <div className="grid grid-cols-1 gap-6">
+                      <div>
+                        <Label htmlFor="overlay-type" className="mb-2 block">Tipo de Overlay</Label>
+                        <Select defaultValue="lower-third">
+                          <SelectTrigger id="overlay-type">
+                            <SelectValue placeholder="Selecciona un tipo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="lower-third">Lower Third</SelectItem>
+                            <SelectItem value="corner-bug">Corner Bug/Logo</SelectItem>
+                            <SelectItem value="full-frame">Full Frame</SelectItem>
+                            <SelectItem value="split-screen">Split Screen</SelectItem>
+                            <SelectItem value="social-media">Redes Sociales</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="overlay-text" className="mb-2 block">Texto</Label>
+                        <Input
+                          id="overlay-text"
+                          placeholder="Nombre / Título"
+                          className="mb-2"
+                        />
+                        <Input
+                          placeholder="Subtítulo / Descripción (opcional)"
+                          className="mb-4"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label className="mb-2 block">Estilo</Label>
+                        <div className="grid grid-cols-3 gap-2 mb-4">
+                          <div className="border border-muted rounded-md p-2 cursor-pointer hover:border-primary">
+                            <div className="h-12 bg-blue-500 rounded-md mb-1 flex items-end p-1">
+                              <div className="text-white text-xs">Estilo 1</div>
+                            </div>
+                            <p className="text-xs text-center">Moderno</p>
+                          </div>
+                          <div className="border border-muted rounded-md p-2 cursor-pointer hover:border-primary">
+                            <div className="h-12 bg-red-500 rounded-md mb-1 flex items-end p-1">
+                              <div className="text-white text-xs">Estilo 2</div>
+                            </div>
+                            <p className="text-xs text-center">Dinámico</p>
+                          </div>
+                          <div className="border border-muted rounded-md p-2 cursor-pointer hover:border-primary">
+                            <div className="h-12 bg-purple-500 rounded-md mb-1 flex items-end p-1">
+                              <div className="text-white text-xs">Estilo 3</div>
+                            </div>
+                            <p className="text-xs text-center">Elegante</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label className="mb-2 block">Duración</Label>
+                        <div className="flex items-center space-x-4">
+                          <Slider
+                            defaultValue={[5]}
+                            max={15}
+                            step={1}
+                            className="flex-1"
+                          />
+                          <span className="w-16 text-center">5 segs</span>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <div className="relative w-full h-40 bg-[#00B140] rounded-md overflow-hidden">
+                          <div className="absolute bottom-8 left-0 w-2/3 h-16 bg-blue-600 bg-opacity-80 pl-4 flex flex-col justify-center">
+                            <p className="text-white text-xl font-semibold">Nombre del Presentador</p>
+                            <p className="text-white text-sm">Cargo o Descripción</p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 text-center">Vista previa - Fondo verde para chroma key</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : chartType === 'text' || chartType === 'subtitle' ? (
+                  <div className="h-full flex flex-col">
+                    <h3 className="text-lg font-medium mb-4">
+                      {chartType === 'text' ? 'Crea un título con fondo verde' : 'Crea un subtítulo con fondo verde'}
+                    </h3>
+                    <div className="grid grid-cols-1 gap-6">
+                      <div>
+                        <Label htmlFor="text-content" className="mb-2 block">Texto</Label>
+                        <Input
+                          id="text-content"
+                          placeholder={chartType === 'text' ? "Introduce el título..." : "Introduce el subtítulo..."}
+                          className="mb-4"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="font-selector" className="mb-2 block">Fuente</Label>
+                        <Select defaultValue="roboto">
+                          <SelectTrigger id="font-selector">
+                            <SelectValue placeholder="Selecciona una fuente" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="roboto">Roboto</SelectItem>
+                            <SelectItem value="montserrat">Montserrat</SelectItem>
+                            <SelectItem value="openSans">Open Sans</SelectItem>
+                            <SelectItem value="jetbrains">JetBrains Mono</SelectItem>
+                            <SelectItem value="lato">Lato</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <Label className="mb-2 block">Tamaño de fuente</Label>
+                        <Slider
+                          defaultValue={[48]}
+                          max={100}
+                          step={2}
+                          className="mb-4"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label className="mb-2 block">Color</Label>
+                        <div className="flex space-x-2 mb-4">
+                          <div className="w-8 h-8 rounded-full bg-white border border-gray-400 cursor-pointer"></div>
+                          <div className="w-8 h-8 rounded-full bg-yellow-400 cursor-pointer"></div>
+                          <div className="w-8 h-8 rounded-full bg-blue-500 cursor-pointer"></div>
+                          <div className="w-8 h-8 rounded-full bg-red-500 cursor-pointer"></div>
+                          <div className="w-8 h-8 rounded-full bg-green-500 cursor-pointer"></div>
+                          <div className="w-8 h-8 rounded-full bg-purple-500 cursor-pointer"></div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label className="mb-2 block">Animación</Label>
+                        <Select defaultValue="fade">
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona una animación" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="fade">Fade In</SelectItem>
+                            <SelectItem value="slide">Slide In</SelectItem>
+                            <SelectItem value="zoom">Zoom In</SelectItem>
+                            <SelectItem value="bounce">Bounce</SelectItem>
+                            <SelectItem value="typewriter">Typewriter</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <div className="p-4 flex justify-center items-center bg-[#00B140] rounded-md h-32">
+                          <p className="text-white text-4xl font-bold">Vista previa del texto</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 text-center">Fondo verde para chroma key</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : customizingData && (selectedChart === 'views' || selectedChart === 'subscribers') ? (
                   <div className="h-full flex flex-col">
                     <h3 className="text-lg font-medium mb-4">
                       Personaliza los datos de {selectedChart === 'views' ? 'visualizaciones' : 'suscriptores'}
