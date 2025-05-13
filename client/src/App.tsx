@@ -8,6 +8,7 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Dashboard from "@/pages/dashboard";
 import Calendar from "@/pages/calendar";
+import CalendarPage from "@/pages/calendar-page"; // Nueva página de calendario estilo Google
 import Profile from "@/pages/profile";
 import Subscribe from "@/pages/subscribe";
 import Teleprompter from "@/pages/teleprompter";
@@ -83,7 +84,9 @@ function App() {
             <Route path="/login" component={() => <Login onLogin={login} />} />
             <Route path="/register" component={() => <Register onRegister={login} />} />
             <Route path="/dashboard" component={() => <Dashboard user={user} />} />
-            <Route path="/calendar" component={() => <Calendar user={user} />} />
+            {/* Calendario estilo Google con generación de ideas integrada */}
+            <Route path="/calendar" component={() => <CalendarPage />} />
+            <Route path="/calendar-old" component={() => <Calendar user={user} />} />
             <Route path="/profile" component={() => <Profile user={user} onProfileUpdate={setUser} />} />
             <Route path="/subscribe" component={() => <Subscribe user={user} onSubscriptionUpdate={setUser} />} />
             <Route path="/teleprompter" component={() => <Teleprompter user={user} />} />

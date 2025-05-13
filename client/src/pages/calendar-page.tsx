@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
 import GoogleStyleCalendar from "@/components/calendar/GoogleStyleCalendar";
 import { Loader2 } from "lucide-react";
+import { User } from "@shared/schema";
 
 export default function CalendarPage() {
   const {
@@ -11,7 +12,7 @@ export default function CalendarPage() {
     error,
   } = useQuery({
     queryKey: ["/api/me"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
   useEffect(() => {
@@ -37,5 +38,5 @@ export default function CalendarPage() {
     );
   }
 
-  return <GoogleStyleCalendar user={user} />;
+  return <GoogleStyleCalendar user={user as User | null} />;
 }
