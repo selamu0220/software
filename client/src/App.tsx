@@ -13,6 +13,9 @@ import Subscribe from "@/pages/subscribe";
 import Teleprompter from "@/pages/teleprompter";
 import Recording from "@/pages/recording";
 import Metrics from "@/pages/metrics";
+import Recursos from "@/pages/recursos";
+import RecursoDetalle from "@/pages/recurso-detalle";
+import SubirRecurso from "@/pages/subir-recurso";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AssistantSidebar } from "@/components/ui/assistant-sidebar";
@@ -86,6 +89,12 @@ function App() {
             <Route path="/teleprompter" component={() => <Teleprompter user={user} />} />
             <Route path="/recording" component={() => <Recording user={user} />} />
             <Route path="/metrics" component={() => <Metrics />} />
+            
+            {/* Nuevas rutas para la biblioteca de recursos */}
+            <Route path="/recursos" component={() => <Recursos />} />
+            <Route path="/recursos/:id" component={RecursoDetalle} />
+            <Route path="/recursos/subir" component={() => <SubirRecurso />} />
+            
             <Route component={NotFound} />
           </Switch>
         </main>
