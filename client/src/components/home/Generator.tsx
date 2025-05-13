@@ -12,6 +12,7 @@ import {
   VideoIdeaContent,
   MultiGenerationResponse
 } from "@/lib/openai";
+import { apiRequest } from "@/lib/queryClient";
 import { GenerationRequest } from "@shared/schema";
 import { Info, RefreshCw, Calendar, Calendar1 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -264,6 +265,90 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
     }
   };
 
+  // Generar una cantidad masiva de ideas
+  const handleMassSubmit = async () => {
+    try {
+      if (!validateForm()) {
+        return;
+      }
+      
+      if (massGenerationCount < 1 || massGenerationCount > 100) {
+        toast({
+          title: "Cantidad no válida",
+          description: "Por favor, elige un número entre 1 y 100",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setIsGenerating(true);
+      
+      // Si el usuario intenta generar más de 20 ideas y no es premium, mostrar mensaje
+      if (massGenerationCount > 20 && !user?.isPremium) {
+        toast({
+          title: "Límite para usuarios gratuitos",
+          description: "Los usuarios gratuitos pueden generar hasta 20 ideas a la vez. Suscríbete para generar hasta 100.",
+          variant: "destructive",
+        });
+        setIsGenerating(false);
+        return;
+      }
+      
+      const result = await apiRequest("POST", "/api/generate-mass", {
+        ...formData,
+        count: massGenerationCount,
+      });
+      
+      if (!result.ok) {
+        if (result.status === 403) {
+          throw new Error("PREMIUM_REQUIRED");
+        }
+        throw new Error("Error generando ideas en masa");
+      }
+      
+      const data = await result.json();
+      
+      // Limpiar resultados anteriores
+      setWeeklyResult(null);
+      setMonthlyResult(null);
+      setMassGenerationResult(data);
+      
+      // Mostrar primera idea en la vista principal
+      if (data.ideas && data.ideas.length > 0) {
+        onIdeaGenerated(data.ideas[0], formData);
+      }
+      
+      toast({
+        title: "Generación masiva completada",
+        description: `Se han generado ${data.count} ideas para tus videos.`,
+      });
+      
+      // Scroll to results
+      const resultsSection = document.getElementById("results");
+      if (resultsSection) {
+        resultsSection.scrollIntoView({ behavior: "smooth" });
+      }
+    } catch (error: any) {
+      console.error("Error generating mass ideas:", error);
+      
+      if (error.message === "PREMIUM_REQUIRED") {
+        toast({
+          title: "Funcionalidad premium",
+          description: "La generación masiva de más de 20 ideas solo está disponible para usuarios premium. Suscríbete para acceder a esta función.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error de generación",
+          description: "No se pudieron generar las ideas. Por favor, intenta de nuevo.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   // Generar ideas para un mes (sólo premium)
   const handleMonthlySubmit = async () => {
     try {
@@ -333,7 +418,7 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
             <CardContent className="p-0">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <div className="px-4 pt-4">
-                  <TabsList className="grid grid-cols-3 w-full">
+                  <TabsList className="grid grid-cols-4 w-full">
                     <TabsTrigger value="single">
                       Idea Diaria
                     </TabsTrigger>
@@ -347,6 +432,9 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
                           Premium
                         </span>
                       )}
+                    </TabsTrigger>
+                    <TabsTrigger value="mass">
+                      Generación Masiva
                     </TabsTrigger>
                   </TabsList>
                 </div>
