@@ -753,6 +753,7 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
                     {activeTab === 'single' && "Generate 1 idea for free without signing up"}
                     {activeTab === 'weekly' && "Generate a week of content (7 ideas)"}
                     {activeTab === 'monthly' && "Generate a month of content (30 ideas) - Premium only"}
+                    {activeTab === 'mass' && "Generar hasta 100 ideas a la vez (20 gratis, 100 para premium)"}
                   </span>
                   <Button
                     variant="outline"
@@ -767,7 +768,9 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
                         ? handleSubmit
                         : activeTab === 'weekly'
                         ? handleWeeklySubmit
-                        : handleMonthlySubmit
+                        : activeTab === 'monthly'
+                        ? handleMonthlySubmit
+                        : handleMassSubmit
                     }
                     disabled={isGenerating || (activeTab === 'monthly' && !user?.isPremium)}
                   >
@@ -781,6 +784,7 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
                         {activeTab === 'single' && "Generar Idea"}
                         {activeTab === 'weekly' && "Generar Plan Semanal"}
                         {activeTab === 'monthly' && "Generar Plan Mensual"}
+                        {activeTab === 'mass' && "Generar Ideas Masivas"}
                       </>
                     )}
                   </Button>
