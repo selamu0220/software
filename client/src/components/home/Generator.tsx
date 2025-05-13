@@ -35,7 +35,9 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
   const [activeTab, setActiveTab] = useState('single');
   const [weeklyResult, setWeeklyResult] = useState<MultiGenerationResponse | null>(null);
   const [monthlyResult, setMonthlyResult] = useState<MultiGenerationResponse | null>(null);
+  const [massGenerationResult, setMassGenerationResult] = useState<MultiGenerationResponse | null>(null);
   const [showQuickMode, setShowQuickMode] = useState(true);
+  const [massGenerationCount, setMassGenerationCount] = useState(10); // Número de ideas para generación masiva
   
   const [formData, setFormData] = useState<GenerationRequest>({
     category: VIDEO_CATEGORIES[0] || "Entertainment",

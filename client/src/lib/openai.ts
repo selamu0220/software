@@ -2,6 +2,15 @@ import { GenerationRequest } from "@shared/schema";
 import { apiRequest } from "./queryClient";
 
 /**
+ * Tipo para respuesta de generación múltiple (semanal, mensual o masiva)
+ */
+export interface MultiGenerationResponse {
+  ideas: VideoIdeaContent[];
+  count: number;
+  message?: string;
+}
+
+/**
  * Type definition for the content structure returned by the OpenAI API
  */
 export type VideoIdeaContent = {
