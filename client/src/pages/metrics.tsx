@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
   Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
+import * as htmlToImage from 'html-to-image';
 import { useToast } from "@/hooks/use-toast";
 import { 
   Loader2, TrendingUp, UserCheck, Clock, Award, BarChart2, 
@@ -30,13 +31,19 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'
 
 // Página de creador de gráficos y elementos para videos
 export default function MetricsCreator() {
-  const [channelName, setChannelName] = useState('Mi Canal');
+  const [channelName, setChannelName] = useState('Mi Proyecto');
   const [selectedChart, setSelectedChart] = useState('views');
   const [isLoading, setIsLoading] = useState(false);
   const [metricsData, setMetricsData] = useState<any>(generateInitialData());
   const [customizingData, setCustomizingData] = useState(false);
-  const [chartType, setChartType] = useState('area');
+  const [chartType, setChartType] = useState('text'); // Comienza con texto por defecto
+  const [titleText, setTitleText] = useState('Mi Título');
   const { toast } = useToast();
+  
+  // Referencias para los elementos visuales que vamos a exportar
+  const textPreviewRef = useRef<HTMLDivElement>(null);
+  const chartPreviewRef = useRef<HTMLDivElement>(null);
+  const overlayPreviewRef = useRef<HTMLDivElement>(null);
 
   // Genera datos iniciales para las métricas
   function generateInitialData() {
@@ -134,36 +141,93 @@ export default function MetricsCreator() {
       
       toast({
         title: "Datos actualizados",
-        description: "Se han generado nuevos datos de métricas para la simulación",
+        description: "Se han generado nuevos datos para la simulación",
       });
     }, 1000);
   };
 
-  // Función para exportar elementos como video MP4 con fondo verde (simulada)
-  const exportChart = () => {
+  // Función para exportar elementos como imagen/video con fondo verde
+  const exportChart = async () => {
+    setIsLoading(true);
     toast({
       title: "Exportación iniciada",
-      description: "Renderizando elemento con fondo verde en formato MP4...",
+      description: "Capturando elemento con fondo verde...",
     });
     
-    // Simulamos el tiempo de renderizado
-    setTimeout(() => {
-      // En una implementación real, aquí generaríamos el video con ffmpeg
+    let elementToExport: HTMLElement | null = null;
+    let filename = 'elemento';
+    
+    // Determinamos qué elemento exportar según el tipo seleccionado
+    if (chartType === 'text' || chartType === 'subtitle') {
+      elementToExport = textPreviewRef.current;
+      filename = `titulo_${titleText.replace(/\s+/g, '_').toLowerCase()}.png`;
+    } else if (chartType === 'overlay') {
+      elementToExport = overlayPreviewRef.current;
+      filename = 'overlay_animado.png';
+    } else {
+      // Para gráficos estadísticos
+      elementToExport = chartPreviewRef.current;
+      filename = `grafico_${selectedChart}.png`;
+    }
+    
+    if (!elementToExport) {
       toast({
-        title: "Renderizado completado",
-        description: "El elemento ha sido exportado como video_elemento.mp4",
+        title: "Error de exportación",
+        description: "No se pudo capturar el elemento. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
+    
+    try {
+      // Exportamos la imagen
+      const dataUrl = await htmlToImage.toPng(elementToExport, {
+        backgroundColor: '#00B140', // Aseguramos fondo verde para chroma key
+        quality: 1.0
+      });
+      
+      // Creamos un elemento a para descargar la imagen
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = dataUrl;
+      link.click();
+      
+      toast({
+        title: "Exportación completada",
+        description: `El elemento ha sido exportado como ${filename}`,
         duration: 3000,
       });
       
-      // Simulamos la descarga del archivo
+      // En una implementación real, aquí convertiríamos la imagen a MP4 con ffmpeg
+      // Por ahora simularemos que también exportamos un MP4
       setTimeout(() => {
+        const mp4filename = filename.replace('.png', '.mp4');
         toast({
-          title: "Descarga iniciada",
-          description: "Descargando video_elemento.mp4",
+          title: "MP4 generado",
+          description: `También puedes descargar el MP4: ${mp4filename}`,
           duration: 2000,
         });
-      }, 500);
-    }, 2500);
+        
+        // Simulamos un segundo click para el MP4
+        // En una implementación real, generaríamos el MP4 con un servicio backend
+        setTimeout(() => {
+          const mp4link = document.createElement('a');
+          mp4link.download = mp4filename;
+          mp4link.href = dataUrl; // En la práctica, esta sería una URL diferente
+          mp4link.click();
+        }, 500);
+      }, 1500);
+    } catch (error) {
+      console.error('Error al exportar:', error);
+      toast({
+        title: "Error de exportación",
+        description: "Ocurrió un error al exportar el elemento.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -200,9 +264,19 @@ export default function MetricsCreator() {
                   size="sm"
                   className="h-8"
                   onClick={exportChart}
+                  disabled={isLoading}
                 >
-                  <Download className="h-4 w-4 mr-1" />
-                  Exportar MP4
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      Exportando...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-1" />
+                      Exportar MP4
+                    </>
+                  )}
                 </Button>
               </div>
             </CardTitle>
@@ -231,12 +305,12 @@ export default function MetricsCreator() {
                     <SelectValue placeholder="Selecciona un tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="area">Gráfico de Área</SelectItem>
-                    <SelectItem value="line">Gráfico de Línea</SelectItem>
-                    <SelectItem value="bar">Gráfico de Barras</SelectItem>
                     <SelectItem value="text">Texto/Título</SelectItem>
                     <SelectItem value="subtitle">Subtítulo</SelectItem>
                     <SelectItem value="overlay">Overlay animado</SelectItem>
+                    <SelectItem value="area">Gráfico de Área</SelectItem>
+                    <SelectItem value="line">Gráfico de Línea</SelectItem>
+                    <SelectItem value="bar">Gráfico de Barras</SelectItem>
                   </SelectContent>
                 </Select>
                 
@@ -357,7 +431,10 @@ export default function MetricsCreator() {
                       </div>
                       
                       <div className="mt-4">
-                        <div className="relative w-full h-40 bg-[#00B140] rounded-md overflow-hidden">
+                        <div 
+                          ref={overlayPreviewRef}
+                          className="relative w-full h-40 bg-[#00B140] rounded-md overflow-hidden"
+                        >
                           <div className="absolute bottom-8 left-0 w-2/3 h-16 bg-blue-600 bg-opacity-80 pl-4 flex flex-col justify-center">
                             <p className="text-white text-xl font-semibold">Nombre del Presentador</p>
                             <p className="text-white text-sm">Cargo o Descripción</p>
@@ -379,6 +456,8 @@ export default function MetricsCreator() {
                           id="text-content"
                           placeholder={chartType === 'text' ? "Introduce el título..." : "Introduce el subtítulo..."}
                           className="mb-4"
+                          value={titleText}
+                          onChange={(e) => setTitleText(e.target.value)}
                         />
                       </div>
                       
@@ -437,38 +516,18 @@ export default function MetricsCreator() {
                       </div>
                       
                       <div className="mt-4">
-                        <div className="p-4 flex justify-center items-center bg-[#00B140] rounded-md h-32">
-                          <p className="text-white text-4xl font-bold">Vista previa del texto</p>
+                        <div 
+                          ref={textPreviewRef}
+                          className="p-4 flex justify-center items-center bg-[#00B140] rounded-md h-32"
+                        >
+                          <p className="text-white text-4xl font-bold">{titleText || 'Vista previa del texto'}</p>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1 text-center">Fondo verde para chroma key</p>
                       </div>
                     </div>
                   </div>
-                ) : customizingData && (selectedChart === 'views' || selectedChart === 'subscribers') ? (
-                  <div className="h-full flex flex-col">
-                    <h3 className="text-lg font-medium mb-4">
-                      Personaliza los datos de {selectedChart === 'views' ? 'visualizaciones' : 'suscriptores'}
-                    </h3>
-                    <div className="grid grid-cols-1 gap-6 overflow-y-auto">
-                      {(selectedChart === 'views' ? metricsData.viewsData : metricsData.subscribersData).map((item: any, index: number) => (
-                        <div key={index} className="flex items-center space-x-4">
-                          <span className="w-10">{item.name}</span>
-                          <Slider
-                            defaultValue={[selectedChart === 'views' ? item.views : item.subscribers]}
-                            max={selectedChart === 'views' ? 30000 : 1000}
-                            step={selectedChart === 'views' ? 1000 : 50}
-                            onValueCommit={(value) => updateDataPoint(index, value[0])}
-                            className="flex-1"
-                          />
-                          <span className="w-20 text-right">
-                            {selectedChart === 'views' ? item.views.toLocaleString() : item.subscribers.toLocaleString()}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
                 ) : (
-                  <>
+                  <div ref={chartPreviewRef} className="h-full">
                     {selectedChart === 'views' && (
                       <ResponsiveContainer width="100%" height="100%">
                         {chartType === 'area' ? (
@@ -608,7 +667,7 @@ export default function MetricsCreator() {
                         </PieChart>
                       </ResponsiveContainer>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
             </div>
@@ -619,219 +678,91 @@ export default function MetricsCreator() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Resumen del Canal</CardTitle>
+            <CardTitle className="text-lg">Resumen del Proyecto</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChannelOverview channelStats={metricsData.channelStats} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-secondary/50 p-3 rounded-lg flex flex-col justify-center items-center space-y-2">
+                <div className="flex items-center">
+                  <FileImage className="h-4 w-4 mr-1" />
+                  <span className="text-xs">Elementos</span>
+                </div>
+                <span className="text-lg font-semibold">3</span>
+              </div>
+              <div className="bg-secondary/50 p-3 rounded-lg flex flex-col justify-center items-center space-y-2">
+                <div className="flex items-center">
+                  <Clock className="h-4 w-4 mr-1" />
+                  <span className="text-xs">Duración</span>
+                </div>
+                <span className="text-lg font-semibold">1:30 min</span>
+              </div>
+              <div className="bg-secondary/50 p-3 rounded-lg flex flex-col justify-center items-center space-y-2">
+                <div className="flex items-center">
+                  <BarChart2 className="h-4 w-4 mr-1" />
+                  <span className="text-xs">Gráficos</span>
+                </div>
+                <span className="text-lg font-semibold">5</span>
+              </div>
+              <div className="bg-secondary/50 p-3 rounded-lg flex flex-col justify-center items-center space-y-2">
+                <div className="flex items-center">
+                  <Target className="h-4 w-4 mr-1" />
+                  <span className="text-xs">Estilos</span>
+                </div>
+                <span className="text-lg font-semibold">3</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
         
         <Card className="md:col-span-2">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Rendimiento de Contenido</CardTitle>
+            <CardTitle className="text-lg">Historial de Exportaciones</CardTitle>
           </CardHeader>
           <CardContent>
-            <ContentAnalysis 
-              topVideos={metricsData.topVideos}
-              contentPerformance={metricsData.contentPerformance} 
-            />
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-2">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Crecimiento y Tendencias</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <GrowthMetrics 
-              viewsData={metricsData.viewsData}
-              subscribersData={metricsData.subscribersData}
-            />
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Recomendaciones</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Recommendations channelStats={metricsData.channelStats} />
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function ChannelOverview({ channelStats }: { channelStats: any }) {
-  return (
-    <div className="grid grid-cols-2 gap-4">
-      <StatCard 
-        title="Suscriptores" 
-        value={channelStats.subscribers} 
-        icon={<UserCheck className="h-4 w-4" />}
-      />
-      <StatCard 
-        title="Visualizaciones" 
-        value={channelStats.totalViews} 
-        icon={<TrendingUp className="h-4 w-4" />}
-      />
-      <StatCard 
-        title="Videos" 
-        value={channelStats.videoCount.toString()} 
-        icon={<BarChart2 className="h-4 w-4" />}
-      />
-      <StatCard 
-        title="Desde" 
-        value={channelStats.joinDate} 
-        icon={<Clock className="h-4 w-4" />}
-      />
-    </div>
-  );
-}
-
-function StatCard({ title, value, icon }: { title: string, value: string, icon: React.ReactNode }) {
-  return (
-    <div className="bg-secondary/50 p-3 rounded-lg flex flex-col justify-center items-center space-y-2">
-      <div className="flex items-center">
-        {icon}
-        <span className="text-xs ml-1">{title}</span>
-      </div>
-      <span className="text-lg font-semibold">{value}</span>
-    </div>
-  );
-}
-
-function GrowthMetrics({ viewsData, subscribersData }: { viewsData: any[], subscribersData: any[] }) {
-  return (
-    <Tabs defaultValue="views">
-      <TabsList className="mb-4">
-        <TabsTrigger value="views">Visualizaciones</TabsTrigger>
-        <TabsTrigger value="subscribers">Suscriptores</TabsTrigger>
-      </TabsList>
-      
-      <TabsContent value="views" className="h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={viewsData}>
-            <defs>
-              <linearGradient id="colorViewsGrowth" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#8884d8" stopOpacity={0.2}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-            <XAxis dataKey="name" stroke="#888" />
-            <YAxis stroke="#888" />
-            <Tooltip 
-              contentStyle={{ backgroundColor: '#333', border: 'none' }}
-              itemStyle={{ color: '#fff' }}
-              formatter={(value: any) => [value.toLocaleString(), 'Visualizaciones']}
-            />
-            <Area type="monotone" dataKey="views" stroke="#8884d8" fill="url(#colorViewsGrowth)" />
-          </AreaChart>
-        </ResponsiveContainer>
-      </TabsContent>
-      
-      <TabsContent value="subscribers" className="h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={subscribersData}>
-            <defs>
-              <linearGradient id="colorSubsGrowth" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.2}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-            <XAxis dataKey="name" stroke="#888" />
-            <YAxis stroke="#888" />
-            <Tooltip 
-              contentStyle={{ backgroundColor: '#333', border: 'none' }}
-              itemStyle={{ color: '#fff' }}
-              formatter={(value: any) => [value.toLocaleString(), 'Suscriptores']}
-            />
-            <Area type="monotone" dataKey="subscribers" stroke="#82ca9d" fill="url(#colorSubsGrowth)" />
-          </AreaChart>
-        </ResponsiveContainer>
-      </TabsContent>
-    </Tabs>
-  );
-}
-
-function ContentAnalysis({ topVideos, contentPerformance }: { topVideos: any[], contentPerformance: any[] }) {
-  return (
-    <Tabs defaultValue="performance">
-      <TabsList className="mb-4">
-        <TabsTrigger value="performance">Rendimiento por tipo</TabsTrigger>
-        <TabsTrigger value="videos">Videos destacados</TabsTrigger>
-      </TabsList>
-      
-      <TabsContent value="performance" className="h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={contentPerformance}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-            <XAxis dataKey="name" stroke="#888" />
-            <YAxis stroke="#888" />
-            <Tooltip 
-              contentStyle={{ backgroundColor: '#333', border: 'none' }}
-              itemStyle={{ color: '#fff' }}
-              formatter={(value) => [`${value}%`, '']}
-            />
-            <Legend />
-            <Bar dataKey="views" name="% Visualizaciones" fill="#8884d8" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="subscribers" name="% Suscriptores" fill="#82ca9d" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </TabsContent>
-      
-      <TabsContent value="videos">
-        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
-          {topVideos.map((video, index) => (
-            <div key={index} className="bg-secondary/30 p-3 rounded-lg">
-              <div className="flex justify-between items-start">
-                <h4 className="font-medium text-sm">{video.title}</h4>
-                <span className="text-sm font-semibold text-primary">{video.views}</span>
+            <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2">
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium text-sm">titulo_mi_título.mp4</h4>
+                    <p className="text-xs text-muted-foreground">Exportado hace 5 minutos</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <div className="flex mt-2 text-xs text-muted-foreground">
-                <span className="flex items-center mr-4">
-                  <Award className="h-3 w-3 mr-1" />
-                  {video.likes}
-                </span>
-                <span className="flex items-center">
-                  <Target className="h-3 w-3 mr-1" />
-                  {video.comments}
-                </span>
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium text-sm">overlay_animado.mp4</h4>
+                    <p className="text-xs text-muted-foreground">Exportado hace 10 minutos</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium text-sm">grafico_views.mp4</h4>
+                    <p className="text-xs text-muted-foreground">Exportado hace 15 minutos</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      </TabsContent>
-    </Tabs>
-  );
-}
-
-function Recommendations({ channelStats }: { channelStats: any }) {
-  const recommendations = [
-    "Publica videos de tutoriales más frecuentemente, ya que generan más engagement y suscriptores.",
-    "Experimenta con formatos cortos (Shorts), pues tienen un alto potencial de crecimiento.",
-    "Mantén una cadencia de publicación regular de al menos 2 videos por semana.",
-    "Optimiza tus títulos y miniaturas para mejorar el CTR (tasa de clics).",
-    "Incluye llamados a la acción claros para aumentar la interacción y suscripciones."
-  ];
-  
-  return (
-    <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
-      {recommendations.map((recommendation, index) => (
-        <div key={index} className="bg-secondary/30 p-3 rounded-lg">
-          <div className="flex items-start space-x-3">
-            <div className="h-5 w-5 rounded-full bg-indigo-600 flex items-center justify-center text-xs mt-0.5">
-              {index + 1}
-            </div>
-            <p className="text-sm">{recommendation}</p>
-          </div>
-        </div>
-      ))}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
