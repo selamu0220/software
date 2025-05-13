@@ -1178,7 +1178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Delete file from filesystem
       try {
-        if (fs.existsSync(video.filePath)) {
+        if (video.filePath && fs.existsSync(video.filePath)) {
           fs.unlinkSync(video.filePath);
         }
 
@@ -1247,7 +1247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify file exists
-      if (!fs.existsSync(video.filePath)) {
+      if (!video.filePath || !fs.existsSync(video.filePath)) {
         return res
           .status(404)
           .json({ message: "Archivo de video no encontrado" });
@@ -1270,7 +1270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           "Content-Range": `bytes ${start}-${end}/${fileSize}`,
           "Accept-Ranges": "bytes",
           "Content-Length": chunksize,
-          "Content-Type": video.mimeType,
+          "Content-Type": video.mimeType || 'video/mp4',
         });
 
         file.pipe(res);
@@ -1278,7 +1278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Send whole file if no range is specified
         res.writeHead(200, {
           "Content-Length": fileSize,
-          "Content-Type": video.mimeType,
+          "Content-Type": video.mimeType || 'video/mp4',
         });
 
         fs.createReadStream(video.filePath).pipe(res);
@@ -1619,7 +1619,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description,
         youtubeId: result.videoId,
         youtubeUrl: result.url,
-        thumbnailUrl: "", // YouTube genera miniaturas automáticamente
+        // Las miniaturas se generan automáticamente por YouTube
         uploadDate: new Date(),
         isPublic: !isPrivate
       });
