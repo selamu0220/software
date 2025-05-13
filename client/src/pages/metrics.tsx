@@ -52,62 +52,62 @@ export default function MetricsCreator() {
       'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
     ];
     
-    // Genera datos aleatorios realistas con tendencia creciente
-    const viewsData = months.map((month, index) => ({
+    // Datos para ejemplos de gráficos (sin datos falsos de rendimiento)
+    const viewsData = months.map((month) => ({
       name: month,
-      views: 5000 + (index * 2000) + Math.floor(Math.random() * 5000)
+      views: 0 // Sin visitas falsas
     }));
     
-    const subscribersData = months.map((month, index) => ({
+    const subscribersData = months.map((month) => ({
       name: month,
-      subscribers: 100 + (index * 70) + Math.floor(Math.random() * 100)
+      subscribers: 0 // Sin suscriptores falsos
     }));
 
-    // Datos de engagement con tendencia positiva
+    // Datos de categorías de contenido (sin métricas falsas)
     const engagementData = [
-      { name: 'Tutoriales', likes: 18, comments: 10, shares: 5 },
-      { name: 'Vlogs', likes: 14, comments: 8, shares: 3 },
-      { name: 'Reviews', likes: 22, comments: 15, shares: 7 },
-      { name: 'Listas', likes: 15, comments: 6, shares: 4 },
-      { name: 'Shorts', likes: 28, comments: 12, shares: 10 },
+      { name: 'Tutoriales', likes: 0, comments: 0, shares: 0 },
+      { name: 'Vlogs', likes: 0, comments: 0, shares: 0 },
+      { name: 'Reviews', likes: 0, comments: 0, shares: 0 },
+      { name: 'Listas', likes: 0, comments: 0, shares: 0 },
+      { name: 'Shorts', likes: 0, comments: 0, shares: 0 },
     ];
 
-    // Datos demográficos
+    // Datos de grupos de edad (para ejemplos de gráficos)
     const audienceData = [
-      { name: '18-24', value: 25 },
-      { name: '25-34', value: 35 },
+      { name: '18-24', value: 20 },
+      { name: '25-34', value: 20 },
       { name: '35-44', value: 20 },
-      { name: '45-54', value: 12 },
-      { name: '55+', value: 8 }
+      { name: '45-54', value: 20 },
+      { name: '55+', value: 20 }
     ];
 
-    // Lista de videos populares
+    // Ejemplos de títulos de contenido (sin métricas falsas)
     const topVideos = [
-      { title: "Cómo editar videos profesionales", views: "45.2K", likes: "2.7K", comments: "342" },
-      { title: "Tutorial avanzado de DaVinci Resolve", views: "32.1K", likes: "1.9K", comments: "278" },
-      { title: "Top 10 plugins para editores", views: "28.5K", likes: "1.5K", comments: "189" },
-      { title: "Tips para mejorar tus thumbnails", views: "22.3K", likes: "1.2K", comments: "156" },
-      { title: "Guía de color para videos virales", views: "18.7K", likes: "980", comments: "124" }
+      { title: "Ejemplo de título de vídeo 1", views: "0", likes: "0", comments: "0" },
+      { title: "Ejemplo de título de vídeo 2", views: "0", likes: "0", comments: "0" },
+      { title: "Ejemplo de título de vídeo 3", views: "0", likes: "0", comments: "0" },
+      { title: "Ejemplo de título de vídeo 4", views: "0", likes: "0", comments: "0" },
+      { title: "Ejemplo de título de vídeo 5", views: "0", likes: "0", comments: "0" }
     ];
 
-    // Datos de rendimiento por tipo de contenido
+    // Tipos de contenido (sin métricas falsas)
     const contentPerformance = [
-      { name: 'Tutoriales', views: 35, subscribers: 42 },
-      { name: 'Vlogs', views: 22, subscribers: 18 },
-      { name: 'Reviews', views: 20, subscribers: 23 },
-      { name: 'Shorts', views: 18, subscribers: 12 },
-      { name: 'Lives', views: 5, subscribers: 5 }
+      { name: 'Tutoriales', views: 0, subscribers: 0 },
+      { name: 'Vlogs', views: 0, subscribers: 0 },
+      { name: 'Reviews', views: 0, subscribers: 0 },
+      { name: 'Shorts', views: 0, subscribers: 0 },
+      { name: 'Lives', views: 0, subscribers: 0 }
     ];
 
     return {
       channelStats: {
         title: channelName,
-        subscribers: "12.5K",
-        totalViews: "450K",
-        videoCount: 48,
-        joinDate: "15 Oct 2023",
-        averageViews: "9.4K",
-        engagementRate: "8.7%"
+        subscribers: "0",
+        totalViews: "0",
+        videoCount: 0,
+        joinDate: "Hoy",
+        averageViews: "0",
+        engagementRate: "0%"
       },
       viewsData,
       subscribersData,

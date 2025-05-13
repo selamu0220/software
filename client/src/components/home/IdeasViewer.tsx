@@ -249,9 +249,12 @@ export function IdeasViewer({
                         <div key={index} className="space-y-2">
                           <div className="flex justify-between items-center">
                             <h4 className="font-semibold">{section}</h4>
-                            {idea.timings && idea.timings[section] && (
+                            {idea.timings && 
+                             typeof idea.timings === 'object' && 
+                             !Array.isArray(idea.timings) && 
+                             Object.prototype.hasOwnProperty.call(idea.timings, section) && (
                               <span className="text-xs bg-muted px-2 py-1 rounded-full">
-                                ⏱️ {idea.timings[section]}
+                                ⏱️ {(idea.timings as Record<string, string>)[section]}
                               </span>
                             )}
                           </div>
