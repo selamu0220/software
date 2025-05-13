@@ -4,496 +4,711 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Slider } from "@/components/ui/slider";
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
   Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Info, TrendingUp, UserCheck, Clock, Award } from "lucide-react";
+import { 
+  Loader2, TrendingUp, UserCheck, Clock, Award, BarChart2, 
+  Plus, Download, Save, Share, FileImage, Edit, EyeOff, Eye,
+  Target, ArrowUp, BarChart as BarChartIcon, PieChart as PieChartIcon, LineChart as LineChartIcon
+} from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 
 // Colores para gráficos
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
-// Página principal de métricas
-export default function Metrics() {
-  const [channelId, setChannelId] = useState('');
+// Página de creador de métricas
+export default function MetricsCreator() {
+  const [channelName, setChannelName] = useState('Mi Canal');
+  const [selectedChart, setSelectedChart] = useState('views');
   const [isLoading, setIsLoading] = useState(false);
-  const [metricsData, setMetricsData] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [metricsData, setMetricsData] = useState<any>(generateInitialData());
+  const [customizingData, setCustomizingData] = useState(false);
+  const [chartType, setChartType] = useState('area');
   const { toast } = useToast();
 
-  // Función para analizar un canal de YouTube
-  const analyzeChannel = async () => {
-    if (!channelId) {
-      toast({
-        title: "Error",
-        description: "Por favor, introduce un ID de canal o nombre de usuario",
-        variant: "destructive"
-      });
-      return;
-    }
+  // Genera datos iniciales para las métricas
+  function generateInitialData() {
+    const months = [
+      'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 
+      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+    ];
+    
+    // Genera datos aleatorios realistas con tendencia creciente
+    const viewsData = months.map((month, index) => ({
+      name: month,
+      views: 5000 + (index * 2000) + Math.floor(Math.random() * 5000)
+    }));
+    
+    const subscribersData = months.map((month, index) => ({
+      name: month,
+      subscribers: 100 + (index * 70) + Math.floor(Math.random() * 100)
+    }));
 
+    // Datos de engagement con tendencia positiva
+    const engagementData = [
+      { name: 'Tutoriales', likes: 18, comments: 10, shares: 5 },
+      { name: 'Vlogs', likes: 14, comments: 8, shares: 3 },
+      { name: 'Reviews', likes: 22, comments: 15, shares: 7 },
+      { name: 'Listas', likes: 15, comments: 6, shares: 4 },
+      { name: 'Shorts', likes: 28, comments: 12, shares: 10 },
+    ];
+
+    // Datos demográficos
+    const audienceData = [
+      { name: '18-24', value: 25 },
+      { name: '25-34', value: 35 },
+      { name: '35-44', value: 20 },
+      { name: '45-54', value: 12 },
+      { name: '55+', value: 8 }
+    ];
+
+    // Lista de videos populares
+    const topVideos = [
+      { title: "Cómo editar videos profesionales", views: "45.2K", likes: "2.7K", comments: "342" },
+      { title: "Tutorial avanzado de DaVinci Resolve", views: "32.1K", likes: "1.9K", comments: "278" },
+      { title: "Top 10 plugins para editores", views: "28.5K", likes: "1.5K", comments: "189" },
+      { title: "Tips para mejorar tus thumbnails", views: "22.3K", likes: "1.2K", comments: "156" },
+      { title: "Guía de color para videos virales", views: "18.7K", likes: "980", comments: "124" }
+    ];
+
+    // Datos de rendimiento por tipo de contenido
+    const contentPerformance = [
+      { name: 'Tutoriales', views: 35, subscribers: 42 },
+      { name: 'Vlogs', views: 22, subscribers: 18 },
+      { name: 'Reviews', views: 20, subscribers: 23 },
+      { name: 'Shorts', views: 18, subscribers: 12 },
+      { name: 'Lives', views: 5, subscribers: 5 }
+    ];
+
+    return {
+      channelStats: {
+        title: channelName,
+        subscribers: "12.5K",
+        totalViews: "450K",
+        videoCount: 48,
+        joinDate: "15 Oct 2023",
+        averageViews: "9.4K",
+        engagementRate: "8.7%"
+      },
+      viewsData,
+      subscribersData,
+      engagementData,
+      audienceData,
+      topVideos,
+      contentPerformance
+    };
+  }
+
+  // Función para actualizar datos del gráfico seleccionado
+  const updateDataPoint = (index: number, value: number) => {
+    if (selectedChart === 'views') {
+      const newData = [...metricsData.viewsData];
+      newData[index] = { ...newData[index], views: value };
+      setMetricsData({ ...metricsData, viewsData: newData });
+    } else if (selectedChart === 'subscribers') {
+      const newData = [...metricsData.subscribersData];
+      newData[index] = { ...newData[index], subscribers: value };
+      setMetricsData({ ...metricsData, subscribersData: newData });
+    }
+  };
+
+  // Función para generar nuevos datos para simulación
+  const generateNewData = () => {
     setIsLoading(true);
-    setError(null);
-
-    try {
-      // Llamada a la API para obtener datos de métricas
-      const response = await apiRequest('GET', `/api/youtube/metrics?channelId=${encodeURIComponent(channelId)}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error al obtener métricas");
-      }
-      
-      const data = await response.json();
-      setMetricsData(data);
-    } catch (err) {
-      console.error("Error al analizar el canal:", err);
-      setError("No se pudo analizar el canal. Por favor, verifica el ID del canal e inténtalo de nuevo.");
-      toast({
-        title: "Error",
-        description: "No se pudo analizar el canal. Por favor, inténtalo de nuevo.",
-        variant: "destructive"
-      });
-    } finally {
+    
+    setTimeout(() => {
+      setMetricsData(generateInitialData());
       setIsLoading(false);
-    }
+      
+      toast({
+        title: "Datos actualizados",
+        description: "Se han generado nuevos datos de métricas para la simulación",
+      });
+    }, 1000);
+  };
+
+  // Función para exportar gráficos como imágenes (simulada)
+  const exportChart = () => {
+    toast({
+      title: "Exportación iniciada",
+      description: "Exportando gráfico actual como imagen...",
+    });
+    
+    setTimeout(() => {
+      toast({
+        title: "Exportación completada",
+        description: "El gráfico ha sido guardado como imagen",
+      });
+    }, 1500);
   };
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-4xl font-bold mb-8 text-center">Análisis de Métricas de YouTube</h1>
+      <h1 className="text-4xl font-bold mb-8 text-center">Creador de Métricas</h1>
       
-      <div className="mb-10 max-w-2xl mx-auto">
+      <div className="mb-8 max-w-4xl mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle>Analizar Canal de YouTube</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              <span>Personaliza tus métricas</span>
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => setCustomizingData(!customizingData)}
+                >
+                  {customizingData ? <Eye className="h-4 w-4 mr-1" /> : <Edit className="h-4 w-4 mr-1" />}
+                  {customizingData ? "Ver" : "Editar"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={generateNewData}
+                  disabled={isLoading}
+                >
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
+                  {isLoading ? "Generando..." : "Generar Datos"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={exportChart}
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Exportar
+                </Button>
+              </div>
+            </CardTitle>
             <CardDescription>
-              Introduce el ID del canal o nombre de usuario para analizar sus métricas
+              Crea, personaliza y visualiza métricas para tu canal
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid w-full items-center gap-4">
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="channel-id">ID del Canal / Nombre de Usuario</Label>
-                <Input 
-                  id="channel-id" 
-                  placeholder="Ej: @NombreCanal o UCxxxx..." 
-                  value={channelId}
-                  onChange={(e) => setChannelId(e.target.value)}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+              <div className="col-span-1">
+                <Label htmlFor="channel-name" className="mb-2 block">Nombre del Canal</Label>
+                <Input
+                  id="channel-name"
+                  placeholder="Nombre de tu canal"
+                  value={channelName}
+                  onChange={(e) => setChannelName(e.target.value)}
+                  className="mb-4"
                 />
+                
+                <Label className="mb-2 block">Tipo de Gráfico</Label>
+                <Select
+                  value={chartType}
+                  onValueChange={setChartType}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="area">Área</SelectItem>
+                    <SelectItem value="line">Línea</SelectItem>
+                    <SelectItem value="bar">Barras</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <div className="mt-4">
+                  <Label className="mb-2 block">Datos a mostrar</Label>
+                  <div className="flex flex-col space-y-2">
+                    <Button
+                      variant={selectedChart === 'views' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedChart('views')}
+                      className="justify-start"
+                    >
+                      <BarChart2 className="h-4 w-4 mr-2" />
+                      Visualizaciones
+                    </Button>
+                    <Button
+                      variant={selectedChart === 'subscribers' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedChart('subscribers')}
+                      className="justify-start"
+                    >
+                      <UserCheck className="h-4 w-4 mr-2" />
+                      Suscriptores
+                    </Button>
+                    <Button
+                      variant={selectedChart === 'engagement' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedChart('engagement')}
+                      className="justify-start"
+                    >
+                      <Target className="h-4 w-4 mr-2" />
+                      Engagement
+                    </Button>
+                    <Button
+                      variant={selectedChart === 'audience' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedChart('audience')}
+                      className="justify-start"
+                    >
+                      <PieChartIcon className="h-4 w-4 mr-2" />
+                      Audiencia
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="col-span-3 h-[400px]">
+                {customizingData && (selectedChart === 'views' || selectedChart === 'subscribers') ? (
+                  <div className="h-full flex flex-col">
+                    <h3 className="text-lg font-medium mb-4">
+                      Personaliza los datos de {selectedChart === 'views' ? 'visualizaciones' : 'suscriptores'}
+                    </h3>
+                    <div className="grid grid-cols-1 gap-6 overflow-y-auto">
+                      {(selectedChart === 'views' ? metricsData.viewsData : metricsData.subscribersData).map((item: any, index: number) => (
+                        <div key={index} className="flex items-center space-x-4">
+                          <span className="w-10">{item.name}</span>
+                          <Slider
+                            defaultValue={[selectedChart === 'views' ? item.views : item.subscribers]}
+                            max={selectedChart === 'views' ? 30000 : 1000}
+                            step={selectedChart === 'views' ? 1000 : 50}
+                            onValueCommit={(value) => updateDataPoint(index, value[0])}
+                            className="flex-1"
+                          />
+                          <span className="w-20 text-right">
+                            {selectedChart === 'views' ? item.views.toLocaleString() : item.subscribers.toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {selectedChart === 'views' && (
+                      <ResponsiveContainer width="100%" height="100%">
+                        {chartType === 'area' ? (
+                          <AreaChart data={metricsData.viewsData}>
+                            <defs>
+                              <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="#8884d8" stopOpacity={0.2}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                            <XAxis dataKey="name" stroke="#888" />
+                            <YAxis stroke="#888" />
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: '#333', border: 'none' }}
+                              itemStyle={{ color: '#fff' }}
+                              formatter={(value: any) => [value.toLocaleString(), 'Visualizaciones']}
+                            />
+                            <Area type="monotone" dataKey="views" stroke="#8884d8" fillOpacity={1} fill="url(#colorViews)" />
+                          </AreaChart>
+                        ) : chartType === 'line' ? (
+                          <LineChart data={metricsData.viewsData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                            <XAxis dataKey="name" stroke="#888" />
+                            <YAxis stroke="#888" />
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: '#333', border: 'none' }}
+                              itemStyle={{ color: '#fff' }}
+                              formatter={(value: any) => [value.toLocaleString(), 'Visualizaciones']}
+                            />
+                            <Line type="monotone" dataKey="views" stroke="#8884d8" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                          </LineChart>
+                        ) : (
+                          <BarChart data={metricsData.viewsData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                            <XAxis dataKey="name" stroke="#888" />
+                            <YAxis stroke="#888" />
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: '#333', border: 'none' }}
+                              itemStyle={{ color: '#fff' }}
+                              formatter={(value: any) => [value.toLocaleString(), 'Visualizaciones']}
+                            />
+                            <Bar dataKey="views" fill="#8884d8" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        )}
+                      </ResponsiveContainer>
+                    )}
+                    
+                    {selectedChart === 'subscribers' && (
+                      <ResponsiveContainer width="100%" height="100%">
+                        {chartType === 'area' ? (
+                          <AreaChart data={metricsData.subscribersData}>
+                            <defs>
+                              <linearGradient id="colorSubs" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.2}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                            <XAxis dataKey="name" stroke="#888" />
+                            <YAxis stroke="#888" />
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: '#333', border: 'none' }}
+                              itemStyle={{ color: '#fff' }}
+                              formatter={(value: any) => [value.toLocaleString(), 'Suscriptores']}
+                            />
+                            <Area type="monotone" dataKey="subscribers" stroke="#82ca9d" fillOpacity={1} fill="url(#colorSubs)" />
+                          </AreaChart>
+                        ) : chartType === 'line' ? (
+                          <LineChart data={metricsData.subscribersData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                            <XAxis dataKey="name" stroke="#888" />
+                            <YAxis stroke="#888" />
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: '#333', border: 'none' }}
+                              itemStyle={{ color: '#fff' }}
+                              formatter={(value: any) => [value.toLocaleString(), 'Suscriptores']}
+                            />
+                            <Line type="monotone" dataKey="subscribers" stroke="#82ca9d" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                          </LineChart>
+                        ) : (
+                          <BarChart data={metricsData.subscribersData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                            <XAxis dataKey="name" stroke="#888" />
+                            <YAxis stroke="#888" />
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: '#333', border: 'none' }}
+                              itemStyle={{ color: '#fff' }}
+                              formatter={(value: any) => [value.toLocaleString(), 'Suscriptores']}
+                            />
+                            <Bar dataKey="subscribers" fill="#82ca9d" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        )}
+                      </ResponsiveContainer>
+                    )}
+                    
+                    {selectedChart === 'engagement' && (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={metricsData.engagementData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                          <XAxis dataKey="name" stroke="#888" />
+                          <YAxis stroke="#888" />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: '#333', border: 'none' }}
+                            itemStyle={{ color: '#fff' }}
+                          />
+                          <Legend />
+                          <Bar dataKey="likes" fill="#8884d8" radius={[4, 4, 0, 0]} name="Likes" />
+                          <Bar dataKey="comments" fill="#82ca9d" radius={[4, 4, 0, 0]} name="Comentarios" />
+                          <Bar dataKey="shares" fill="#ffc658" radius={[4, 4, 0, 0]} name="Compartidos" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
+                    
+                    {selectedChart === 'audience' && (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={metricsData.audienceData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={150}
+                            fill="#8884d8"
+                            dataKey="value"
+                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {metricsData.audienceData.map((entry: any, index: number) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: '#333', border: 'none' }}
+                            itemStyle={{ color: '#fff' }}
+                            formatter={(value: any) => [`${value}%`, 'Audiencia']}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end">
-            <Button onClick={analyzeChannel} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Analizando...
-                </>
-              ) : (
-                'Analizar Canal'
-              )}
-            </Button>
-          </CardFooter>
         </Card>
       </div>
-
-      {error && (
-        <div className="bg-destructive/10 p-4 rounded-md border border-destructive mb-10 max-w-2xl mx-auto">
-          <div className="flex items-center">
-            <Info className="h-5 w-5 text-destructive mr-2" />
-            <p className="text-destructive">{error}</p>
-          </div>
-        </div>
-      )}
-
-      {metricsData && (
-        <div className="space-y-10">
-          <ChannelOverview channelStats={metricsData.channelStats} />
-          
-          <Tabs defaultValue="growth" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="growth">Crecimiento</TabsTrigger>
-              <TabsTrigger value="engagement">Engagement</TabsTrigger>
-              <TabsTrigger value="audience">Audiencia</TabsTrigger>
-              <TabsTrigger value="content">Contenido</TabsTrigger>
-              <TabsTrigger value="recommendations">Recomendaciones</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="growth" className="space-y-6 mt-6">
-              <GrowthMetrics 
-                viewsData={metricsData.viewsData} 
-                subscribersData={metricsData.subscribersData} 
-              />
-            </TabsContent>
-            
-            <TabsContent value="engagement" className="space-y-6 mt-6">
-              <EngagementMetrics data={metricsData.engagementData} />
-            </TabsContent>
-            
-            <TabsContent value="audience" className="space-y-6 mt-6">
-              <AudienceMetrics data={metricsData.audienceData} />
-            </TabsContent>
-            
-            <TabsContent value="content" className="space-y-6 mt-6">
-              <ContentAnalysis 
-                topVideos={metricsData.topVideos}
-                contentPerformance={metricsData.contentPerformance}
-              />
-            </TabsContent>
-            
-            <TabsContent value="recommendations" className="space-y-6 mt-6">
-              <Recommendations channelStats={metricsData.channelStats} />
-            </TabsContent>
-          </Tabs>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Componente para la visión general del canal
-function ChannelOverview({ channelStats }: { channelStats: any }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-2xl">{channelStats.title}</CardTitle>
-        <CardDescription>Visión general de las métricas del canal</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard 
-            title="Suscriptores" 
-            value={channelStats.subscribers} 
-            icon={<UserCheck className="h-5 w-5 text-primary" />} 
-          />
-          <StatCard 
-            title="Vistas Totales" 
-            value={channelStats.totalViews} 
-            icon={<TrendingUp className="h-5 w-5 text-primary" />} 
-          />
-          <StatCard 
-            title="Vídeos Publicados" 
-            value={channelStats.videoCount.toString()} 
-            icon={<Clock className="h-5 w-5 text-primary" />} 
-          />
-          <StatCard 
-            title="Miembro Desde" 
-            value={channelStats.joinDate} 
-            icon={<Award className="h-5 w-5 text-primary" />} 
-          />
-          <StatCard 
-            title="Vistas Promedio" 
-            value={channelStats.averageViews} 
-            icon={<TrendingUp className="h-5 w-5 text-primary" />} 
-          />
-          <StatCard 
-            title="Tasa de Engagement" 
-            value={channelStats.engagementRate} 
-            icon={<UserCheck className="h-5 w-5 text-primary" />} 
-          />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Tarjeta de estadísticas
-function StatCard({ title, value, icon }: { title: string, value: string, icon: React.ReactNode }) {
-  return (
-    <div className="flex items-center p-4 bg-muted/30 rounded-lg">
-      <div className="mr-4">{icon}</div>
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">{title}</p>
-        <h3 className="text-2xl font-bold">{value}</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Resumen del Canal</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChannelOverview channelStats={metricsData.channelStats} />
+          </CardContent>
+        </Card>
+        
+        <Card className="md:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Rendimiento de Contenido</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ContentAnalysis 
+              topVideos={metricsData.topVideos}
+              contentPerformance={metricsData.contentPerformance} 
+            />
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="md:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Crecimiento y Tendencias</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <GrowthMetrics 
+              viewsData={metricsData.viewsData}
+              subscribersData={metricsData.subscribersData}
+            />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Recomendaciones</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Recommendations channelStats={metricsData.channelStats} />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
 
-// Componente para métricas de crecimiento
+function ChannelOverview({ channelStats }: { channelStats: any }) {
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <StatCard 
+        title="Suscriptores" 
+        value={channelStats.subscribers} 
+        icon={<UserCheck className="h-4 w-4" />}
+      />
+      <StatCard 
+        title="Visualizaciones" 
+        value={channelStats.totalViews} 
+        icon={<TrendingUp className="h-4 w-4" />}
+      />
+      <StatCard 
+        title="Videos" 
+        value={channelStats.videoCount.toString()} 
+        icon={<BarChart2 className="h-4 w-4" />}
+      />
+      <StatCard 
+        title="Desde" 
+        value={channelStats.joinDate} 
+        icon={<Clock className="h-4 w-4" />}
+      />
+    </div>
+  );
+}
+
+function StatCard({ title, value, icon }: { title: string, value: string, icon: React.ReactNode }) {
+  return (
+    <div className="bg-secondary/50 p-3 rounded-lg flex flex-col justify-center items-center space-y-2">
+      <div className="flex items-center">
+        {icon}
+        <span className="text-xs ml-1">{title}</span>
+      </div>
+      <span className="text-lg font-semibold">{value}</span>
+    </div>
+  );
+}
+
 function GrowthMetrics({ viewsData, subscribersData }: { viewsData: any[], subscribersData: any[] }) {
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Evolución de Vistas</CardTitle>
-          <CardDescription>Total de vistas mensuales en los últimos 12 meses</CardDescription>
-        </CardHeader>
-        <CardContent className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={viewsData}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Area type="monotone" dataKey="views" stroke="#8884d8" fill="#8884d8" fillOpacity={0.3} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Crecimiento de Suscriptores</CardTitle>
-          <CardDescription>Nuevos suscriptores mensuales en los últimos 12 meses</CardDescription>
-        </CardHeader>
-        <CardContent className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={subscribersData}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="subscribers" 
-                stroke="#82ca9d" 
-                activeDot={{ r: 8 }} 
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-    </div>
+    <Tabs defaultValue="views">
+      <TabsList className="mb-4">
+        <TabsTrigger value="views">Visualizaciones</TabsTrigger>
+        <TabsTrigger value="subscribers">Suscriptores</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="views" className="h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={viewsData}>
+            <defs>
+              <linearGradient id="colorViewsGrowth" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#8884d8" stopOpacity={0.2}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+            <XAxis dataKey="name" stroke="#888" />
+            <YAxis stroke="#888" />
+            <Tooltip 
+              contentStyle={{ backgroundColor: '#333', border: 'none' }}
+              itemStyle={{ color: '#fff' }}
+              formatter={(value: any) => [value.toLocaleString(), 'Visualizaciones']}
+            />
+            <Area type="monotone" dataKey="views" stroke="#8884d8" fill="url(#colorViewsGrowth)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </TabsContent>
+      
+      <TabsContent value="subscribers" className="h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={subscribersData}>
+            <defs>
+              <linearGradient id="colorSubsGrowth" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.2}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+            <XAxis dataKey="name" stroke="#888" />
+            <YAxis stroke="#888" />
+            <Tooltip 
+              contentStyle={{ backgroundColor: '#333', border: 'none' }}
+              itemStyle={{ color: '#fff' }}
+              formatter={(value: any) => [value.toLocaleString(), 'Suscriptores']}
+            />
+            <Area type="monotone" dataKey="subscribers" stroke="#82ca9d" fill="url(#colorSubsGrowth)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </TabsContent>
+    </Tabs>
   );
 }
 
-// Componente para métricas de engagement
 function EngagementMetrics({ data }: { data: any[] }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Tasa de Engagement por Tipo</CardTitle>
-        <CardDescription>Likes, comentarios y compartidos por cada 1000 visualizaciones</CardDescription>
-      </CardHeader>
-      <CardContent className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={data}
-            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="likes" fill="#8884d8" />
-            <Bar dataKey="comments" fill="#82ca9d" />
-            <Bar dataKey="shares" fill="#ffc658" />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    <div className="h-[300px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+          <XAxis dataKey="name" stroke="#888" />
+          <YAxis stroke="#888" />
+          <Tooltip 
+            contentStyle={{ backgroundColor: '#333', border: 'none' }}
+            itemStyle={{ color: '#fff' }}
+          />
+          <Legend />
+          <Bar dataKey="likes" fill="#8884d8" radius={[4, 4, 0, 0]} name="Likes" />
+          <Bar dataKey="comments" fill="#82ca9d" radius={[4, 4, 0, 0]} name="Comentarios" />
+          <Bar dataKey="shares" fill="#ffc658" radius={[4, 4, 0, 0]} name="Compartidos" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
-// Componente para métricas de audiencia
 function AudienceMetrics({ data }: { data: any[] }) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Distribución Demográfica</CardTitle>
-          <CardDescription>Porcentaje de audiencia por grupo de edad y género</CardDescription>
-        </CardHeader>
-        <CardContent className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Fuentes de Tráfico</CardTitle>
-          <CardDescription>Origen del tráfico de visualizaciones</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-4 h-4 rounded bg-primary mr-2"></div>
-                <span>Búsqueda de YouTube</span>
-              </div>
-              <span className="font-medium">42%</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-4 h-4 rounded bg-blue-500 mr-2"></div>
-                <span>Sugeridos/Página Principal</span>
-              </div>
-              <span className="font-medium">31%</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-4 h-4 rounded bg-green-500 mr-2"></div>
-                <span>Enlaces Externos</span>
-              </div>
-              <span className="font-medium">15%</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-4 h-4 rounded bg-yellow-500 mr-2"></div>
-                <span>Notificaciones</span>
-              </div>
-              <span className="font-medium">8%</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-4 h-4 rounded bg-purple-500 mr-2"></div>
-                <span>Otros</span>
-              </div>
-              <span className="font-medium">4%</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="h-[300px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            outerRadius={120}
+            fill="#8884d8"
+            dataKey="value"
+            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip 
+            contentStyle={{ backgroundColor: '#333', border: 'none' }}
+            itemStyle={{ color: '#fff' }}
+            formatter={(value) => [`${value}%`, 'Audiencia']}
+          />
+        </PieChart>
+      </ResponsiveContainer>
     </div>
   );
 }
 
-// Componente para análisis de contenido
 function ContentAnalysis({ topVideos, contentPerformance }: { topVideos: any[], contentPerformance: any[] }) {
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Top Videos por Rendimiento</CardTitle>
-          <CardDescription>Videos más exitosos basados en visualizaciones y engagement</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-2">#</th>
-                  <th className="text-left py-3 px-4">Título</th>
-                  <th className="text-right py-3 px-4">Vistas</th>
-                  <th className="text-right py-3 px-4">Engagement</th>
-                  <th className="text-right py-3 px-4">CTR</th>
-                  <th className="text-right py-3 px-4">Fecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topVideos.map((video, index) => (
-                  <tr key={index} className="border-b border-border/40 hover:bg-muted/30">
-                    <td className="py-3 px-2">{index + 1}</td>
-                    <td className="py-3 px-4 font-medium">{video.title}</td>
-                    <td className="py-3 px-4 text-right">{video.views}</td>
-                    <td className="py-3 px-4 text-right">{video.engagement}</td>
-                    <td className="py-3 px-4 text-right">{video.ctr}</td>
-                    <td className="py-3 px-4 text-right">{video.date}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Rendimiento por Categoría</CardTitle>
-          <CardDescription>Análisis de vistas promedio por tipo de contenido</CardDescription>
-        </CardHeader>
-        <CardContent className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={contentPerformance}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="category" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="avgViews" fill="#8884d8" name="Vistas Promedio" />
-              <Bar dataKey="avgEngagement" fill="#82ca9d" name="Engagement Promedio" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-    </div>
+    <Tabs defaultValue="performance">
+      <TabsList className="mb-4">
+        <TabsTrigger value="performance">Rendimiento por tipo</TabsTrigger>
+        <TabsTrigger value="videos">Videos destacados</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="performance" className="h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={contentPerformance}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+            <XAxis dataKey="name" stroke="#888" />
+            <YAxis stroke="#888" />
+            <Tooltip 
+              contentStyle={{ backgroundColor: '#333', border: 'none' }}
+              itemStyle={{ color: '#fff' }}
+              formatter={(value) => [`${value}%`, '']}
+            />
+            <Legend />
+            <Bar dataKey="views" name="% Visualizaciones" fill="#8884d8" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="subscribers" name="% Suscriptores" fill="#82ca9d" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </TabsContent>
+      
+      <TabsContent value="videos">
+        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+          {topVideos.map((video, index) => (
+            <div key={index} className="bg-secondary/30 p-3 rounded-lg">
+              <div className="flex justify-between items-start">
+                <h4 className="font-medium text-sm">{video.title}</h4>
+                <span className="text-sm font-semibold text-primary">{video.views}</span>
+              </div>
+              <div className="flex mt-2 text-xs text-muted-foreground">
+                <span className="flex items-center mr-4">
+                  <Award className="h-3 w-3 mr-1" />
+                  {video.likes}
+                </span>
+                <span className="flex items-center">
+                  <Target className="h-3 w-3 mr-1" />
+                  {video.comments}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </TabsContent>
+    </Tabs>
   );
 }
 
-// Componente para recomendaciones
 function Recommendations({ channelStats }: { channelStats: any }) {
+  const recommendations = [
+    "Publica videos de tutoriales más frecuentemente, ya que generan más engagement y suscriptores.",
+    "Experimenta con formatos cortos (Shorts), pues tienen un alto potencial de crecimiento.",
+    "Mantén una cadencia de publicación regular de al menos 2 videos por semana.",
+    "Optimiza tus títulos y miniaturas para mejorar el CTR (tasa de clics).",
+    "Incluye llamados a la acción claros para aumentar la interacción y suscripciones."
+  ];
+  
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Recomendaciones Estratégicas</CardTitle>
-          <CardDescription>Sugerencias basadas en el análisis de datos para mejorar el rendimiento del canal</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="border-l-4 border-primary pl-4 py-2">
-            <h3 className="font-bold text-lg mb-1">Optimiza la Frecuencia de Publicación</h3>
-            <p className="text-muted-foreground">
-              Basado en tus datos de engagement, publicar contenido los martes y jueves entre 15:00-18:00 podría maximizar tu alcance inicial.
-            </p>
+    <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+      {recommendations.map((recommendation, index) => (
+        <div key={index} className="bg-secondary/30 p-3 rounded-lg">
+          <div className="flex items-start space-x-3">
+            <div className="h-5 w-5 rounded-full bg-indigo-600 flex items-center justify-center text-xs mt-0.5">
+              {index + 1}
+            </div>
+            <p className="text-sm">{recommendation}</p>
           </div>
-          
-          <div className="border-l-4 border-blue-500 pl-4 py-2">
-            <h3 className="font-bold text-lg mb-1">Mejora tus Miniaturas</h3>
-            <p className="text-muted-foreground">
-              Tus videos con mayor CTR utilizan contraste de colores y texto grande. Considera aplicar este estilo a todas tus miniaturas.
-            </p>
-          </div>
-          
-          <div className="border-l-4 border-green-500 pl-4 py-2">
-            <h3 className="font-bold text-lg mb-1">Contenido Sugerido</h3>
-            <p className="text-muted-foreground">
-              Los videos de tipo "Listicle" y "Tutorial" generan un 32% más de engagement. Considera crear más contenido en estos formatos.
-            </p>
-          </div>
-          
-          <div className="border-l-4 border-yellow-500 pl-4 py-2">
-            <h3 className="font-bold text-lg mb-1">Duración Óptima</h3>
-            <p className="text-muted-foreground">
-              Tu audiencia muestra mayor retención en videos de 8-12 minutos. Considera ajustar la duración de tu contenido a este rango.
-            </p>
-          </div>
-          
-          <div className="border-l-4 border-purple-500 pl-4 py-2">
-            <h3 className="font-bold text-lg mb-1">Estrategia de Keywords</h3>
-            <p className="text-muted-foreground">
-              Incorpora más keywords relacionadas con "{channelStats.title.split(' ')[0]}" en tus títulos y descripciones para mejorar la visibilidad en búsquedas.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      ))}
     </div>
   );
 }
-
-// Los datos ahora se obtienen directamente desde la API
