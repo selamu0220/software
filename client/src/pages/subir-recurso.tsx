@@ -454,7 +454,7 @@ export default function SubirRecursoPage() {
                             <X className="h-4 w-4" />
                           </Button>
                           <p className="text-sm text-center text-muted-foreground mt-2">
-                            {imagen?.name} ({Math.round(imagen?.size / 1024)} KB)
+                            {imagen?.name} ({imagen?.size ? Math.round(imagen.size / 1024) : 0} KB)
                           </p>
                         </div>
                       ) : (
@@ -508,7 +508,7 @@ export default function SubirRecursoPage() {
                             <X className="h-4 w-4" />
                           </Button>
                           <p className="text-sm text-center text-muted-foreground">
-                            {archivoSubido.name} ({Math.round(archivoSubido.size / 1024)} KB)
+                            {archivoSubido.name} ({Math.round((archivoSubido.size || 0) / 1024)} KB)
                           </p>
                         </div>
                       ) : (
@@ -646,7 +646,7 @@ export default function SubirRecursoPage() {
                 </div>
                 
                 <div className="flex justify-between w-full">
-                  <Button type="button" variant="outline" onClick={() => navigate("/recursos")}>
+                  <Button type="button" variant="outline" onClick={() => setLocation("/recursos")}>
                     Cancelar
                   </Button>
                   <AlertDialog>

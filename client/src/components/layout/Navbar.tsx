@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video, BarChart3 } from "lucide-react";
+import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video, BarChart3, BookOpen, Library } from "lucide-react";
 
 interface NavbarProps {
   user: User | null;
@@ -22,11 +22,11 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
 
   const navLinks = [
     { name: "Generador", href: "/" },
+    { name: "Recursos", href: "/recursos" },
     { name: "Calendario", href: "/calendar" },
     { name: "Teleprompter", href: "/teleprompter" },
     { name: "Grabación", href: "/recording" },
     { name: "Métricas", href: "/metrics" },
-    { name: "Plantillas", href: "/#templates" },
     { name: "Precios", href: "/#pricing" },
   ];
 
@@ -102,6 +102,12 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     <Link href="/metrics" className="flex items-center">
                       <BarChart3 className="mr-2 h-4 w-4" />
                       Métricas
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/recursos" className="flex items-center">
+                      <Library className="mr-2 h-4 w-4" />
+                      Biblioteca de Recursos
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -237,6 +243,16 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     <div className="flex items-center">
                       <BarChart3 className="mr-2 h-4 w-4" />
                       <span>Métricas</span>
+                    </div>
+                  </Link>
+                  <Link
+                    href="/recursos"
+                    className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="flex items-center">
+                      <Library className="mr-2 h-4 w-4" />
+                      <span>Biblioteca de Recursos</span>
                     </div>
                   </Link>
                   <Link
