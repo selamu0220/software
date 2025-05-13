@@ -109,10 +109,14 @@ export function IdeasViewer({
         
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-2 mb-4">
+            <TabsList className="grid grid-cols-3 mb-4">
               <TabsTrigger value="outline" className="flex items-center">
                 <Lightbulb className="h-4 w-4 mr-2" />
                 Esquema
+              </TabsTrigger>
+              <TabsTrigger value="script" className="flex items-center">
+                <Book className="h-4 w-4 mr-2" />
+                Guión Completo
               </TabsTrigger>
               <TabsTrigger value="editor" className="flex items-center">
                 <Edit className="h-4 w-4 mr-2" />
@@ -206,6 +210,92 @@ export function IdeasViewer({
               </div>
             </TabsContent>
             
+            <TabsContent value="script" className="space-y-6">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <Book className="h-4 w-4 mr-2 text-blue-500" />
+                    Guión Completo con Tiempos
+                  </h3>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleCopyToClipboard(
+                      typeof idea.fullScript === 'string' 
+                        ? idea.fullScript 
+                        : Object.entries(idea.fullScript || {}).map(([section, content]) => 
+                            `${section}\n${content}`
+                          ).join('\n\n'),
+                      'guión completo'
+                    )}
+                    className="h-8"
+                  >
+                    {copySuccess === 'guión completo' ? (
+                      <CheckCheck className="h-4 w-4 mr-1" />
+                    ) : (
+                      <Copy className="h-4 w-4 mr-1" />
+                    )}
+                    Copiar Todo
+                  </Button>
+                </div>
+
+                {/* Guión con formato y tiempos */}
+                <div className="rounded-lg border p-4 bg-card/50">
+                  {typeof idea.fullScript === 'string' ? (
+                    <div className="whitespace-pre-wrap text-muted-foreground">{idea.fullScript}</div>
+                  ) : (
+                    <div className="space-y-6">
+                      {Object.entries(idea.fullScript || {}).map(([section, content], index) => (
+                        <div key={index} className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <h4 className="font-semibold">{section}</h4>
+                            {idea.timings && idea.timings[section] && (
+                              <span className="text-xs bg-muted px-2 py-1 rounded-full">
+                                ⏱️ {idea.timings[section]}
+                              </span>
+                            )}
+                          </div>
+                          <div className="whitespace-pre-wrap text-muted-foreground pl-4 border-l-2 border-primary/30">
+                            {content as string}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {Array.isArray(idea.timings) && (
+                    <div className="mt-4 pt-4 border-t">
+                      <h4 className="font-semibold mb-2">Tiempos Recomendados</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {idea.timings.map((timing, index) => (
+                          <div key={index} className="text-xs bg-muted px-3 py-2 rounded-md">
+                            {timing}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Consejos para la Grabación</h3>
+                <div className="grid grid-cols-1 gap-2">
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-sm">🎙️ Habla con un ritmo constante y haz pausas después de puntos importantes</p>
+                  </div>
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-sm">🎬 Divide la grabación en secciones para facilitar la edición</p>
+                  </div>
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-sm">🔊 Asegúrate de enfatizar los puntos clave de cada sección</p>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
             <TabsContent value="editor">
               <ScriptEditor 
                 videoIdea={idea}

@@ -35,6 +35,7 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
   const [activeTab, setActiveTab] = useState('single');
   const [weeklyResult, setWeeklyResult] = useState<MultiGenerationResponse | null>(null);
   const [monthlyResult, setMonthlyResult] = useState<MultiGenerationResponse | null>(null);
+  const [showQuickMode, setShowQuickMode] = useState(true);
   
   const [formData, setFormData] = useState<GenerationRequest>({
     category: VIDEO_CATEGORIES[0] || "Entertainment",
@@ -114,7 +115,70 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
     return true;
   };
 
-  // Generar una idea individual
+  // Generar idea rápida con valores predeterminados por categoría
+  const handleQuickGenerate = async (category?: string) => {
+    try {
+      setIsGenerating(true);
+      
+      // Configurar parámetros rápidos con categoría seleccionada o predeterminada
+      const quickParams: GenerationRequest = {
+        category: category || "Gaming",
+        subcategory: category ? VIDEO_SUBCATEGORIES[category][0] : "Game Reviews",
+        videoFocus: category === "Gaming" ? "Game Reviews sin mostrar la cara" :
+                    category === "Technology" ? "Análisis de nuevos productos tecnológicos" :
+                    category === "Educational" ? "Tutoriales paso a paso" :
+                    category === "Entertainment" ? "Entretenimiento para jóvenes" : "Ideas de video para YouTube",
+        videoLength: "Medium (5-10 min)",
+        templateStyle: "Listicle",
+        contentTone: "Enthusiastic",
+        titleTemplate: "TOP [Número] SECRETOS que Nadie te Cuenta sobre [Tema]",
+        contentType: "fullScript",
+        timingDetail: true,
+        useSubcategory: true,
+        customChannelType: "",
+        geminiApiKey: formData.geminiApiKey || "",
+      };
+      
+      // Generar la idea
+      const generatedIdea = await generateVideoIdea(quickParams);
+      onIdeaGenerated(generatedIdea, quickParams);
+      
+      // Limpiar resultados anteriores
+      setWeeklyResult(null);
+      setMonthlyResult(null);
+      
+      // Scroll to results
+      const resultsSection = document.getElementById("results");
+      if (resultsSection) {
+        resultsSection.scrollIntoView({ behavior: "smooth" });
+      }
+      
+      toast({
+        title: "¡Idea generada!",
+        description: "Se ha generado una idea rápida para tu video",
+      });
+    } catch (error: any) {
+      console.error("Error generating quick idea:", error);
+      
+      if (error.message === "DAILY_LIMIT_REACHED") {
+        toast({
+          title: "Límite diario alcanzado",
+          description: "Has alcanzado el límite diario de generación de ideas gratuitas. Suscríbete para generar más ideas.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error de generación",
+          description: "No se pudo generar la idea. Por favor, intenta de nuevo.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Generar una idea individual con parámetros personalizados
   const handleSubmit = async () => {
     try {
       if (!validateForm()) {
@@ -283,6 +347,82 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
                       )}
                     </TabsTrigger>
                   </TabsList>
+                </div>
+                
+                {/* MODO RÁPIDO - Generación con un solo click */}
+                <div className="px-4 pt-4 pb-0">
+                  <div className="flex justify-between items-center mb-1">
+                    <h3 className="text-base font-bold flex items-center">
+                      🚀 Modo Rápido
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                        Genera ideas de inmediato
+                      </span>
+                    </h3>
+                    <button
+                      type="button"
+                      className="text-xs text-muted-foreground hover:text-primary"
+                      onClick={() => setShowQuickMode(!showQuickMode)}
+                    >
+                      {showQuickMode ? "Ocultar opciones" : "Mostrar opciones"}
+                    </button>
+                  </div>
+                  
+                  {showQuickMode && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between py-3 mb-2 bg-primary/10 rounded-lg px-4">
+                      <div className="mb-3 sm:mb-0">
+                        <p className="text-sm">
+                          Selecciona una categoría o genera idea al azar:
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleQuickGenerate("Gaming")}
+                          disabled={isGenerating}
+                          className="min-w-[100px]"
+                        >
+                          🎮 Gaming
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleQuickGenerate("Technology")}
+                          disabled={isGenerating}
+                          className="min-w-[100px]"
+                        >
+                          💻 Tecnología
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleQuickGenerate("Educational")}
+                          disabled={isGenerating}
+                          className="min-w-[100px]"
+                        >
+                          📚 Educación
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleQuickGenerate("Entertainment")}
+                          disabled={isGenerating}
+                          className="min-w-[100px]"
+                        >
+                          🎭 Entretenimiento
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={() => handleQuickGenerate()}
+                          disabled={isGenerating}
+                          className="min-w-[140px]"
+                        >
+                          🎲 Generar al azar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="px-4 py-5 sm:p-6">
