@@ -40,6 +40,8 @@ export const calendarEntries = pgTable("calendar_entries", {
   title: text("title").notNull(),
   date: timestamp("date").notNull(),
   completed: boolean("completed").default(false).notNull(),
+  notes: text("notes"),
+  color: text("color").default("#3b82f6"),
 });
 
 // User videos model
@@ -220,6 +222,8 @@ export const insertCalendarEntrySchema = createInsertSchema(calendarEntries).pic
   title: true,
   date: true,
   completed: true,
+  notes: true,
+  color: true,
 });
 
 export const insertUserVideoSchema = createInsertSchema(userVideos).pick({

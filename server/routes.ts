@@ -877,12 +877,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Calendar Management
+  // Calendar Management - Create calendar entry
   app.post("/api/calendar", requireAuth, async (req, res) => {
     try {
+      let { videoIdeaContent, ...restData } = req.body;
+      let videoIdeaId = req.body.videoIdeaId;
+      
+      // Si hay contenido de video idea, primero guardarlo
+      if (videoIdeaContent && !videoIdeaId) {
+        try {
+          // Crear idea de video primero
+          const videoIdea = await storage.createVideoIdea({
+            userId: req.session.userId,
+            title: videoIdeaContent.title,
+            category: videoIdeaContent.category || "general",
+            subcategory: videoIdeaContent.subcategory || "",
+            videoLength: videoIdeaContent.videoLength || "5-10",
+            content: videoIdeaContent
+          });
+          
+          videoIdeaId = videoIdea.id;
+          console.log(`Video idea created with ID: ${videoIdeaId}`);
+        } catch (ideaError) {
+          console.error("Error creating video idea:", ideaError);
+          // Continuar aunque falle la creación de la idea
+        }
+      }
+      
+      // Validar y crear entrada
       const calendarData = insertCalendarEntrySchema.parse({
-        ...req.body,
+        ...restData,
         userId: req.session.userId,
+        videoIdeaId: videoIdeaId || null
       });
 
       const entry = await storage.createCalendarEntry(calendarData);
