@@ -439,6 +439,46 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
                   </TabsList>
                 </div>
                 
+                {/* MASS GENERATION TAB */}
+                {activeTab === 'mass' && (
+                  <div className="px-4 pt-6 pb-3 bg-primary/5 border-y border-border">
+                    <div className="mb-6">
+                      <h3 className="text-lg font-bold mb-2">Generación Masiva de Ideas</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Genera múltiples ideas de videos a la vez y elige las que más te gusten.
+                        Usuarios gratuitos pueden generar hasta 20 ideas, usuarios premium hasta 100.
+                      </p>
+                      
+                      <div className="mb-4">
+                        <Label htmlFor="mass-count" className="mb-2 block">
+                          Número de ideas a generar (1-100)
+                        </Label>
+                        <div className="flex gap-3 items-center">
+                          <Input
+                            id="mass-count"
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={massGenerationCount}
+                            onChange={(e) => setMassGenerationCount(parseInt(e.target.value) || 10)}
+                            className="w-24"
+                            disabled={isGenerating}
+                          />
+                          <div className="text-xs text-muted-foreground">
+                            {!user ? (
+                              "Inicia sesión para generar ideas"
+                            ) : !user.isPremium && massGenerationCount > 20 ? (
+                              <span className="text-red-500">Límite de 20 para usuarios gratuitos</span>
+                            ) : (
+                              `${user.isPremium ? 'Premium' : 'Gratuito'}: ${massGenerationCount} ideas`
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 {/* MODO RÁPIDO - Generación con un solo click */}
                 <div className="px-4 pt-4 pb-0">
                   <div className="flex justify-between items-center mb-1">
@@ -793,21 +833,29 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
             </CardContent>
           </Card>
           
-          {/* Resultados de la generación semanal o mensual */}
-          {(weeklyResult || monthlyResult) && (
+          {/* Resultados de la generación semanal, mensual o masiva */}
+          {(weeklyResult || monthlyResult || massGenerationResult) && (
             <div className="mt-8">
               <Card className="border border-border">
                 <CardContent className="p-6">
                   <h3 className="text-lg font-semibold mb-6 font-heading">
-                    {weeklyResult ? "Plan Semanal de Contenido" : "Plan Mensual de Contenido"}
+                    {weeklyResult 
+                      ? "Plan Semanal de Contenido" 
+                      : monthlyResult 
+                        ? "Plan Mensual de Contenido" 
+                        : `Generación Masiva (${massGenerationResult?.count} ideas)`}
                   </h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {(weeklyResult?.ideas || monthlyResult?.ideas)?.map((idea, index) => (
+                    {(weeklyResult?.ideas || monthlyResult?.ideas || massGenerationResult?.ideas)?.map((idea, index) => (
                       <div key={index} 
                            className="border border-border rounded-md p-4 hover:bg-muted/50 transition-colors cursor-pointer idea-card"
                            onClick={() => onIdeaGenerated(idea, formData)}>
-                        <p className="text-xs font-medium text-primary/90 mb-1 font-mono">DÍA {index + 1}</p>
+                        <p className="text-xs font-medium text-primary/90 mb-1 font-mono">
+                          {massGenerationResult 
+                            ? `IDEA ${index + 1}` 
+                            : `DÍA ${index + 1}`}
+                        </p>
                         <h4 className="font-semibold font-heading mb-2">{idea.title}</h4>
                         <p className="text-sm text-muted-foreground line-clamp-2">
                           {idea.outline[0]}
