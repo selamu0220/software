@@ -294,7 +294,7 @@ export default function Generator({ onIdeaGenerated, isGenerating, setIsGenerati
         return;
       }
       
-      const result = await apiRequest("POST", "/api/generate-mass", {
+      const result = await apiRequest("POST", "/api/generate-ideas/mass", {
         ...formData,
         count: massGenerationCount,
       });
