@@ -61,11 +61,75 @@ export const userVideos = pgTable("user_videos", {
   isPublic: boolean("is_public").default(false).notNull(),
 });
 
+// Categorías de recursos
+export const resourceCategories = pgTable("resource_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  iconName: text("icon_name"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Subcategorías de recursos
+export const resourceSubcategories = pgTable("resource_subcategories", {
+  id: serial("id").primaryKey(),
+  categoryId: integer("category_id").references(() => resourceCategories.id).notNull(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull(),
+  description: text("description"),
+  iconName: text("icon_name"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Recursos
+export const resources = pgTable("resources", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  categoryId: integer("category_id").references(() => resourceCategories.id).notNull(),
+  subcategoryId: integer("subcategory_id").references(() => resourceSubcategories.id),
+  title: text("title").notNull(),
+  slug: text("slug").notNull(),
+  description: text("description").notNull(),
+  content: text("content"),
+  thumbnailUrl: text("thumbnail_url"),
+  externalUrl: text("external_url"),
+  downloadUrl: text("download_url"),
+  fileSize: integer("file_size"),
+  fileType: text("file_type"),
+  version: text("version"),
+  tags: text("tags").array(),
+  isVerified: boolean("is_verified").default(false).notNull(),
+  isPublic: boolean("is_public").default(true).notNull(),
+  isFeatured: boolean("is_featured").default(false).notNull(),
+  viewCount: integer("view_count").default(0).notNull(),
+  downloadCount: integer("download_count").default(0).notNull(),
+  likesCount: integer("likes_count").default(0).notNull(),
+  dislikesCount: integer("dislikes_count").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Comentarios en recursos
+export const resourceComments = pgTable("resource_comments", {
+  id: serial("id").primaryKey(),
+  resourceId: integer("resource_id").references(() => resources.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  content: text("content").notNull(),
+  rating: integer("rating"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Define relations
 export const usersRelations = relations(users, ({ many }) => ({
   videoIdeas: many(videoIdeas),
   calendarEntries: many(calendarEntries),
   userVideos: many(userVideos),
+  resources: many(resources),
+  resourceComments: many(resourceComments),
 }));
 
 export const videoIdeasRelations = relations(videoIdeas, ({ one, many }) => ({
@@ -90,6 +154,46 @@ export const calendarEntriesRelations = relations(calendarEntries, ({ one }) => 
 export const userVideosRelations = relations(userVideos, ({ one }) => ({
   user: one(users, {
     fields: [userVideos.userId],
+    references: [users.id],
+  }),
+}));
+
+export const resourceCategoriesRelations = relations(resourceCategories, ({ many }) => ({
+  subcategories: many(resourceSubcategories),
+  resources: many(resources),
+}));
+
+export const resourceSubcategoriesRelations = relations(resourceSubcategories, ({ one, many }) => ({
+  category: one(resourceCategories, {
+    fields: [resourceSubcategories.categoryId],
+    references: [resourceCategories.id],
+  }),
+  resources: many(resources),
+}));
+
+export const resourcesRelations = relations(resources, ({ one, many }) => ({
+  user: one(users, {
+    fields: [resources.userId],
+    references: [users.id],
+  }),
+  category: one(resourceCategories, {
+    fields: [resources.categoryId],
+    references: [resourceCategories.id],
+  }),
+  subcategory: one(resourceSubcategories, {
+    fields: [resources.subcategoryId],
+    references: [resourceSubcategories.id],
+  }),
+  comments: many(resourceComments),
+}));
+
+export const resourceCommentsRelations = relations(resourceComments, ({ one }) => ({
+  resource: one(resources, {
+    fields: [resourceComments.resourceId],
+    references: [resources.id],
+  }),
+  user: one(users, {
+    fields: [resourceComments.userId],
     references: [users.id],
   }),
 }));
@@ -149,6 +253,49 @@ export const generationRequestSchema = z.object({
   geminiApiKey: z.string().optional(),
 });
 
+// Esquemas de inserción para recursos
+export const insertResourceCategorySchema = createInsertSchema(resourceCategories).pick({
+  name: true,
+  slug: true,
+  description: true,
+  iconName: true,
+});
+
+export const insertResourceSubcategorySchema = createInsertSchema(resourceSubcategories).pick({
+  categoryId: true,
+  name: true,
+  slug: true,
+  description: true,
+  iconName: true,
+});
+
+export const insertResourceSchema = createInsertSchema(resources).pick({
+  userId: true,
+  categoryId: true,
+  subcategoryId: true,
+  title: true,
+  slug: true,
+  description: true,
+  content: true,
+  thumbnailUrl: true,
+  externalUrl: true,
+  downloadUrl: true,
+  fileSize: true,
+  fileType: true,
+  version: true,
+  tags: true,
+  isVerified: true,
+  isPublic: true,
+  isFeatured: true,
+});
+
+export const insertResourceCommentSchema = createInsertSchema(resourceComments).pick({
+  resourceId: true,
+  userId: true,
+  content: true,
+  rating: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -159,6 +306,14 @@ export type CalendarEntry = typeof calendarEntries.$inferSelect;
 export type InsertUserVideo = z.infer<typeof insertUserVideoSchema>;
 export type UserVideo = typeof userVideos.$inferSelect;
 export type GenerationRequest = z.infer<typeof generationRequestSchema>;
+export type InsertResourceCategory = z.infer<typeof insertResourceCategorySchema>;
+export type ResourceCategory = typeof resourceCategories.$inferSelect;
+export type InsertResourceSubcategory = z.infer<typeof insertResourceSubcategorySchema>;
+export type ResourceSubcategory = typeof resourceSubcategories.$inferSelect;
+export type InsertResource = z.infer<typeof insertResourceSchema>;
+export type Resource = typeof resources.$inferSelect;
+export type InsertResourceComment = z.infer<typeof insertResourceCommentSchema>;
+export type ResourceComment = typeof resourceComments.$inferSelect;
 
 // User profile update schema
 export const updateUserSchema = z.object({

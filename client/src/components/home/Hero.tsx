@@ -14,21 +14,21 @@ export default function Hero({ user }: HeroProps) {
           <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <h1 className="text-4xl tracking-tight font-bold sm:text-5xl md:text-6xl font-heading">
-                <span className="block mb-2">AI-Powered YouTube</span>
-                <span className="block text-primary">Video Ideas Generator</span>
+                <span className="block mb-2">Red Creativa</span>
+                <span className="block text-primary">Recursos para Creadores</span>
               </h1>
               <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-                Generate engaging video ideas for your YouTube channel, create a content calendar, and never run out of inspiration again.
+                Los mejores recursos disponibles en internet para creadores de contenido. Herramientas, plantillas, tutoriales y mucho más para potenciar tu creatividad.
               </p>
               <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="#generator">
+                <Link href="#recursos">
                   <Button size="lg" className="w-full sm:w-auto px-8">
-                    Generate Ideas
+                    Explorar Recursos
                   </Button>
                 </Link>
-                <Link href="#pricing">
+                <Link href="#ideas">
                   <Button size="lg" variant="outline" className="w-full sm:w-auto px-8">
-                    View Pricing
+                    Generar Ideas
                   </Button>
                 </Link>
               </div>
