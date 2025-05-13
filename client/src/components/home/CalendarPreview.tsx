@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { VideoIdeaContent, generateVideoIdea } from "@/lib/openai";
 import { format } from "date-fns";
+import { GenerationRequest } from "@shared/schema";
 
 const WEEKDAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
@@ -93,7 +94,7 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
       const formattedDate = format(targetDate, "yyyy-MM-dd");
       
       // Parámetros rápidos para la generación
-      const quickParams = {
+      const quickParams: GenerationRequest = {
         category: "Gaming",
         subcategory: "Game Reviews",
         videoFocus: "Game Reviews sin mostrar la cara",
@@ -101,7 +102,7 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
         templateStyle: "Listicle",
         contentTone: "Enthusiastic",
         titleTemplate: "TOP [Número] SECRETOS que Nadie te Cuenta sobre [Tema]",
-        contentType: "fullScript" as "fullScript" | "idea" | "keypoints", // Tipado correcto
+        contentType: "fullScript",
         timingDetail: true,
         useSubcategory: true,
         customChannelType: "",
@@ -275,7 +276,7 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
                             </div>
                           )}
                           
-                          {isGenerating && day.currentMonth && day.day === today.getDate() && (
+                          {isGenerating && day.currentMonth && (
                             <div className="text-xs text-center mt-1 text-primary animate-pulse">
                               Generando...
                             </div>
@@ -292,7 +293,7 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
                   {entries.length} {entries.length === 1 ? 'video planificado' : 'videos planificados'} este mes
                 </span>
                 
-                <Link href="/calendar">
+                <Link to="/calendar">
                   <Button size="sm">
                     <Calendar className="h-4 w-4 mr-1" />
                     Ver Calendario Completo
@@ -309,7 +310,7 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
                   <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
                     Inicia sesión para planificar tus videos con un solo clic y organizar todo tu contenido.
                   </p>
-                  <Link href="/login">
+                  <Link to="/login">
                     <Button>Iniciar Sesión</Button>
                   </Link>
                 </div>
