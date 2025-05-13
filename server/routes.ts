@@ -673,7 +673,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Generar ideas para todo un mes (solo para usuarios premium)
+  // Generar ideas masivamente (límite según tipo de usuario: gratuito o premium)
+  app.post("/api/generate-ideas/mass", requireAuth, async (req, res) => {
+    try {
+      // Validar los parámetros del cuerpo de la solicitud
+      const baseParams = generationRequestSchema.parse(req.body);
+      const count = Math.min(parseInt(req.body.count) || 10, 100); // Máximo 100 ideas
+      
+      const userId = req.session.userId!;
+      
+      // Obtener información del usuario
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+      
+      // Verificar límites según el tipo de usuario
+      const isPremium = user.isPremium || user.lifetimeAccess;
+      const maxIdeas = isPremium ? 100 : 20; // Premium: 100, Gratuito: 20
+      
+      if (count > maxIdeas) {
+        return res.status(403).json({
+          message: isPremium 
+            ? "El límite máximo es de 100 ideas por solicitud" 
+            : "Los usuarios gratuitos pueden generar hasta 20 ideas por solicitud. Actualiza a premium para generar hasta 100.",
+          limitReached: true,
+        });
+      }
+      
+      // Iniciar la generación
+      console.log(`Generando ${count} ideas para el usuario ${user.username}...`);
+      
+      // Arreglos para almacenar ideas
+      const ideas: VideoIdeaContent[] = [];
+      const storedIdeas: VideoIdea[] = [];
+      
+      // Generar las ideas solicitadas con un enfoque iterativo y gestión de errores
+      for (let i = 0; i < count; i++) {
+        try {
+          console.log(`Generando idea ${i + 1} de ${count}...`);
+          
+          // Generar idea con variaciones para evitar repeticiones
+          const generatedIdea = await generateVideoIdea({
+            ...baseParams,
+            videoFocus: `${baseParams.videoFocus} (Idea ${i + 1} de ${count})`,
+            geminiApiKey: baseParams.geminiApiKey,
+          });
+          
+          // Guardar la idea en la base de datos
+          const videoIdea = await storage.createVideoIdea({
+            userId,
+            title: generatedIdea.title,
+            category: baseParams.category,
+            subcategory: baseParams.subcategory,
+            videoLength: baseParams.videoLength,
+            content: generatedIdea,
+          });
+          
+          storedIdeas.push(videoIdea);
+          ideas.push(generatedIdea);
+          console.log(`Idea ${i + 1} generada con éxito`);
+        } catch (error) {
+          console.error(`Error generando idea ${i + 1}:`, error);
+          // Continuamos con la siguiente idea si hay un error
+        }
+      }
+      
+      // Retornar resultado
+      return res.json({
+        message: `Se generaron ${ideas.length} ideas de ${count} solicitadas`,
+        count: ideas.length,
+        ideas: ideas,
+        storedIdeas: storedIdeas,
+      });
+    } catch (error) {
+      console.error("Error en generate-mass-ideas:", error);
+      return res.status(500).json({
+        message: "Error al generar ideas",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
   app.post("/api/generate-ideas/month", requirePremium, async (req, res) => {
     try {
       const params = generationRequestSchema.parse(req.body);
