@@ -27,20 +27,25 @@ async function clearMockData() {
       
       console.log('Eliminando recursos de muestra...');
       
-      // 1. Eliminar primero comentarios de recursos (dependencia)
-      const deleteCommentsResult = await client.query(`
-        DELETE FROM resource_comments
-        RETURNING id
+      // Verificar si la tabla existe antes de intentar eliminar
+      const checkResourcesTable = await client.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_name = 'resources'
+        );
       `);
-      console.log(`Eliminados ${deleteCommentsResult.rowCount} comentarios de recursos`);
       
-      // 2. Eliminar recursos
-      const deleteResourcesResult = await client.query(`
-        DELETE FROM resources
-        WHERE user_id != (SELECT id FROM users WHERE username = 'sela_gr')
-        RETURNING id
-      `);
-      console.log(`Eliminados ${deleteResourcesResult.rowCount} recursos de muestra`);
+      if (checkResourcesTable.rows[0].exists) {
+        // Eliminar recursos
+        const deleteResourcesResult = await client.query(`
+          DELETE FROM resources
+          WHERE user_id != (SELECT id FROM users WHERE username = 'sela_gr')
+          RETURNING id
+        `);
+        console.log(`Eliminados ${deleteResourcesResult.rowCount} recursos de muestra`);
+      } else {
+        console.log('La tabla de recursos no existe todavía.');
+      }
       
       // Confirmar cambios
       await client.query('COMMIT');

@@ -15,6 +15,7 @@ import {
   updateUserSchema,
   insertUserVideoSchema,
   UserVideo,
+  VideoIdea,
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import session from "express-session";
