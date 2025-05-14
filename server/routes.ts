@@ -2013,11 +2013,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Limitar a usuarios no premium a 10 artículos a la vez
-      const maxPosts = user.isPremium ? 100 : 10;
+      // Para los usuarios autorizados a generar blog posts, permitir hasta 50 artículos
+      // Sela_gr, sela_gb y redcreativa tienen permisos especiales
+      const maxPosts = 50;
       if (params.count > maxPosts) {
         return res.status(403).json({ 
-          message: `Usuarios ${user.isPremium ? 'premium' : 'gratuitos'} pueden generar hasta ${maxPosts} artículos a la vez.`
+          message: `Puedes generar hasta ${maxPosts} artículos a la vez.`
         });
       }
       
