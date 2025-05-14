@@ -1,6 +1,31 @@
 import { ChevronRight, Home } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
+// Exportación de componentes adicionales para el sistema de breadcrumbs
+export function BreadcrumbItem({ children }: { children: React.ReactNode }) {
+  return <li className="flex items-center">{children}</li>;
+}
+
+export function BreadcrumbLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link href={href}>
+      <span className="text-muted-foreground hover:text-foreground cursor-pointer">{children}</span>
+    </Link>
+  );
+}
+
+export function BreadcrumbSeparator() {
+  return <ChevronRight className="h-4 w-4 text-muted-foreground mx-1" aria-hidden="true" />;
+}
+
+export function BreadcrumbList({ children }: { children: React.ReactNode }) {
+  return <ol className="flex items-center">{children}</ol>;
+}
+
+export function BreadcrumbPage({ children }: { children: React.ReactNode }) {
+  return <span className="text-foreground font-medium">{children}</span>;
+}
+
 export function Breadcrumb() {
   const [location] = useLocation();
   

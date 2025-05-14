@@ -249,6 +249,38 @@ export default function RecursoDetallePage() {
   
   return (
     <div className="container mx-auto py-10 px-4 sm:px-6">
+      {/* Schema.org markup para el producto (recurso) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": recurso.titulo,
+            "image": recurso.imagen,
+            "description": recurso.descripcion,
+            "category": recurso.categoria,
+            "sku": `recurso-${recursoId}`,
+            "brand": {
+              "@type": "Brand",
+              "name": recurso.autor.nombre
+            },
+            "offers": {
+              "@type": "Offer",
+              "url": window.location.href,
+              "priceCurrency": "EUR",
+              "price": recurso.premium ? "4.99" : "0",
+              "availability": "https://schema.org/InStock"
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": recurso.valoracionPromedio,
+              "reviewCount": recurso.numeroValoraciones
+            }
+          })
+        }}
+      />
+      
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
