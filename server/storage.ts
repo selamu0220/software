@@ -83,6 +83,7 @@ export interface IStorage {
   removeCategoryFromBlogPost(postId: number, categoryId: number): Promise<boolean>;
   getBlogPostCategories(postId: number): Promise<BlogCategory[]>;
   getBlogPostsByCategory(categoryId: number): Promise<BlogPost[]>;
+  getBlogPostsForScheduledPublishing(currentDate: Date): Promise<BlogPost[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -485,6 +486,20 @@ export class MemStorage implements IStorage {
     return categoryPostIds.map(id => this.blogPosts.get(id)!)
       .filter(Boolean)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  /**
+   * Busca los artículos que deben ser publicados automáticamente
+   * Encuentra artículos donde published=false y publishedAt <= fecha actual
+   */
+  async getBlogPostsForScheduledPublishing(currentDate: Date): Promise<BlogPost[]> {
+    return Array.from(this.blogPosts.values())
+      .filter(post => {
+        return !post.published && 
+               post.publishedAt && 
+               post.publishedAt <= currentDate;
+      })
+      .sort((a, b) => a.publishedAt.getTime() - b.publishedAt.getTime());
   }
 }
 
@@ -916,6 +931,27 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(blogPosts.createdAt));
     
     return postsByCategory.map(row => row.post);
+  }
+  
+  /**
+   * Busca los artículos que deben ser publicados automáticamente
+   * Encuentra artículos donde published=false y publishedAt <= fecha actual
+   */
+  async getBlogPostsForScheduledPublishing(currentDate: Date): Promise<BlogPost[]> {
+    try {
+      const result = await db.select().from(blogPosts).where(
+        and(
+          eq(blogPosts.published, false),
+          isNotNull(blogPosts.publishedAt),
+          lte(blogPosts.publishedAt, currentDate)
+        )
+      );
+      
+      return result;
+    } catch (error) {
+      console.error("Error fetching blog posts for scheduled publishing:", error);
+      return [];
+    }
   }
 }
 
