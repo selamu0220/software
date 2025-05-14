@@ -23,7 +23,7 @@ import {
   type InsertBlogPostCategory
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, SQL, sql } from "drizzle-orm";
+import { eq, and, SQL, sql, desc, asc } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -715,6 +715,207 @@ export class DatabaseStorage implements IStorage {
     }
     
     return video;
+  }
+
+  // Blog posts methods
+  async createBlogPost(post: InsertBlogPost): Promise<BlogPost> {
+    const [blogPost] = await db
+      .insert(blogPosts)
+      .values(post)
+      .returning();
+    
+    return blogPost;
+  }
+
+  async getBlogPost(id: number): Promise<BlogPost | undefined> {
+    const [blogPost] = await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.id, id));
+    
+    return blogPost;
+  }
+
+  async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
+    const [blogPost] = await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.slug, slug));
+    
+    return blogPost;
+  }
+
+  async getAllBlogPosts(limit = 10, offset = 0): Promise<BlogPost[]> {
+    return await db
+      .select()
+      .from(blogPosts)
+      .orderBy(desc(blogPosts.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async getPublishedBlogPosts(limit = 10, offset = 0): Promise<BlogPost[]> {
+    return await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.published, true))
+      .orderBy(desc(blogPosts.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async getFeaturedBlogPosts(limit = 3): Promise<BlogPost[]> {
+    return await db
+      .select()
+      .from(blogPosts)
+      .where(and(
+        eq(blogPosts.published, true),
+        eq(blogPosts.featured, true)
+      ))
+      .orderBy(desc(blogPosts.createdAt))
+      .limit(limit);
+  }
+
+  async getBlogPostsByUser(userId: number): Promise<BlogPost[]> {
+    return await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.userId, userId))
+      .orderBy(desc(blogPosts.createdAt));
+  }
+
+  async updateBlogPost(id: number, updates: Partial<BlogPost>): Promise<BlogPost> {
+    const [blogPost] = await db
+      .update(blogPosts)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(blogPosts.id, id))
+      .returning();
+    
+    if (!blogPost) {
+      throw new Error(`Blog post with id ${id} not found`);
+    }
+    
+    return blogPost;
+  }
+
+  async deleteBlogPost(id: number): Promise<boolean> {
+    const result = await db
+      .delete(blogPosts)
+      .where(eq(blogPosts.id, id))
+      .returning({ id: blogPosts.id });
+    
+    return result.length > 0;
+  }
+
+  // Blog categories methods
+  async createBlogCategory(category: InsertBlogCategory): Promise<BlogCategory> {
+    const [blogCategory] = await db
+      .insert(blogCategories)
+      .values(category)
+      .returning();
+    
+    return blogCategory;
+  }
+
+  async getBlogCategory(id: number): Promise<BlogCategory | undefined> {
+    const [blogCategory] = await db
+      .select()
+      .from(blogCategories)
+      .where(eq(blogCategories.id, id));
+    
+    return blogCategory;
+  }
+
+  async getBlogCategoryBySlug(slug: string): Promise<BlogCategory | undefined> {
+    const [blogCategory] = await db
+      .select()
+      .from(blogCategories)
+      .where(eq(blogCategories.slug, slug));
+    
+    return blogCategory;
+  }
+
+  async getAllBlogCategories(): Promise<BlogCategory[]> {
+    return await db
+      .select()
+      .from(blogCategories)
+      .orderBy(asc(blogCategories.name));
+  }
+
+  async updateBlogCategory(id: number, updates: Partial<BlogCategory>): Promise<BlogCategory> {
+    const [blogCategory] = await db
+      .update(blogCategories)
+      .set(updates)
+      .where(eq(blogCategories.id, id))
+      .returning();
+    
+    if (!blogCategory) {
+      throw new Error(`Blog category with id ${id} not found`);
+    }
+    
+    return blogCategory;
+  }
+
+  async deleteBlogCategory(id: number): Promise<boolean> {
+    const result = await db
+      .delete(blogCategories)
+      .where(eq(blogCategories.id, id))
+      .returning({ id: blogCategories.id });
+    
+    return result.length > 0;
+  }
+
+  // Blog post-category relationship methods
+  async addCategoryToBlogPost(postId: number, categoryId: number): Promise<BlogPostCategory> {
+    const [postCategory] = await db
+      .insert(blogPostCategories)
+      .values({
+        postId,
+        categoryId
+      })
+      .returning();
+    
+    return postCategory;
+  }
+
+  async removeCategoryFromBlogPost(postId: number, categoryId: number): Promise<boolean> {
+    const result = await db
+      .delete(blogPostCategories)
+      .where(and(
+        eq(blogPostCategories.postId, postId),
+        eq(blogPostCategories.categoryId, categoryId)
+      ))
+      .returning({ id: blogPostCategories.id });
+    
+    return result.length > 0;
+  }
+
+  async getBlogPostCategories(postId: number): Promise<BlogCategory[]> {
+    const postCategories = await db
+      .select({
+        category: blogCategories
+      })
+      .from(blogPostCategories)
+      .innerJoin(blogCategories, eq(blogPostCategories.categoryId, blogCategories.id))
+      .where(eq(blogPostCategories.postId, postId));
+    
+    return postCategories.map(row => row.category);
+  }
+
+  async getBlogPostsByCategory(categoryId: number): Promise<BlogPost[]> {
+    const postsByCategory = await db
+      .select({
+        post: blogPosts
+      })
+      .from(blogPostCategories)
+      .innerJoin(blogPosts, eq(blogPostCategories.postId, blogPosts.id))
+      .where(eq(blogPostCategories.categoryId, categoryId))
+      .orderBy(desc(blogPosts.createdAt));
+    
+    return postsByCategory.map(row => row.post);
   }
 }
 
