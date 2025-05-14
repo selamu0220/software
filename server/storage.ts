@@ -23,7 +23,7 @@ import {
   type InsertBlogPostCategory
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, SQL, sql, desc, asc } from "drizzle-orm";
+import { eq, and, SQL, sql, desc, asc, isNotNull, lte, gt, gte } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
