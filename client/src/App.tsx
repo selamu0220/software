@@ -107,14 +107,14 @@ function App() {
             
             {/* Nuevas rutas para la biblioteca de recursos */}
             <Route path="/recursos" component={() => <Recursos />} />
-            <Route path="/recursos/:id" component={RecursoDetalle} />
             <Route path="/recursos/subir" component={() => <SubirRecurso />} />
+            <Route path="/recursos/:id" component={RecursoDetalle} />
             
             {/* Nuevas rutas para el blog (mejora SEO) */}
             <Route path="/blog" component={() => <BlogPage />} />
-            <Route path="/blog/:slug" component={BlogPostPage} />
             <Route path="/blog/new" component={() => <BlogEditorPage />} />
             <Route path="/blog/edit/:id" component={BlogEditorPage} />
+            <Route path="/blog/:slug" component={BlogPostPage} />
             
             <Route component={NotFound} />
           </Switch>

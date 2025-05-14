@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video, BarChart3, BookOpen, Library } from "lucide-react";
+import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video, BarChart3, BookOpen, Library, FileText } from "lucide-react";
 
 interface NavbarProps {
   user: User | null;
@@ -23,6 +23,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
   const navLinks = [
     { name: "Generador", href: "/" },
     { name: "Recursos", href: "/recursos" },
+    { name: "Blog", href: "/blog" },
     { name: "Calendario", href: "/calendar" },
     { name: "Teleprompter", href: "/teleprompter" },
     { name: "Grabación", href: "/recording" },
@@ -108,6 +109,12 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     <Link href="/recursos" className="flex items-center">
                       <Library className="mr-2 h-4 w-4" />
                       Biblioteca de Recursos
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/blog" className="flex items-center">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Blog
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -253,6 +260,16 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     <div className="flex items-center">
                       <Library className="mr-2 h-4 w-4" />
                       <span>Biblioteca de Recursos</span>
+                    </div>
+                  </Link>
+                  <Link
+                    href="/blog"
+                    className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="flex items-center">
+                      <FileText className="mr-2 h-4 w-4" />
+                      <span>Blog</span>
                     </div>
                   </Link>
                   <Link
