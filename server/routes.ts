@@ -1,7 +1,8 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateVideoIdea, aiAssistant, aiAssistRequestSchema, VideoIdeaContent } from "./gemini";
+import { generateVideoIdea, aiAssistant, aiAssistRequestSchema, VideoIdeaContent, generateBlogPosts, blogPostGenerationSchema } from "./gemini";
+import slugify from "../client/src/lib/utils/slugify";
 import {
   createMonthlySubscription,
   createLifetimePayment,
@@ -1988,6 +1989,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Datos inválidos", details: error.format() });
       }
       res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Endpoint para generar artículos de blog con IA
+  app.post("/api/blog/generate", requireAuth, async (req, res) => {
+    try {
+      // Validar parámetros de entrada
+      const params = blogPostGenerationSchema.parse(req.body);
+      const userId = req.session.userId!;
+      
+      // Verificar límites según si el usuario es premium
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+      
+      // Limitar a usuarios no premium a 10 artículos a la vez
+      const maxPosts = user.isPremium ? 100 : 10;
+      if (params.count > maxPosts) {
+        return res.status(403).json({ 
+          message: `Usuarios ${user.isPremium ? 'premium' : 'gratuitos'} pueden generar hasta ${maxPosts} artículos a la vez.`
+        });
+      }
+      
+      console.log(`Generando ${params.count} artículos sobre "${params.topic}" para usuario ${userId}`);
+      
+      // Generar artículos con IA
+      const blogPosts = await generateBlogPosts(params);
+      
+      // Guardar los artículos en la base de datos
+      const savedPosts = [];
+      for (const post of blogPosts) {
+        const slug = slugify(post.title);
+        
+        // Verificar si el slug ya existe
+        const existingPost = await storage.getBlogPostBySlug(slug);
+        if (existingPost) {
+          // Añadir timestamp al slug para hacerlo único
+          const uniqueSlug = `${slug}-${Date.now().toString().substring(8)}`;
+          
+          const savedPost = await storage.createBlogPost({
+            userId,
+            title: post.title,
+            content: post.content,
+            excerpt: post.excerpt,
+            coverImage: post.coverImage || `https://picsum.photos/seed/${encodeURIComponent(slug)}/1200/630`,
+            slug: uniqueSlug,
+            tags: post.tags,
+            readingTime: post.readingTime,
+            published: true,
+            featured: false,
+            seoTitle: post.seoTitle || post.title,
+            seoDescription: post.seoDescription || post.excerpt.substring(0, 155)
+          });
+          
+          savedPosts.push(savedPost);
+        } else {
+          const savedPost = await storage.createBlogPost({
+            userId,
+            title: post.title,
+            content: post.content,
+            excerpt: post.excerpt,
+            coverImage: post.coverImage || `https://picsum.photos/seed/${encodeURIComponent(slug)}/1200/630`,
+            slug,
+            tags: post.tags,
+            readingTime: post.readingTime,
+            published: true,
+            featured: false,
+            seoTitle: post.seoTitle || post.title,
+            seoDescription: post.seoDescription || post.excerpt.substring(0, 155)
+          });
+          
+          savedPosts.push(savedPost);
+        }
+      }
+      
+      res.status(201).json({
+        message: `Se han generado y guardado ${savedPosts.length} artículos de blog.`,
+        posts: savedPosts
+      });
+    } catch (error: any) {
+      console.error("Error generating blog posts:", error);
+      if (error.name === "ZodError") {
+        return res.status(400).json({ message: "Datos inválidos", details: error.format() });
+      }
+      res.status(500).json({ message: "Error al generar artículos: " + error.message });
     }
   });
   

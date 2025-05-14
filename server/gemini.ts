@@ -18,6 +18,9 @@ export const aiAssistRequestSchema = z.object({
 
 // Inicializar el cliente de Google Generative AI con la clave por defecto
 // La clave personalizada se utilizará por solicitud
+const genAI = process.env.GEMINI_API_KEY 
+  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+  : null;
 
 // Formatos para la generación de ideas de videos
 const IDEA_TEMPLATES = [
@@ -49,6 +52,218 @@ export type VideoIdeaContent = {
   subcategory: string;
   videoLength: string;
 };
+
+export type BlogPostContent = {
+  title: string;
+  content: string;
+  excerpt: string;
+  tags: string[];
+  readingTime: number;
+  seoTitle: string;
+  seoDescription: string;
+  coverImage?: string;
+};
+
+// Esquema para la generación de artículos de blog
+export const blogPostGenerationSchema = z.object({
+  topic: z.string().min(1, "Se requiere un tema"),
+  count: z.number().min(1).max(100).default(1),
+});
+
+// Temas comunes para artículos de blog sobre creación de contenido
+const BLOG_TOPICS = [
+  "Creación de contenido para YouTube",
+  "Optimización SEO para videos",
+  "Monetización de canales",
+  "Edición de videos",
+  "Crecimiento en redes sociales",
+  "Estrategias de marketing digital",
+  "YouTube Shorts vs videos largos",
+  "Tendencias en contenido audiovisual",
+  "Herramientas para creadores",
+  "Inteligencia artificial para creadores de contenido"
+];
+
+// Genera el placeholder para imagen de portada a partir del título
+function generateCoverImageUrl(title: string): string {
+  const seed = encodeURIComponent(title.substring(0, 30));
+  return `https://picsum.photos/seed/${seed}/1200/630`;
+}
+
+/**
+ * Genera múltiples artículos de blog con IA
+ */
+export async function generateBlogPosts(params: z.infer<typeof blogPostGenerationSchema>): Promise<BlogPostContent[]> {
+  const { topic, count } = params;
+  const posts: BlogPostContent[] = [];
+  
+  // Si no especifica tema, seleccionar uno aleatorio
+  const finalTopic = topic || BLOG_TOPICS[Math.floor(Math.random() * BLOG_TOPICS.length)];
+  
+  // Generar posts en paralelo
+  const promises = [];
+  for (let i = 0; i < count; i++) {
+    // Si es más de un post, añadir un número al tema para variación
+    const postTopic = count > 1 
+      ? `${finalTopic} - Parte ${i + 1}`
+      : finalTopic;
+      
+    promises.push(generateBlogPost(postTopic));
+  }
+  
+  // Procesar en lotes de 5 para no sobrecargar la API
+  const results = await Promise.all(promises);
+  return results;
+}
+
+/**
+ * Genera un artículo de blog con IA
+ */
+async function generateBlogPost(topic: string): Promise<BlogPostContent> {
+  if (!genAI || !process.env.GEMINI_API_KEY) {
+    console.warn("GEMINI_API_KEY no está configurada. Usando generación simulada para blog post.");
+    return getMockBlogPost(topic);
+  }
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    
+    const prompt = buildBlogPostPrompt(topic);
+    
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
+    
+    try {
+      // Intentamos parsear la respuesta como JSON
+      const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || 
+                        text.match(/{[\s\S]*}/);
+                        
+      if (jsonMatch) {
+        const jsonStr = jsonMatch[1] || jsonMatch[0];
+        const parsedContent = JSON.parse(jsonStr);
+        
+        // Calculamos el tiempo de lectura basado en la longitud del contenido
+        const wordCount = parsedContent.content.split(/\s+/).length;
+        const readingTime = Math.max(1, Math.ceil(wordCount / 200)); // ~200 palabras por minuto
+        
+        return {
+          ...parsedContent,
+          readingTime,
+          coverImage: generateCoverImageUrl(parsedContent.title),
+          tags: parsedContent.tags || ["Creación de contenido"]
+        };
+      } else {
+        // Fallback: generamos un post a partir del texto
+        const lines = text.split("\n").filter(line => line.trim() !== "");
+        const title = lines[0] || `Blog sobre ${topic}`;
+        const content = lines.slice(1).join("\n");
+        
+        return {
+          title,
+          content,
+          excerpt: content.substring(0, 150) + "...",
+          tags: ["Creación de contenido", topic],
+          readingTime: Math.ceil(content.split(/\s+/).length / 200),
+          seoTitle: title,
+          seoDescription: content.substring(0, 155),
+          coverImage: generateCoverImageUrl(title)
+        };
+      }
+    } catch (parseError) {
+      console.error("Error al parsear la respuesta JSON:", parseError);
+      return getMockBlogPost(topic);
+    }
+  } catch (error) {
+    console.error("Error al generar blog post con Gemini:", error);
+    return getMockBlogPost(topic);
+  }
+}
+
+/**
+ * Construye el prompt para la generación de un artículo de blog
+ */
+function buildBlogPostPrompt(topic: string): string {
+  return `Genera un artículo de blog completo sobre "${topic}" enfocado en creadores de contenido y YouTubers. El artículo debe ser informativo, práctico y con un tono profesional pero cercano. 
+
+Debe estar COMPLETAMENTE EN ESPAÑOL y debe incluir:
+- Título atractivo (menos de 60 caracteres)
+- Contenido de aproximadamente 800-1000 palabras con formato Markdown
+- Un extracto inicial atractivo (máximo 150 caracteres)
+- Sección de introducción
+- 3-5 secciones de contenido principal con subtítulos
+- Una conclusión
+- Incluye entre 3-5 etiquetas relevantes
+
+Formatea la respuesta como un objeto JSON con los siguientes campos:
+- title: string (Título del artículo)
+- content: string (Contenido completo en Markdown)
+- excerpt: string (Extracto/resumen corto)
+- tags: string[] (Array de etiquetas)
+- seoTitle: string (Título optimizado para SEO)
+- seoDescription: string (Meta descripción de máximo 155 caracteres)
+
+Responde SOLAMENTE con el JSON, sin ningún texto adicional, dentro de bloque de código markdown con triple backtick y lenguaje json.`;
+}
+
+/**
+ * Función de respaldo para obtener un artículo de blog simulado
+ */
+function getMockBlogPost(topic: string): BlogPostContent {
+  const title = `${topic}: Guía Completa para Creadores de Contenido en 2024`;
+  
+  const content = `
+# ${title}
+
+## Introducción
+
+En el dinámico mundo de la creación de contenido, mantenerse al día con las tendencias actuales es crucial para el éxito. Este artículo explora estrategias efectivas y herramientas para optimizar tu presencia en ${topic}.
+
+## Por qué es importante ${topic}
+
+La creación de contenido ha evolucionado significativamente en los últimos años. Con la creciente competencia, es esencial destacar mediante estrategias innovadoras y técnicas probadas que capturen la atención de tu audiencia.
+
+## Estrategias efectivas
+
+1. **Conoce a tu audiencia**: Investiga a fondo las preferencias y necesidades de tu público objetivo.
+2. **Planifica tu contenido**: Establece un calendario editorial consistente.
+3. **Optimiza para algoritmos**: Comprende cómo funcionan los algoritmos de las plataformas.
+4. **Colabora con otros creadores**: Las colaboraciones amplían tu alcance.
+
+## Herramientas recomendadas
+
+Para maximizar tu eficiencia en ${topic}, considera utilizar estas herramientas:
+
+- Planificadores de contenido
+- Software de edición avanzada
+- Herramientas de analítica
+- Asistentes de IA para generación de ideas
+
+## Tendencias actuales
+
+El panorama de la creación de contenido está en constante evolución. Algunas tendencias que deberías considerar incluyen:
+
+- Contenido corto y dinámico
+- Autenticidad y transparencia
+- Narración de historias personales
+- Contenido educativo de valor
+
+## Conclusión
+
+Dominar ${topic} requiere una combinación de estrategia, creatividad y persistencia. Implementando los consejos de esta guía, estarás bien posicionado para destacar en el competitivo mundo de la creación de contenido.
+`;
+
+  return {
+    title,
+    content,
+    excerpt: `Descubre estrategias efectivas y herramientas esenciales para dominar ${topic} en el competitivo mundo de la creación de contenido digital.`,
+    tags: ["Creación de contenido", "Estrategias digitales", "YouTube", "Redes sociales"],
+    readingTime: 5,
+    seoTitle: `${title} | Red Creativa Gen`,
+    seoDescription: `Aprende estrategias efectivas, herramientas y tendencias actuales para optimizar tu presencia en ${topic}. Guía completa para creadores.`,
+    coverImage: generateCoverImageUrl(title)
+  };
+}
 
 /**
  * Genera una idea de video de YouTube basada en parámetros del usuario
