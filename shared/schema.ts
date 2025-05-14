@@ -124,6 +124,7 @@ export const blogPosts = pgTable("blog_posts", {
   excerpt: text("excerpt").notNull(),
   coverImage: text("cover_image").notNull(),
   published: boolean("published").notNull().default(false),
+  publishedAt: timestamp("published_at"), // Nueva columna para fecha de publicación programada
   featured: boolean("featured").notNull().default(false),
   readingTime: integer("reading_time").notNull(),
   tags: text("tags").array().notNull(),
@@ -363,6 +364,7 @@ export const insertBlogPostSchema = createInsertSchema(blogPosts).pick({
   excerpt: true,
   coverImage: true,
   published: true,
+  publishedAt: true,
   featured: true,
   readingTime: true,
   tags: true,
