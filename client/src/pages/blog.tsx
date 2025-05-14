@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { BlogPost } from "@shared/schema";
 import { 
@@ -9,8 +9,25 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Clock, Edit3, PenTool, Plus } from "lucide-react";
+import { 
+  CalendarIcon, 
+  Clock, 
+  Edit3, 
+  PenTool, 
+  Plus, 
+  Sparkles,
+  Loader2 
+} from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -19,6 +36,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 // Determina el tiempo de lectura aproximado en minutos
 function calculateReadingTime(text: string): number {
@@ -31,6 +50,41 @@ export default function BlogPage() {
   const [location, navigate] = useLocation();
   const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [generatingCount, setGeneratingCount] = useState(50); // Valor predeterminado de 50 artículos
+  const { toast } = useToast();
+  
+  // Mutación para generar artículos con IA
+  const generateMutation = useMutation({
+    mutationFn: async (count: number) => {
+      const res = await apiRequest("POST", "/api/blog/generate", {
+        topic: "", // Vacío para usar un tema aleatorio
+        count
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Error al generar artículos");
+      }
+      
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "¡Artículos generados!",
+        description: data.message,
+      });
+      
+      // Actualizar la caché para mostrar los nuevos artículos
+      queryClient.invalidateQueries({ queryKey: ["/api/blog/posts"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error al generar artículos",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
 
   // Obtener las entradas del blog
   const { 
@@ -94,13 +148,56 @@ export default function BlogPage() {
         </div>
         
         {user && (
-          <Button
-            onClick={() => navigate("/blog/new")}
-            className="flex items-center gap-2"
-          >
-            <Plus size={16} />
-            Nuevo artículo
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <Select 
+                value={generatingCount.toString()} 
+                onValueChange={(value) => setGeneratingCount(parseInt(value))}
+                disabled={generateMutation.isPending}
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Cantidad" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Cantidad de artículos</SelectLabel>
+                    <SelectItem value="1">1 artículo</SelectItem>
+                    <SelectItem value="5">5 artículos</SelectItem>
+                    <SelectItem value="10">10 artículos</SelectItem>
+                    <SelectItem value="25">25 artículos</SelectItem>
+                    <SelectItem value="50">50 artículos</SelectItem>
+                    {user.isPremium && (
+                      <SelectItem value="100">100 artículos</SelectItem>
+                    )}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              
+              <Button
+                variant="outline"
+                onClick={() => generateMutation.mutate(generatingCount)}
+                className="flex items-center gap-2"
+                disabled={generateMutation.isPending}
+              >
+                {generateMutation.isPending ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Sparkles size={16} />
+                )}
+                {generateMutation.isPending 
+                  ? "Generando..." 
+                  : "Generar con IA"}
+              </Button>
+            </div>
+            
+            <Button
+              onClick={() => navigate("/blog/new")}
+              className="flex items-center gap-2"
+            >
+              <Plus size={16} />
+              Nuevo artículo
+            </Button>
+          </div>
         )}
       </div>
       
