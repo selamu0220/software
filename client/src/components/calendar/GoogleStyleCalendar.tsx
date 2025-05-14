@@ -340,6 +340,7 @@ export default function GoogleStyleCalendar({ user }: GoogleStyleCalendarProps) 
           userId: user.id,
           title: generatedIdea.title,
           date: selectedDate.toISOString(),
+          completed: false,
           notes: generatedIdea.outline.join("\n"),
           color: "#10b981", // Verde para ideas generadas
           videoIdeaContent: generatedIdea
