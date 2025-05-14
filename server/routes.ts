@@ -616,38 +616,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             if (retryCount > maxRetries) {
               console.warn(`Se alcanzó el máximo de reintentos para el día ${i + 1}. Continuando con el siguiente día.`);
-              // Si todos los reintentos fallan, intentamos generar una idea simulada
-              try {
-                const ideaDate = new Date(today);
-                ideaDate.setDate(today.getDate() + i);
-                const fechaFormateada = ideaDate.toLocaleDateString("es-ES");
-                
-                // Usar la función getMockVideoIdea de gemini.ts que exportamos directamente
-                const gemini = await import('./gemini');
-                const mockIdea = gemini.getMockVideoIdea({
-                  ...params,
-                  videoFocus: `${params.videoFocus} (Día ${i + 1} de 7, ${fechaFormateada})`,
-                });
-                
-                // Personalizar el título con el día
-                mockIdea.title = `Día ${i + 1}: ${mockIdea.title}`;
-                
-                // Guardar la idea simulada
-                const videoIdea = await storage.createVideoIdea({
-                  userId,
-                  title: mockIdea.title,
-                  category: params.category,
-                  subcategory: params.subcategory,
-                  videoLength: params.videoLength,
-                  content: mockIdea,
-                });
-                
-                storedIdeas.push(videoIdea);
-                ideas.push(mockIdea);
-                console.log(`Idea simulada generada para el día ${i + 1} después de fallos en la API`);
-              } catch (mockError) {
-                console.error(`Error al generar idea simulada para el día ${i + 1}:`, mockError);
-              }
+              console.error(`No se pudo generar una idea para el día ${i + 1} después de ${maxRetries} intentos. Omitiendo este día.`);
+              break; // Salir del ciclo de reintentos y continuar con el siguiente día
             } else {
               // Esperar un poco antes del siguiente reintento
               await new Promise(resolve => setTimeout(resolve, 1000));
