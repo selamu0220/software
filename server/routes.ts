@@ -2213,6 +2213,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
+  
+  /**
+   * Endpoint para publicar automáticamente los artículos programados
+   * Este endpoint publica los artículos que tienen publishedAt <= hora actual
+   */
+  app.post("/api/blog/publish-scheduled", async (req, res) => {
+    try {
+      // Obtener artículos que deben ser publicados
+      const currentDate = new Date();
+      const postsToPublish = await storage.getBlogPostsForScheduledPublishing(currentDate);
+      
+      if (postsToPublish.length === 0) {
+        return res.json({ message: "No hay artículos programados para publicar en este momento", count: 0 });
+      }
+      
+      // Limitar a un solo artículo por hora
+      // Tomamos el más antiguo según publishedAt
+      const [oldestPost] = postsToPublish;
+      
+      // Actualizar el post para marcarlo como publicado
+      await storage.updateBlogPost(oldestPost.id, {
+        published: true
+      });
+      
+      console.log(`Artículo publicado automáticamente: "${oldestPost.title}" (ID: ${oldestPost.id})`);
+      
+      res.json({ 
+        message: "Artículo publicado automáticamente", 
+        post: oldestPost,
+        count: 1,
+        remaining: postsToPublish.length - 1
+      });
+    } catch (error: any) {
+      console.error("Error al publicar artículos programados:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  /**
+   * Programar la publicación automática de artículos cada hora
+   * Esta función se ejecuta cada 60 minutos y publica un artículo si hay artículos programados
+   */
+  function scheduleAutomaticPublishing() {
+    // Iniciar inmediatamente la primera verificación
+    publishScheduledPosts();
+    
+    // Programar cada hora (60 minutos * 60 segundos * 1000 ms)
+    const PUBLISH_INTERVAL = 60 * 60 * 1000;
+    
+    setInterval(publishScheduledPosts, PUBLISH_INTERVAL);
+    console.log("Publicación automática programada cada hora");
+  }
+  
+  /**
+   * Función para publicar artículos programados
+   * Realiza una solicitud al endpoint de publicación automática
+   */
+  async function publishScheduledPosts() {
+    try {
+      // Obtener artículos que deben ser publicados
+      const currentDate = new Date();
+      const postsToPublish = await storage.getBlogPostsForScheduledPublishing(currentDate);
+      
+      if (postsToPublish.length === 0) {
+        console.log("No hay artículos programados para publicar en este momento");
+        return;
+      }
+      
+      // Limitar a un solo artículo por ejecución
+      // Tomamos el más antiguo según publishedAt
+      const [oldestPost] = postsToPublish;
+      
+      // Actualizar el post para marcarlo como publicado
+      await storage.updateBlogPost(oldestPost.id, {
+        published: true
+      });
+      
+      console.log(`Artículo publicado automáticamente: "${oldestPost.title}" (ID: ${oldestPost.id})`);
+      console.log(`Quedan ${postsToPublish.length - 1} artículos pendientes de publicación automática`);
+    } catch (error) {
+      console.error("Error al publicar artículos programados:", error);
+    }
+  }
+
+  // Iniciar el programador de publicación automática
+  scheduleAutomaticPublishing();
 
   const httpServer = createServer(app);
   return httpServer;
