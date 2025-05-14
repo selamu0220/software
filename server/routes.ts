@@ -24,6 +24,8 @@ import {
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import MemoryStore from "memorystore";
+import connectPgSimple from "connect-pg-simple";
+import { pool } from "./db";
 import { z } from "zod";
 import Stripe from "stripe";
 import {
@@ -88,7 +90,7 @@ declare module "express-session" {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create session store
-  const SessionStore = MemoryStore(session);
+  const PgSession = connectPgSimple(session);
 
   // Setup session middleware
   app.use(
@@ -96,12 +98,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       secret: process.env.SESSION_SECRET || "keyboard-cat",
       resave: false,
       saveUninitialized: false,
-      store: new SessionStore({
-        checkPeriod: 86400000, // prune expired entries every 24h
+      store: new PgSession({
+        pool: pool,
+        tableName: 'session', // Nombre de la tabla para las sesiones
+        createTableIfMissing: true // Crea la tabla si no existe
       }),
       cookie: {
         secure: process.env.NODE_ENV === "production",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 1 semana
       },
     }),
   );
