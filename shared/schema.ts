@@ -115,6 +115,38 @@ export const resources = pgTable("resources", {
 });
 
 // Comentarios en recursos
+export const blogPosts = pgTable("blog_posts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  content: text("content").notNull(),
+  excerpt: text("excerpt").notNull(),
+  coverImage: text("cover_image").notNull(),
+  published: boolean("published").notNull().default(false),
+  featured: boolean("featured").notNull().default(false),
+  readingTime: integer("reading_time").notNull(),
+  tags: text("tags").array().notNull(),
+  seoTitle: text("seo_title"),
+  seoDescription: text("seo_description"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const blogCategories = pgTable("blog_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const blogPostCategories = pgTable("blog_post_categories", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => blogPosts.id, { onDelete: "cascade" }),
+  categoryId: integer("category_id").notNull().references(() => blogCategories.id, { onDelete: "cascade" }),
+});
+
 export const resourceComments = pgTable("resource_comments", {
   id: serial("id").primaryKey(),
   resourceId: integer("resource_id").references(() => resources.id).notNull(),
@@ -197,6 +229,29 @@ export const resourceCommentsRelations = relations(resourceComments, ({ one }) =
   user: one(users, {
     fields: [resourceComments.userId],
     references: [users.id],
+  }),
+}));
+
+export const blogPostsRelations = relations(blogPosts, ({ one, many }) => ({
+  user: one(users, {
+    fields: [blogPosts.userId],
+    references: [users.id],
+  }),
+  categories: many(blogPostCategories),
+}));
+
+export const blogCategoriesRelations = relations(blogCategories, ({ many }) => ({
+  posts: many(blogPostCategories),
+}));
+
+export const blogPostCategoriesRelations = relations(blogPostCategories, ({ one }) => ({
+  post: one(blogPosts, {
+    fields: [blogPostCategories.postId],
+    references: [blogPosts.id],
+  }),
+  category: one(blogCategories, {
+    fields: [blogPostCategories.categoryId],
+    references: [blogCategories.id],
   }),
 }));
 
@@ -300,6 +355,32 @@ export const insertResourceCommentSchema = createInsertSchema(resourceComments).
   rating: true,
 });
 
+export const insertBlogPostSchema = createInsertSchema(blogPosts).pick({
+  userId: true,
+  title: true,
+  slug: true,
+  content: true,
+  excerpt: true,
+  coverImage: true,
+  published: true,
+  featured: true,
+  readingTime: true,
+  tags: true,
+  seoTitle: true,
+  seoDescription: true,
+});
+
+export const insertBlogCategorySchema = createInsertSchema(blogCategories).pick({
+  name: true,
+  slug: true,
+  description: true,
+});
+
+export const insertBlogPostCategorySchema = createInsertSchema(blogPostCategories).pick({
+  postId: true,
+  categoryId: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -318,6 +399,12 @@ export type InsertResource = z.infer<typeof insertResourceSchema>;
 export type Resource = typeof resources.$inferSelect;
 export type InsertResourceComment = z.infer<typeof insertResourceCommentSchema>;
 export type ResourceComment = typeof resourceComments.$inferSelect;
+export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type InsertBlogCategory = z.infer<typeof insertBlogCategorySchema>;
+export type BlogCategory = typeof blogCategories.$inferSelect;
+export type InsertBlogPostCategory = z.infer<typeof insertBlogPostCategorySchema>;
+export type BlogPostCategory = typeof blogPostCategories.$inferSelect;
 
 // User profile update schema
 export const updateUserSchema = z.object({

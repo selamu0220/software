@@ -3,6 +3,9 @@ import {
   videoIdeas, 
   calendarEntries,
   userVideos,
+  blogPosts,
+  blogCategories,
+  blogPostCategories,
   type User, 
   type InsertUser, 
   type VideoIdea, 
@@ -11,7 +14,13 @@ import {
   type InsertCalendarEntry,
   type UserVideo,
   type InsertUserVideo,
-  type UpdateUser
+  type UpdateUser,
+  type BlogPost,
+  type InsertBlogPost,
+  type BlogCategory,
+  type InsertBlogCategory,
+  type BlogPostCategory,
+  type InsertBlogPostCategory
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, SQL, sql } from "drizzle-orm";
@@ -49,6 +58,31 @@ export interface IStorage {
   getUserVideosByUser(userId: number): Promise<UserVideo[]>;
   deleteUserVideo(id: number): Promise<boolean>;
   updateUserVideo(id: number, updates: Partial<UserVideo>): Promise<UserVideo>;
+  
+  // Blog operations
+  createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
+  getBlogPost(id: number): Promise<BlogPost | undefined>;
+  getBlogPostBySlug(slug: string): Promise<BlogPost | undefined>;
+  getAllBlogPosts(limit?: number, offset?: number): Promise<BlogPost[]>;
+  getPublishedBlogPosts(limit?: number, offset?: number): Promise<BlogPost[]>;
+  getFeaturedBlogPosts(limit?: number): Promise<BlogPost[]>;
+  getBlogPostsByUser(userId: number): Promise<BlogPost[]>;
+  updateBlogPost(id: number, updates: Partial<BlogPost>): Promise<BlogPost>;
+  deleteBlogPost(id: number): Promise<boolean>;
+  
+  // Blog category operations
+  createBlogCategory(category: InsertBlogCategory): Promise<BlogCategory>;
+  getBlogCategory(id: number): Promise<BlogCategory | undefined>;
+  getBlogCategoryBySlug(slug: string): Promise<BlogCategory | undefined>;
+  getAllBlogCategories(): Promise<BlogCategory[]>;
+  updateBlogCategory(id: number, updates: Partial<BlogCategory>): Promise<BlogCategory>;
+  deleteBlogCategory(id: number): Promise<boolean>;
+  
+  // Blog post-category relationship operations
+  addCategoryToBlogPost(postId: number, categoryId: number): Promise<BlogPostCategory>;
+  removeCategoryFromBlogPost(postId: number, categoryId: number): Promise<boolean>;
+  getBlogPostCategories(postId: number): Promise<BlogCategory[]>;
+  getBlogPostsByCategory(categoryId: number): Promise<BlogPost[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -56,20 +90,32 @@ export class MemStorage implements IStorage {
   private videoIdeas: Map<number, VideoIdea>;
   private calendarEntries: Map<number, CalendarEntry>;
   private userVideos: Map<number, UserVideo>;
+  private blogPosts: Map<number, BlogPost>;
+  private blogCategories: Map<number, BlogCategory>;
+  private blogPostCategories: Map<number, BlogPostCategory>;
   private userIdCounter: number;
   private videoIdeaIdCounter: number;
   private calendarEntryIdCounter: number;
   private userVideoIdCounter: number;
+  private blogPostIdCounter: number;
+  private blogCategoryIdCounter: number;
+  private blogPostCategoryIdCounter: number;
 
   constructor() {
     this.users = new Map();
     this.videoIdeas = new Map();
     this.calendarEntries = new Map();
     this.userVideos = new Map();
+    this.blogPosts = new Map();
+    this.blogCategories = new Map();
+    this.blogPostCategories = new Map();
     this.userIdCounter = 1;
     this.videoIdeaIdCounter = 1;
     this.calendarEntryIdCounter = 1;
     this.userVideoIdCounter = 1;
+    this.blogPostIdCounter = 1;
+    this.blogCategoryIdCounter = 1;
+    this.blogPostCategoryIdCounter = 1;
   }
 
   // User operations
