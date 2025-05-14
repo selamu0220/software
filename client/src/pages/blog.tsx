@@ -1,356 +1,270 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+import { Link, useLocation } from "wouter";
+import { BlogPost } from "@shared/schema";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Calendar,
-  Clock,
-  Filter,
-  Tag,
-  ChevronRight,
-  ChevronLeft,
-  Plus,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CalendarIcon, Clock, Edit3, PenTool, Plus } from "lucide-react";
+import { useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
-import { queryClient } from "@/lib/queryClient";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Componente de Breadcrumb
-function BlogBreadcrumb() {
-  return (
-    <nav className="flex mb-8" aria-label="Breadcrumb">
-      <ol className="inline-flex items-center space-x-1 md:space-x-2">
-        <li className="inline-flex items-center">
-          <Link href="/">
-            <span className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground cursor-pointer">
-              Inicio
-            </span>
-          </Link>
-        </li>
-        <li>
-          <div className="flex items-center">
-            <ChevronRight className="h-4 w-4 text-muted-foreground mx-1" />
-            <span className="text-sm font-medium text-foreground">Blog</span>
-          </div>
-        </li>
-      </ol>
-    </nav>
-  );
+// Determina el tiempo de lectura aproximado en minutos
+function calculateReadingTime(text: string): number {
+  const wordsPerMinute = 200;
+  const wordCount = text.trim().split(/\s+/).length;
+  return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
 }
 
-// Skeleton para cargar artículos
-function BlogPostSkeleton() {
-  return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-4">
-        <div className="space-y-3">
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-6 w-full" />
-        </div>
-      </CardHeader>
-      <CardContent className="flex-grow">
-        <div className="space-y-2">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-2/3" />
-        </div>
-      </CardContent>
-      <CardFooter className="pt-2 flex justify-between">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-4 w-16" />
-      </CardFooter>
-    </Card>
-  );
-}
-
-// Listado de artículos de blog
 export default function BlogPage() {
-  const [location, setLocation] = useLocation();
-  const [page, setPage] = useState(1);
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [location, navigate] = useLocation();
   const { user } = useAuth();
-  
-  // Consultar artículos
-  const {
-    data: posts,
-    isLoading: postsLoading,
-    error: postsError,
-  } = useQuery({
-    queryKey: ["/api/blog/posts", page, selectedCategory],
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Obtener las entradas del blog
+  const { 
+    data: posts, 
+    isLoading: isLoadingPosts,
+    error: postsError 
+  } = useQuery<BlogPost[], Error>({
+    queryKey: ["/api/blog/posts"],
     queryFn: async () => {
-      let url = `/api/blog/posts?limit=9&offset=${(page - 1) * 9}`;
-      
-      // Solo mostrar posts publicados si no estamos en modo admin
-      if (!user) {
-        url += "&published=true";
-      }
-      
-      // Filtrar por categoría si hay una seleccionada
-      if (selectedCategory) {
-        url = `/api/blog/categories/${selectedCategory}/posts`;
-      }
-      
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error("Error al cargar artículos");
-      }
-      return await response.json();
-    },
+      const res = await fetch("/api/blog/posts");
+      if (!res.ok) throw new Error("Error al cargar las entradas del blog");
+      return res.json();
+    }
   });
-  
-  // Consultar categorías
-  const {
-    data: categories,
-    isLoading: categoriesLoading,
+
+  // Obtener las categorías del blog
+  const { 
+    data: categories, 
+    isLoading: isLoadingCategories 
   } = useQuery({
     queryKey: ["/api/blog/categories"],
     queryFn: async () => {
-      const response = await fetch("/api/blog/categories");
-      if (!response.ok) {
-        throw new Error("Error al cargar categorías");
-      }
-      return await response.json();
-    },
+      const res = await fetch("/api/blog/categories");
+      if (!res.ok) throw new Error("Error al cargar las categorías");
+      return res.json();
+    }
   });
-  
-  // Manejar la selección de categoría
-  const handleCategorySelect = (categoryId: number | null) => {
-    setSelectedCategory(categoryId);
-    setPage(1); // Resetear paginación
-  };
-  
-  // Manejar cambio de página
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 1) return;
-    if (posts && posts.length === 0 && newPage > 1) return;
-    if (posts && posts.length < 9 && newPage > page) return;
-    
-    setPage(newPage);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-  
-  // Calcular total de páginas estimado
-  const totalPages = posts && posts.length === 9 ? page + 1 : page;
-  
-  // Utilizar el título SEO del artículo si está disponible, de lo contrario, usar el título normal
-  const getTitle = (post: any) => post.seoTitle || post.title;
-  
-  // Utilizar la descripción SEO del artículo si está disponible, de lo contrario, usar el extracto
-  const getDescription = (post: any) => post.seoDescription || post.excerpt;
-  
-  // Formatear fecha
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return format(date, "d 'de' MMMM, yyyy", { locale: es });
-  };
-  
-  // Tiempo de lectura en minutos
-  const formatReadingTime = (minutes: number) => {
-    return `${minutes} min de lectura`;
-  };
-  
+
+  // Artículos filtrados por categoría (si hay categoría seleccionada)
+  const filteredPosts = selectedCategory 
+    ? posts?.filter(post => post.categories?.some(c => c.id === parseInt(selectedCategory)))
+    : posts;
+
+  if (postsError) {
+    return (
+      <div className="container py-8">
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            No se pudieron cargar las entradas del blog. Por favor, inténtalo de nuevo más tarde.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
-    <div className="container max-w-screen-xl px-4 py-12 mx-auto">
-      {/* Metadatos SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Blog",
-            "headline": "Blog - Red Creativa Gen",
-            "description": "Artículos sobre creación de contenido para YouTube, consejos, tutoriales y tendencias en video marketing.",
-            "keywords": "YouTube, creación de contenido, videos, marketing digital, tutoriales",
-            "author": {
-              "@type": "Organization",
-              "name": "Red Creativa Gen",
-              "url": window.location.origin
-            },
-            "publisher": {
-              "@type": "Organization",
-              "name": "Red Creativa Gen",
-              "logo": {
-                "@type": "ImageObject",
-                "url": `${window.location.origin}/logo.png`
-              }
-            },
-            "url": window.location.href,
-            "mainEntityOfPage": {
-              "@type": "WebPage",
-              "@id": window.location.href
-            }
-          })
-        }}
-      />
+    <div className="container py-8">
+      {/* SEO metadata */}
+      <div itemScope itemType="https://schema.org/Blog">
+        <meta itemProp="name" content="Blog de Red Creativa Gen - Recursos para Creadores de Contenido" />
+        <meta itemProp="description" content="Artículos, tutoriales y consejos para creadores de contenido en YouTube, Instagram y TikTok." />
+      </div>
       
-      <BlogBreadcrumb />
-      
-      <div className="flex flex-col space-y-8">
-        {/* Encabezado del blog */}
-        <div className="text-center max-w-3xl mx-auto px-4">
-          <h1 className="text-4xl font-bold tracking-tight mb-4">Blog</h1>
-          <p className="text-lg text-muted-foreground mb-8">
-            Artículos y tutoriales sobre creación de contenido para YouTube, 
-            tendencias, herramientas y consejos para creadores de contenido digital.
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">Blog</h1>
+          <p className="text-muted-foreground mt-2">
+            Artículos, tutoriales y consejos para creadores de contenido
           </p>
         </div>
         
-        {/* Filtros y categorías */}
-        <div className="flex flex-wrap gap-2 mb-8 justify-center">
+        {user && (
           <Button
-            variant={selectedCategory === null ? "default" : "outline"}
-            size="sm"
-            onClick={() => handleCategorySelect(null)}
+            onClick={() => navigate("/blog/new")}
+            className="flex items-center gap-2"
           >
-            Todos
+            <Plus size={16} />
+            Nuevo artículo
           </Button>
+        )}
+      </div>
+      
+      {/* Filtro de categorías */}
+      <div className="mb-8">
+        <div className="flex flex-wrap gap-2">
+          <Badge 
+            variant={selectedCategory === null ? "default" : "outline"}
+            className="cursor-pointer hover:bg-primary/90 transition-colors"
+            onClick={() => setSelectedCategory(null)}
+          >
+            Todas
+          </Badge>
           
-          {categoriesLoading ? (
-            Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-9 w-24" />
+          {isLoadingCategories ? (
+            Array(5).fill(0).map((_, i) => (
+              <Skeleton key={i} className="h-6 w-20 rounded-full" />
             ))
           ) : (
-            categories?.map((category: any) => (
-              <Button
+            categories?.map((category) => (
+              <Badge
                 key={category.id}
-                variant={selectedCategory === category.id ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleCategorySelect(category.id)}
+                variant={selectedCategory === category.id.toString() ? "default" : "outline"}
+                className="cursor-pointer hover:bg-primary/90 transition-colors"
+                onClick={() => setSelectedCategory(category.id.toString())}
               >
                 {category.name}
-              </Button>
+              </Badge>
             ))
           )}
-          
-          {user && (
-            <Link href="/blog/new">
-              <Button variant="outline" size="sm" className="ml-auto">
-                <Plus className="h-4 w-4 mr-2" />
-                Nuevo artículo
-              </Button>
-            </Link>
-          )}
         </div>
-        
-        {/* Listado de artículos */}
-        {postsLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <BlogPostSkeleton key={i} />
-            ))}
-          </div>
-        ) : postsError ? (
-          <div className="text-center py-12">
-            <p className="text-lg text-red-500">
-              Error al cargar los artículos. Por favor, intenta de nuevo más tarde.
-            </p>
-          </div>
-        ) : posts?.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-lg text-muted-foreground">
+      </div>
+      
+      {/* Grid de artículos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+        {isLoadingPosts ? (
+          // Skeleton loading state
+          Array(6).fill(0).map((_, i) => (
+            <Card key={i} className="overflow-hidden">
+              <CardHeader className="pb-4">
+                <Skeleton className="h-4 w-1/2 mb-2" />
+                <Skeleton className="h-6 w-4/5" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-24 w-full" />
+              </CardContent>
+              <CardFooter>
+                <Skeleton className="h-4 w-1/3" />
+              </CardFooter>
+            </Card>
+          ))
+        ) : filteredPosts?.length === 0 ? (
+          <div className="col-span-full p-8 text-center">
+            <p className="text-muted-foreground">
               No hay artículos disponibles en esta categoría.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts?.map((post: any) => (
-              <Link key={post.id} href={`/blog/${post.slug}`}>
-                <Card className="h-full flex flex-col cursor-pointer hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-2">
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {post.categories?.map((category: any) => (
-                        <Badge key={category.id} variant="secondary" className="text-xs">
-                          {category.name}
-                        </Badge>
-                      ))}
-                      {post.featured && (
-                        <Badge variant="default" className="ml-auto">
-                          Destacado
-                        </Badge>
-                      )}
-                      {!post.published && (
-                        <Badge variant="outline" className="text-xs text-yellow-500 border-yellow-200">
-                          Borrador
-                        </Badge>
-                      )}
-                    </div>
-                    <CardTitle className="text-xl hover:text-primary transition-colors">
-                      {getTitle(post)}
-                    </CardTitle>
-                    <CardDescription className="text-xs flex items-center mt-2">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      {formatDate(post.createdAt)}
-                      <span className="mx-2">•</span>
-                      <Clock className="h-3 w-3 mr-1" />
-                      {formatReadingTime(post.readingTime)}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                    <div className="relative aspect-video mb-4 overflow-hidden rounded-md">
-                      <img
-                        src={post.coverImage}
-                        alt={post.title}
-                        className="object-cover w-full h-full"
-                      />
-                    </div>
-                    <p className="text-muted-foreground text-sm line-clamp-3">
-                      {getDescription(post)}
-                    </p>
-                  </CardContent>
-                  <CardFooter className="pt-0">
-                    <Button variant="link" className="p-0 h-auto text-sm">
-                      Leer más <ChevronRight className="h-4 w-4 ml-1" />
+          filteredPosts?.map((post) => (
+            <Card key={post.id} className="overflow-hidden flex flex-col h-full">
+              <div itemScope itemType="https://schema.org/BlogPosting">
+                <meta itemProp="headline" content={post.title} />
+                <meta itemProp="description" content={post.excerpt || post.title} />
+                <meta itemProp="datePublished" content={new Date(post.publishedAt || post.createdAt).toISOString()} />
+                {post.author && (
+                  <span itemProp="author" itemScope itemType="https://schema.org/Person">
+                    <meta itemProp="name" content={post.author.username} />
+                  </span>
+                )}
+              </div>
+              
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={post.author?.avatarUrl || ''} />
+                    <AvatarFallback>
+                      {post.author?.username.substring(0, 2).toUpperCase() || 'RC'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-muted-foreground">
+                    {post.author?.username || 'Red Creativa'}
+                  </span>
+                </div>
+                
+                <CardTitle className="line-clamp-2 text-lg">
+                  <Link href={`/blog/${post.slug}`} className="hover:underline">
+                    {post.title}
+                  </Link>
+                </CardTitle>
+                
+                {post.categories && post.categories.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {post.categories.map(category => (
+                      <Badge variant="secondary" key={category.id} className="text-xs">
+                        {category.name}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </CardHeader>
+              
+              <CardContent className="pb-4 flex-grow">
+                <p className="line-clamp-3 text-muted-foreground text-sm">
+                  {post.excerpt || (post.content && post.content.substring(0, 120) + '...')}
+                </p>
+              </CardContent>
+              
+              <CardFooter className="flex justify-between pt-0 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <CalendarIcon size={14} />
+                  <span>
+                    {post.publishedAt ? 
+                      format(new Date(post.publishedAt), 'PP', { locale: es }) : 
+                      'Borrador'}
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-1">
+                  <Clock size={14} />
+                  <span>{calculateReadingTime(post.content || '')} min</span>
+                </div>
+                
+                {user && post.author?.id === user.id && (
+                  <Link href={`/blog/edit/${post.id}`}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Edit3 size={14} />
                     </Button>
-                  </CardFooter>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
-        
-        {/* Paginación */}
-        {!postsLoading && posts?.length > 0 && (
-          <div className="flex justify-center mt-12">
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                <span className="sr-only">Página anterior</span>
-              </Button>
-              
-              <span className="text-sm text-muted-foreground">
-                Página {page} de {totalPages}
-              </span>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(page + 1)}
-                disabled={posts.length < 9}
-              >
-                <ChevronRight className="h-4 w-4" />
-                <span className="sr-only">Página siguiente</span>
-              </Button>
-            </div>
-          </div>
+                  </Link>
+                )}
+              </CardFooter>
+            </Card>
+          ))
         )}
       </div>
+      
+      {/* Llamada a la acción para escribir */}
+      <Card className="bg-primary/5 border-primary/20">
+        <CardContent className="flex flex-col md:flex-row items-center justify-between p-6">
+          <div className="mb-4 md:mb-0">
+            <h3 className="text-xl font-bold mb-2">¿Tienes conocimientos que compartir?</h3>
+            <p className="text-muted-foreground">
+              Comparte tus consejos y experiencias con la comunidad de creadores
+            </p>
+          </div>
+          
+          {user ? (
+            <Button 
+              onClick={() => navigate("/blog/new")}
+              className="flex items-center gap-2"
+            >
+              <PenTool size={16} />
+              Escribir artículo
+            </Button>
+          ) : (
+            <Button 
+              onClick={() => navigate("/login?redirect=/blog/new")}
+              className="flex items-center gap-2"
+            >
+              <PenTool size={16} />
+              Inicia sesión para escribir
+            </Button>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

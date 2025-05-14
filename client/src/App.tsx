@@ -2,6 +2,7 @@ import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Login from "@/pages/login";
@@ -17,6 +18,10 @@ import MetricsCreator from "@/pages/metrics";
 import Recursos from "@/pages/recursos";
 import RecursoDetalle from "@/pages/recurso-detalle";
 import SubirRecurso from "@/pages/subir-recurso";
+// Nuevas páginas de blog para SEO
+import BlogPage from "@/pages/blog";
+import BlogPostPage from "@/pages/blog-post";
+import BlogEditorPage from "@/pages/blog-editor";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AssistantSidebar } from "@/components/ui/assistant-sidebar";
@@ -77,18 +82,19 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        {showNavAndFooter && <Navbar user={user} onLogout={logout} />}
-        <main className="min-h-screen">
-          {showNavAndFooter && location !== "/" && (
-            <div className="container pt-4">
-              <Breadcrumb />
-            </div>
-          )}
-          <Switch>
-            <Route path="/" component={() => <Home user={user} />} />
-            <Route path="/login" component={() => <Login onLogin={login} />} />
-            <Route path="/register" component={() => <Register onRegister={login} />} />
+      <AuthProvider>
+        <TooltipProvider>
+          {showNavAndFooter && <Navbar user={user} onLogout={logout} />}
+          <main className="min-h-screen">
+            {showNavAndFooter && location !== "/" && (
+              <div className="container pt-4">
+                <Breadcrumb />
+              </div>
+            )}
+            <Switch>
+              <Route path="/" component={() => <Home user={user} />} />
+              <Route path="/login" component={() => <Login onLogin={login} />} />
+              <Route path="/register" component={() => <Register onRegister={login} />} />
             <Route path="/dashboard" component={() => <Dashboard user={user} />} />
             {/* Calendario estilo Google con generación de ideas integrada */}
             <Route path="/calendar" component={() => <CalendarPage />} />
@@ -104,13 +110,20 @@ function App() {
             <Route path="/recursos/:id" component={RecursoDetalle} />
             <Route path="/recursos/subir" component={() => <SubirRecurso />} />
             
+            {/* Nuevas rutas para el blog (mejora SEO) */}
+            <Route path="/blog" component={() => <BlogPage />} />
+            <Route path="/blog/:slug" component={BlogPostPage} />
+            <Route path="/blog/new" component={() => <BlogEditorPage />} />
+            <Route path="/blog/edit/:id" component={BlogEditorPage} />
+            
             <Route component={NotFound} />
           </Switch>
         </main>
         {showNavAndFooter && <Footer />}
         {/* Sidebar del asistente que se puede abrir/cerrar */}
         <AssistantSidebar />
-      </TooltipProvider>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
