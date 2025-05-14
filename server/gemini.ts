@@ -66,8 +66,9 @@ export type BlogPostContent = {
 
 // Esquema para la generación de artículos de blog
 export const blogPostGenerationSchema = z.object({
-  topic: z.string().min(1, "Se requiere un tema"),
+  topic: z.string().default(""),
   count: z.number().min(1).max(100).default(1),
+  schedulePublishing: z.boolean().optional().default(false),
 });
 
 // Temas comunes para artículos de blog sobre creación de contenido

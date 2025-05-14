@@ -2005,6 +2005,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
       
+      // Verificar que el usuario sea uno de los autorizados (sela_gr, sela_gb o Red Creativa)
+      const allowedUsernames = ['sela_gr', 'sela_gb', 'redcreativa'];
+      if (!allowedUsernames.includes(user.username.toLowerCase())) {
+        return res.status(403).json({ 
+          message: "No tienes permiso para generar artículos de blog con IA."
+        });
+      }
+      
       // Limitar a usuarios no premium a 10 artículos a la vez
       const maxPosts = user.isPremium ? 100 : 10;
       if (params.count > maxPosts) {
@@ -2013,18 +2021,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      console.log(`Generando ${params.count} artículos sobre "${params.topic}" para usuario ${userId}`);
+      console.log(`Generando ${params.count} artículos sobre "${params.topic || 'tema aleatorio'}" para usuario ${userId}`);
       
       // Generar artículos con IA
       const blogPosts = await generateBlogPosts(params);
       
       // Guardar los artículos en la base de datos
       const savedPosts = [];
-      for (const post of blogPosts) {
+      
+      // Si se solicita publicación programada, almacenar los artículos como no publicados
+      const initiallyPublished = !params.schedulePublishing;
+      
+      for (let i = 0; i < blogPosts.length; i++) {
+        const post = blogPosts[i];
         const slug = slugify(post.title);
         
         // Verificar si el slug ya existe
         const existingPost = await storage.getBlogPostBySlug(slug);
+        
+        // Determinar la fecha de publicación programada si es necesario
+        const publishDate = params.schedulePublishing 
+          ? new Date(Date.now() + (i + 1) * 60 * 60 * 1000) // Un artículo por hora
+          : undefined;
+          
         if (existingPost) {
           // Añadir timestamp al slug para hacerlo único
           const uniqueSlug = `${slug}-${Date.now().toString().substring(8)}`;
@@ -2038,7 +2057,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             slug: uniqueSlug,
             tags: post.tags,
             readingTime: post.readingTime,
-            published: true,
+            published: initiallyPublished,
+            publishedAt: publishDate,
             featured: false,
             seoTitle: post.seoTitle || post.title,
             seoDescription: post.seoDescription || post.excerpt.substring(0, 155)
@@ -2055,7 +2075,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             slug,
             tags: post.tags,
             readingTime: post.readingTime,
-            published: true,
+            published: initiallyPublished,
+            publishedAt: publishDate,
             featured: false,
             seoTitle: post.seoTitle || post.title,
             seoDescription: post.seoDescription || post.excerpt.substring(0, 155)
@@ -2065,8 +2086,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      const message = params.schedulePublishing 
+        ? `Se han generado ${savedPosts.length} artículos de blog que se publicarán automáticamente uno cada hora.`
+        : `Se han generado y publicado ${savedPosts.length} artículos de blog.`;
+      
       res.status(201).json({
-        message: `Se han generado y guardado ${savedPosts.length} artículos de blog.`,
+        message,
         posts: savedPosts
       });
     } catch (error: any) {

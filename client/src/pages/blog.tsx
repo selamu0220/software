@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   CalendarIcon, 
   Clock, 
@@ -26,7 +27,8 @@ import {
   PenTool, 
   Plus, 
   Sparkles,
-  Loader2 
+  Loader2,
+  Clock1 
 } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
@@ -51,14 +53,16 @@ export default function BlogPage() {
   const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [generatingCount, setGeneratingCount] = useState(50); // Valor predeterminado de 50 artículos
+  const [schedulePublishing, setSchedulePublishing] = useState(true); // Publicación programada por defecto
   const { toast } = useToast();
   
   // Mutación para generar artículos con IA
   const generateMutation = useMutation({
-    mutationFn: async (count: number) => {
+    mutationFn: async ({ count, schedulePublishing }: { count: number, schedulePublishing: boolean }) => {
       const res = await apiRequest("POST", "/api/blog/generate", {
         topic: "", // Vacío para usar un tema aleatorio
-        count
+        count,
+        schedulePublishing
       });
       
       if (!res.ok) {
@@ -149,45 +153,66 @@ export default function BlogPage() {
         
         {user && (
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2">
-              <Select 
-                value={generatingCount.toString()} 
-                onValueChange={(value) => setGeneratingCount(parseInt(value))}
-                disabled={generateMutation.isPending}
-              >
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Cantidad" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Cantidad de artículos</SelectLabel>
-                    <SelectItem value="1">1 artículo</SelectItem>
-                    <SelectItem value="5">5 artículos</SelectItem>
-                    <SelectItem value="10">10 artículos</SelectItem>
-                    <SelectItem value="25">25 artículos</SelectItem>
-                    <SelectItem value="50">50 artículos</SelectItem>
-                    {user.isPremium && (
-                      <SelectItem value="100">100 artículos</SelectItem>
-                    )}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <Select 
+                  value={generatingCount.toString()} 
+                  onValueChange={(value) => setGeneratingCount(parseInt(value))}
+                  disabled={generateMutation.isPending}
+                >
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="Cantidad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Cantidad de artículos</SelectLabel>
+                      <SelectItem value="1">1 artículo</SelectItem>
+                      <SelectItem value="5">5 artículos</SelectItem>
+                      <SelectItem value="10">10 artículos</SelectItem>
+                      <SelectItem value="25">25 artículos</SelectItem>
+                      <SelectItem value="50">50 artículos</SelectItem>
+                      {user.isPremium && (
+                        <SelectItem value="100">100 artículos</SelectItem>
+                      )}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => generateMutation.mutate({
+                    count: generatingCount, 
+                    schedulePublishing
+                  })}
+                  className="flex items-center gap-2"
+                  disabled={generateMutation.isPending}
+                >
+                  {generateMutation.isPending ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={16} />
+                  )}
+                  {generateMutation.isPending 
+                    ? "Generando..." 
+                    : "Generar con IA"}
+                </Button>
+              </div>
               
-              <Button
-                variant="outline"
-                onClick={() => generateMutation.mutate(generatingCount)}
-                className="flex items-center gap-2"
-                disabled={generateMutation.isPending}
-              >
-                {generateMutation.isPending ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Sparkles size={16} />
-                )}
-                {generateMutation.isPending 
-                  ? "Generando..." 
-                  : "Generar con IA"}
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="schedule" 
+                  checked={schedulePublishing}
+                  onCheckedChange={(checked) => setSchedulePublishing(checked === true)}
+                  disabled={generateMutation.isPending}
+                />
+                <label
+                  htmlFor="schedule"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1"
+                >
+                  <Clock1 size={12} />
+                  Publicar automáticamente uno cada hora
+                </label>
+              </div>
             </div>
             
             <Button
