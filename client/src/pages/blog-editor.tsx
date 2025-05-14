@@ -1,6 +1,21 @@
-import { useState, useEffect } from "react";
-import { Link, useRoute, useLocation } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useParams, useLocation } from "wouter";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Form,
   FormControl,
@@ -10,10 +25,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -21,96 +32,127 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { ArrowLeft, ImagePlus, Loader2, Tags, Clock } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { ArrowLeft, Check, Loader2, Save } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import slugify from "@/lib/utils/slugify";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
 
-// Esquema de validación para el formulario
+// Esquema de validación para el formulario de blog
 const blogPostSchema = z.object({
-  title: z.string().min(5, "El título debe tener al menos 5 caracteres").max(100, "El título no puede exceder los 100 caracteres"),
-  slug: z.string().min(5, "El slug debe tener al menos 5 caracteres").max(100, "El slug no puede exceder los 100 caracteres")
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "El slug solo puede contener letras minúsculas, números y guiones"),
-  excerpt: z.string().min(20, "El extracto debe tener al menos 20 caracteres").max(300, "El extracto no puede exceder los 300 caracteres"),
+  title: z.string().min(5, "El título debe tener al menos 5 caracteres").max(100, "El título es demasiado largo"),
+  slug: z.string().min(5, "La URL debe tener al menos 5 caracteres").regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "La URL solo puede contener letras minúsculas, números y guiones"),
   content: z.string().min(50, "El contenido debe tener al menos 50 caracteres"),
-  coverImage: z.string().url("Ingresa una URL válida para la imagen de portada"),
-  categories: z.array(z.number()).min(1, "Selecciona al menos una categoría"),
-  tags: z.string().optional(),
-  readingTime: z.coerce.number().min(1, "El tiempo de lectura debe ser al menos 1 minuto"),
+  excerpt: z.string().max(200, "El extracto no puede tener más de 200 caracteres").optional(),
+  featuredImage: z.string().url("Debe ser una URL válida").optional().or(z.literal("")),
   published: z.boolean().default(false),
   featured: z.boolean().default(false),
-  seoTitle: z.string().max(70, "El título SEO no puede exceder los 70 caracteres").optional(),
-  seoDescription: z.string().max(160, "La descripción SEO no puede exceder los 160 caracteres").optional(),
+  seoTitle: z.string().max(60, "El título SEO no debe exceder los 60 caracteres").optional().or(z.literal("")),
+  seoDescription: z.string().max(160, "La descripción SEO no debe exceder los 160 caracteres").optional().or(z.literal("")),
+  categoryIds: z.array(z.number()).optional(),
 });
 
 type BlogPostFormValues = z.infer<typeof blogPostSchema>;
 
-// Función auxiliar para calcular el tiempo de lectura en minutos
+// Determina el tiempo de lectura aproximado en minutos
 function calculateReadingTime(text: string): number {
   const wordsPerMinute = 200;
   const wordCount = text.trim().split(/\s+/).length;
   return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
 }
 
-// Componente para crear/editar artículos de blog
 export default function BlogEditorPage() {
-  const [matchNew] = useRoute("/blog/new");
-  const [matchEdit, params] = useRoute<{ id: string }>("/blog/edit/:id");
-  const [location, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { id } = useParams<{ id: string }>();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
-  
-  const isEditing = matchEdit && params?.id;
-  const postId = isEditing ? parseInt(params.id) : null;
+  const { user } = useAuth();
+  const [isSlugEdited, setIsSlugEdited] = useState(false);
+  const isEditing = Boolean(id);
 
-  // Redirigir si no está autenticado
+  // Redirigir si no hay usuario autenticado
   useEffect(() => {
     if (!user) {
-      setLocation("/auth");
+      navigate("/login?redirect=/blog/new");
     }
-  }, [user, setLocation]);
+  }, [user, navigate]);
 
-  // Consultar categorías disponibles
-  const { data: categories, isLoading: loadingCategories } = useQuery({
-    queryKey: ["/api/blog/categories"],
+  // Obtener datos del post si estamos editando
+  const { 
+    data: post, 
+    isLoading: isLoadingPost,
+    error: postError 
+  } = useQuery({
+    queryKey: ["/api/blog/post", id],
     queryFn: async () => {
-      const response = await fetch("/api/blog/categories");
-      if (!response.ok) {
-        throw new Error("Error al cargar categorías");
-      }
-      return await response.json();
+      if (!id) return null;
+      const res = await fetch(`/api/blog/posts/${id}`);
+      if (!res.ok) throw new Error("Error al cargar el artículo");
+      return res.json();
     },
+    enabled: isEditing && !!id
   });
 
-  // Si está editando, cargar datos del post
-  const { data: postData, isLoading: loadingPost } = useQuery({
-    queryKey: ["/api/blog/posts", postId],
+  // Obtener las categorías del blog
+  const { 
+    data: categories, 
+    isLoading: isLoadingCategories 
+  } = useQuery({
+    queryKey: ["/api/blog/categories"],
     queryFn: async () => {
-      if (!postId) return null;
-      const response = await fetch(`/api/blog/posts/${postId}`);
-      if (!response.ok) {
-        throw new Error("Error al cargar el artículo");
-      }
-      return await response.json();
+      const res = await fetch("/api/blog/categories");
+      if (!res.ok) throw new Error("Error al cargar las categorías");
+      return res.json();
+    }
+  });
+
+  // Mutación para crear un post
+  const createPostMutation = useMutation({
+    mutationFn: async (data: BlogPostFormValues) => {
+      const res = await apiRequest("POST", "/api/blog/posts", data);
+      return await res.json();
     },
-    enabled: !!postId,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/blog/posts"] });
+      toast({
+        title: "¡Artículo creado!",
+        description: "Tu artículo ha sido creado correctamente.",
+      });
+      navigate("/blog");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error al crear el artículo",
+        description: error.message || "Ha ocurrido un error. Inténtalo de nuevo más tarde.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutación para actualizar un post
+  const updatePostMutation = useMutation({
+    mutationFn: async (data: BlogPostFormValues) => {
+      const res = await apiRequest("PUT", `/api/blog/posts/${id}`, data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/blog/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/blog/post", id] });
+      toast({
+        title: "¡Artículo actualizado!",
+        description: "Tu artículo ha sido actualizado correctamente.",
+      });
+      navigate("/blog");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error al actualizar el artículo",
+        description: error.message || "Ha ocurrido un error. Inténtalo de nuevo más tarde.",
+        variant: "destructive",
+      });
+    }
   });
 
   // Inicializar formulario
@@ -119,466 +161,396 @@ export default function BlogEditorPage() {
     defaultValues: {
       title: "",
       slug: "",
-      excerpt: "",
       content: "",
-      coverImage: "",
-      categories: [],
-      tags: "",
-      readingTime: 3,
+      excerpt: "",
+      featuredImage: "",
       published: false,
       featured: false,
       seoTitle: "",
       seoDescription: "",
+      categoryIds: [],
     },
   });
 
-  // Actualizar formulario cuando se cargan los datos del post
+  // Actualizar valores del formulario si estamos editando
   useEffect(() => {
-    if (postData) {
+    if (post && isEditing) {
+      const categoryIds = post.categories ? post.categories.map(c => c.id) : [];
+      
       form.reset({
-        title: postData.title,
-        slug: postData.slug,
-        excerpt: postData.excerpt,
-        content: postData.content,
-        coverImage: postData.coverImage,
-        categories: postData.categories?.map((c: any) => c.id) || [],
-        tags: postData.tags?.join(", ") || "",
-        readingTime: postData.readingTime,
-        published: postData.published,
-        featured: postData.featured,
-        seoTitle: postData.seoTitle || "",
-        seoDescription: postData.seoDescription || "",
+        title: post.title,
+        slug: post.slug,
+        content: post.content,
+        excerpt: post.excerpt || "",
+        featuredImage: post.featuredImage || "",
+        published: post.published,
+        featured: post.featured || false,
+        seoTitle: post.seoTitle || "",
+        seoDescription: post.seoDescription || "",
+        categoryIds: categoryIds,
       });
-      setSelectedCategories(postData.categories?.map((c: any) => c.id) || []);
+      
+      // Marcar el slug como editado para evitar que se sobrescriba automáticamente
+      setIsSlugEdited(true);
     }
-  }, [postData, form]);
+  }, [post, isEditing, form]);
 
-  // Generar slug automáticamente al cambiar el título
+  // Generar slug automático basado en el título si el usuario no lo ha editado manualmente
+  const title = form.watch("title");
+  
   useEffect(() => {
-    const subscription = form.watch((values, { name }) => {
-      if (name === "title" && values.title) {
-        const generatedSlug = slugify(values.title);
-        form.setValue("slug", generatedSlug);
-      }
-      
-      // Actualizar tiempo de lectura cuando cambia el contenido
-      if (name === "content" && values.content) {
-        const readingTime = calculateReadingTime(values.content);
-        form.setValue("readingTime", readingTime);
-      }
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form]);
+    if (title && !isSlugEdited) {
+      const generatedSlug = slugify(title);
+      form.setValue("slug", generatedSlug);
+    }
+  }, [title, form, isSlugEdited]);
 
-  // Mutación para crear un nuevo post
-  const createMutation = useMutation({
-    mutationFn: async (data: BlogPostFormValues) => {
-      const response = await apiRequest("POST", "/api/blog/posts", {
-        ...data,
-        tags: data.tags ? data.tags.split(",").map(tag => tag.trim()) : [],
-      });
-      return await response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Artículo creado",
-        description: "El artículo ha sido creado exitosamente",
-      });
-      setLocation("/blog");
-      // Invalidar consultas para actualizar la lista de posts
-      queryClient.invalidateQueries({ queryKey: ["/api/blog/posts"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Error al crear el artículo",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Mutación para actualizar un post existente
-  const updateMutation = useMutation({
-    mutationFn: async (data: BlogPostFormValues) => {
-      if (!postId) throw new Error("ID del post no disponible");
-      
-      const response = await apiRequest("PUT", `/api/blog/posts/${postId}`, {
-        ...data,
-        tags: data.tags ? data.tags.split(",").map(tag => tag.trim()) : [],
-      });
-      return await response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Artículo actualizado",
-        description: "El artículo ha sido actualizado exitosamente",
-      });
-      setLocation("/blog");
-      // Invalidar consultas para actualizar la lista de posts
-      queryClient.invalidateQueries({ queryKey: ["/api/blog/posts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/blog/posts", postId] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Error al actualizar el artículo",
-        variant: "destructive",
-      });
-    },
-  });
+  // Manejar cambios en el slug (marcar como editado manualmente)
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsSlugEdited(true);
+    form.setValue("slug", e.target.value);
+  };
 
   // Manejar envío del formulario
   const onSubmit = async (data: BlogPostFormValues) => {
-    setIsSubmitting(true);
-    
-    try {
-      if (isEditing) {
-        await updateMutation.mutateAsync(data);
-      } else {
-        await createMutation.mutateAsync(data);
-      }
-    } finally {
-      setIsSubmitting(false);
+    if (isEditing) {
+      updatePostMutation.mutate(data);
+    } else {
+      createPostMutation.mutate(data);
     }
   };
 
-  // Manejar selección de categorías
-  const handleCategorySelect = (categoryId: number) => {
-    setSelectedCategories(prev => {
-      if (prev.includes(categoryId)) {
-        const newCategories = prev.filter(id => id !== categoryId);
-        form.setValue("categories", newCategories);
-        return newCategories;
-      } else {
-        const newCategories = [...prev, categoryId];
-        form.setValue("categories", newCategories);
-        return newCategories;
-      }
-    });
-  };
+  if (!user) {
+    return null; // Ya hay una redirección en el useEffect
+  }
 
-  if (loadingPost && isEditing) {
+  if (isEditing && isLoadingPost) {
     return (
-      <div className="container max-w-3xl px-4 py-12 mx-auto">
-        <div className="space-y-8">
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-60 w-full" />
+      <div className="container py-8 flex justify-center items-center">
+        <Loader2 className="animate-spin h-8 w-8 text-primary" />
+        <span className="ml-2">Cargando artículo...</span>
+      </div>
+    );
+  }
+
+  if (isEditing && postError) {
+    return (
+      <div className="container py-8">
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            No se pudo cargar el artículo para editar. Por favor, inténtalo de nuevo más tarde.
+          </AlertDescription>
+        </Alert>
+        
+        <div className="mt-4">
+          <Button variant="outline" onClick={() => navigate("/blog")}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Volver al blog
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container max-w-4xl px-4 py-12 mx-auto">
-      <Link href="/blog">
-        <Button variant="ghost" size="sm" className="mb-8">
-          <ArrowLeft className="h-4 w-4 mr-2" /> Volver al blog
+    <div className="container py-8">
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center">
+          <Button variant="outline" onClick={() => navigate("/blog")} className="mr-4">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Volver
+          </Button>
+          <h1 className="text-2xl font-bold">
+            {isEditing ? "Editar artículo" : "Nuevo artículo"}
+          </h1>
+        </div>
+        
+        <Button 
+          onClick={form.handleSubmit(onSubmit)} 
+          disabled={createPostMutation.isPending || updatePostMutation.isPending}
+        >
+          {createPostMutation.isPending || updatePostMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Guardando...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Guardar
+            </>
+          )}
         </Button>
-      </Link>
-
-      <h1 className="text-3xl font-bold mb-8">
-        {isEditing ? "Editar artículo" : "Crear nuevo artículo"}
-      </h1>
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Columna principal */}
-            <div className="md:col-span-2 space-y-8">
-              {/* Título */}
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Título</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Título del artículo"
-                        {...field}
-                        className="text-lg"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Un título claro y atractivo para tu artículo.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Slug */}
-              <FormField
-                control={form.control}
-                name="slug"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Slug</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="slug-del-articulo"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      La URL amigable del artículo. Se genera automáticamente a partir del título, pero puedes modificarlo.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Extracto */}
-              <FormField
-                control={form.control}
-                name="excerpt"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Extracto</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Breve descripción del artículo..."
-                        {...field}
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Un breve resumen del artículo que aparecerá en las listas y en los resultados de búsqueda.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Contenido */}
-              <FormField
-                control={form.control}
-                name="content"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contenido</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Contenido del artículo..."
-                        {...field}
-                        rows={15}
-                        className="font-mono text-sm"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      El contenido principal del artículo. Puedes usar HTML para dar formato.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* URL de la imagen de portada */}
-              <FormField
-                control={form.control}
-                name="coverImage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>URL de la imagen de portada</FormLabel>
-                    <FormControl>
-                      <div className="flex space-x-2">
-                        <Input
-                          placeholder="https://ejemplo.com/imagen.jpg"
-                          {...field}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => {
-                            // Modal para seleccionar una imagen (implementar en el futuro)
-                            toast({
-                              title: "Selector de imágenes",
-                              description: "Esta función estará disponible próximamente",
-                            });
-                          }}
-                        >
-                          <ImagePlus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      URL de la imagen principal del artículo.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Tags */}
-              <FormField
-                control={form.control}
-                name="tags"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tags</FormLabel>
-                    <FormControl>
-                      <div className="flex space-x-2">
-                        <Input
-                          placeholder="seo, marketing, videos"
-                          {...field}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => {
-                            // Modal para seleccionar tags (implementar en el futuro)
-                            toast({
-                              title: "Selector de tags",
-                              description: "Esta función estará disponible próximamente",
-                            });
-                          }}
-                        >
-                          <Tags className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      Palabras clave separadas por comas.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Columna de configuración */}
-            <div className="space-y-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Publicación</CardTitle>
-                  <CardDescription>
-                    Configurar opciones de publicación
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Categorías */}
-                  <div>
-                    <FormLabel className="block mb-2">Categorías</FormLabel>
-                    {loadingCategories ? (
-                      <div className="space-y-2">
-                        <Skeleton className="h-8 w-full" />
-                        <Skeleton className="h-8 w-full" />
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {categories?.map((category: any) => (
-                          <div key={category.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`category-${category.id}`}
-                              checked={selectedCategories.includes(category.id)}
-                              onCheckedChange={() => handleCategorySelect(category.id)}
-                            />
-                            <label
-                              htmlFor={`category-${category.id}`}
-                              className="text-sm cursor-pointer"
-                            >
-                              {category.name}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {form.formState.errors.categories && (
-                      <p className="text-sm text-destructive mt-2">
-                        {form.formState.errors.categories.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <Separator />
-
-                  {/* Tiempo de lectura */}
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Contenido principal</CardTitle>
+              <CardDescription>
+                Escribe el contenido de tu artículo
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                   <FormField
                     control={form.control}
-                    name="readingTime"
+                    name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center">
-                          <Clock className="h-4 w-4 mr-2" />
-                          Tiempo de lectura (minutos)
-                        </FormLabel>
+                        <FormLabel>Título</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={60}
-                            {...field}
+                          <Input 
+                            placeholder="Escribe un título atractivo" 
+                            {...field} 
                           />
                         </FormControl>
+                        <FormDescription>
+                          El título de tu artículo (5-100 caracteres)
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  <Separator />
-
-                  {/* Publicado */}
+                  
                   <FormField
                     control={form.control}
-                    name="published"
+                    name="slug"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                      <FormItem>
+                        <FormLabel>URL amigable</FormLabel>
                         <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          <div className="flex">
+                            <span className="flex items-center px-3 bg-secondary rounded-l-md border border-r-0 border-input">
+                              /blog/
+                            </span>
+                            <Input 
+                              className="rounded-l-none"
+                              placeholder="url-amigable" 
+                              value={field.value}
+                              onChange={handleSlugChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                            />
+                          </div>
                         </FormControl>
-                        <div className="space-y-1">
-                          <FormLabel>Publicado</FormLabel>
-                          <FormDescription>
-                            Marcar como publicado para hacerlo visible al público.
-                          </FormDescription>
-                        </div>
+                        <FormDescription>
+                          La URL de tu artículo (se genera automáticamente, pero puedes personalizarla)
+                        </FormDescription>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  {/* Destacado */}
+                  
                   <FormField
                     control={form.control}
-                    name="featured"
+                    name="excerpt"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                      <FormItem>
+                        <FormLabel>Extracto</FormLabel>
                         <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
+                          <Textarea 
+                            placeholder="Escribe un breve resumen de tu artículo" 
+                            {...field} 
+                            rows={3}
                           />
                         </FormControl>
-                        <div className="space-y-1">
-                          <FormLabel>Destacado</FormLabel>
-                          <FormDescription>
-                            Mostrar este artículo en secciones destacadas.
-                          </FormDescription>
-                        </div>
+                        <FormDescription>
+                          Un breve resumen que aparecerá en la vista previa (máximo 200 caracteres)
+                        </FormDescription>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
-                </CardContent>
-              </Card>
-
-              {/* SEO */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>SEO</CardTitle>
-                  <CardDescription>
-                    Optimización para motores de búsqueda
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Título SEO */}
+                  
+                  <FormField
+                    control={form.control}
+                    name="content"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contenido</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Escribe el contenido completo de tu artículo..." 
+                            {...field} 
+                            rows={15}
+                            className="font-mono"
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          El contenido completo de tu artículo. Acepta formato HTML.
+                          {field.value && (
+                            <span className="ml-2 text-muted-foreground">
+                              Tiempo de lectura estimado: {calculateReadingTime(field.value)} minutos
+                            </span>
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Publicación</CardTitle>
+              <CardDescription>
+                Configura la visibilidad de tu artículo
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent className="space-y-4">
+              <Form {...form}>
+                <FormField
+                  control={form.control}
+                  name="published"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>Publicar</FormLabel>
+                        <FormDescription>
+                          Haz visible tu artículo para todos
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="featured"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>Destacado</FormLabel>
+                        <FormDescription>
+                          Mostrar en sección de destacados
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </Form>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Categorías</CardTitle>
+              <CardDescription>
+                Asigna categorías a tu artículo
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              <Form {...form}>
+                <FormField
+                  control={form.control}
+                  name="categoryIds"
+                  render={() => (
+                    <FormItem>
+                      {isLoadingCategories ? (
+                        <div className="flex items-center justify-center p-4">
+                          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : categories?.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          No hay categorías disponibles
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {categories?.map((category) => (
+                            <FormField
+                              key={category.id}
+                              control={form.control}
+                              name="categoryIds"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={category.id}
+                                    className="flex flex-row items-center space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(category.id)}
+                                        onCheckedChange={(checked) => {
+                                          const currentValue = [...(field.value || [])];
+                                          if (checked) {
+                                            field.onChange([...currentValue, category.id]);
+                                          } else {
+                                            field.onChange(currentValue.filter((id) => id !== category.id));
+                                          }
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal cursor-pointer">
+                                      {category.name}
+                                    </FormLabel>
+                                  </FormItem>
+                                );
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </Form>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>SEO</CardTitle>
+              <CardDescription>
+                Optimiza tu artículo para buscadores
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              <Form {...form}>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="featuredImage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Imagen destacada (URL)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="https://ejemplo.com/imagen.jpg" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          URL de la imagen principal (aparecerá en listas y compartir en redes)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
                   <FormField
                     control={form.control}
                     name="seoTitle"
@@ -586,20 +558,19 @@ export default function BlogEditorPage() {
                       <FormItem>
                         <FormLabel>Título SEO</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Título para SEO"
-                            {...field}
+                          <Input 
+                            placeholder="Título para motores de búsqueda" 
+                            {...field} 
                           />
                         </FormControl>
                         <FormDescription>
-                          {field.value?.length || 0}/70 caracteres
+                          Título optimizado para SEO (máximo 60 caracteres)
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  {/* Descripción SEO */}
+                  
                   <FormField
                     control={form.control}
                     name="seoDescription"
@@ -607,46 +578,45 @@ export default function BlogEditorPage() {
                       <FormItem>
                         <FormLabel>Descripción SEO</FormLabel>
                         <FormControl>
-                          <Textarea
-                            placeholder="Descripción para SEO"
-                            {...field}
+                          <Textarea 
+                            placeholder="Descripción para motores de búsqueda" 
+                            {...field} 
                             rows={3}
                           />
                         </FormControl>
                         <FormDescription>
-                          {field.value?.length || 0}/160 caracteres
+                          Descripción optimizada para SEO (máximo 160 caracteres)
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </CardContent>
-              </Card>
-
-              {/* Botones de acción */}
-              <div className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setLocation("/blog")}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="min-w-[120px]"
-                >
-                  {isSubmitting && (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  )}
-                  {isEditing ? "Actualizar" : "Publicar"}
-                </Button>
-              </div>
-            </div>
+                </div>
+              </Form>
+            </CardContent>
+          </Card>
+          
+          <div className="flex justify-end">
+            <Button 
+              onClick={form.handleSubmit(onSubmit)} 
+              disabled={createPostMutation.isPending || updatePostMutation.isPending}
+              className="w-full"
+            >
+              {createPostMutation.isPending || updatePostMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Guardar artículo
+                </>
+              )}
+            </Button>
           </div>
-        </form>
-      </Form>
+        </div>
+      </div>
     </div>
   );
 }
