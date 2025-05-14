@@ -20,6 +20,7 @@ import SubirRecurso from "@/pages/subir-recurso";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AssistantSidebar } from "@/components/ui/assistant-sidebar";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { useEffect, useState } from "react";
 import { User } from "@shared/schema";
 import { apiRequest } from "./lib/queryClient";
@@ -79,6 +80,11 @@ function App() {
       <TooltipProvider>
         {showNavAndFooter && <Navbar user={user} onLogout={logout} />}
         <main className="min-h-screen">
+          {showNavAndFooter && location !== "/" && (
+            <div className="container pt-4">
+              <Breadcrumb />
+            </div>
+          )}
           <Switch>
             <Route path="/" component={() => <Home user={user} />} />
             <Route path="/login" component={() => <Login onLogin={login} />} />

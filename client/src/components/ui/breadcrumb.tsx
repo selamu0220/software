@@ -1,115 +1,73 @@
-import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { ChevronRight, MoreHorizontal } from "lucide-react"
+import { ChevronRight, Home } from "lucide-react";
+import { Link, useLocation } from "wouter";
 
-import { cn } from "@/lib/utils"
-
-const Breadcrumb = React.forwardRef<
-  HTMLElement,
-  React.ComponentPropsWithoutRef<"nav"> & {
-    separator?: React.ReactNode
-  }
->(({ ...props }, ref) => <nav ref={ref} aria-label="breadcrumb" {...props} />)
-Breadcrumb.displayName = "Breadcrumb"
-
-const BreadcrumbList = React.forwardRef<
-  HTMLOListElement,
-  React.ComponentPropsWithoutRef<"ol">
->(({ className, ...props }, ref) => (
-  <ol
-    ref={ref}
-    className={cn(
-      "flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5",
-      className
-    )}
-    {...props}
-  />
-))
-BreadcrumbList.displayName = "BreadcrumbList"
-
-const BreadcrumbItem = React.forwardRef<
-  HTMLLIElement,
-  React.ComponentPropsWithoutRef<"li">
->(({ className, ...props }, ref) => (
-  <li
-    ref={ref}
-    className={cn("inline-flex items-center gap-1.5", className)}
-    {...props}
-  />
-))
-BreadcrumbItem.displayName = "BreadcrumbItem"
-
-const BreadcrumbLink = React.forwardRef<
-  HTMLAnchorElement,
-  React.ComponentPropsWithoutRef<"a"> & {
-    asChild?: boolean
-  }
->(({ asChild, className, ...props }, ref) => {
-  const Comp = asChild ? Slot : "a"
-
+export function Breadcrumb() {
+  const [location] = useLocation();
+  
+  if (location === "/") return null; // No mostrar breadcrumbs en la página de inicio
+  
+  const pathSegments = location.split("/").filter(Boolean);
+  
+  // Mapeo de URLs a nombres legibles
+  const pathNames: Record<string, string> = {
+    "calendar": "Calendario",
+    "recursos": "Recursos",
+    "teleprompter": "Teleprompter",
+    "profile": "Perfil",
+    "subscribe": "Suscripción",
+    "recording": "Grabación",
+    "metrics": "Métricas",
+    "subir": "Subir Recurso"
+  };
+  
   return (
-    <Comp
-      ref={ref}
-      className={cn("transition-colors hover:text-foreground", className)}
-      {...props}
-    />
-  )
-})
-BreadcrumbLink.displayName = "BreadcrumbLink"
-
-const BreadcrumbPage = React.forwardRef<
-  HTMLSpanElement,
-  React.ComponentPropsWithoutRef<"span">
->(({ className, ...props }, ref) => (
-  <span
-    ref={ref}
-    role="link"
-    aria-disabled="true"
-    aria-current="page"
-    className={cn("font-normal text-foreground", className)}
-    {...props}
-  />
-))
-BreadcrumbPage.displayName = "BreadcrumbPage"
-
-const BreadcrumbSeparator = ({
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"li">) => (
-  <li
-    role="presentation"
-    aria-hidden="true"
-    className={cn("[&>svg]:w-3.5 [&>svg]:h-3.5", className)}
-    {...props}
-  >
-    {children ?? <ChevronRight />}
-  </li>
-)
-BreadcrumbSeparator.displayName = "BreadcrumbSeparator"
-
-const BreadcrumbEllipsis = ({
-  className,
-  ...props
-}: React.ComponentProps<"span">) => (
-  <span
-    role="presentation"
-    aria-hidden="true"
-    className={cn("flex h-9 w-9 items-center justify-center", className)}
-    {...props}
-  >
-    <MoreHorizontal className="h-4 w-4" />
-    <span className="sr-only">More</span>
-  </span>
-)
-BreadcrumbEllipsis.displayName = "BreadcrumbElipssis"
-
-export {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-  BreadcrumbEllipsis,
+    <nav aria-label="Breadcrumb" className="flex items-center mb-4 text-sm">
+      <ol className="flex items-center space-x-1 text-muted-foreground" itemScope itemType="https://schema.org/BreadcrumbList">
+        <li className="flex items-center" itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
+          <Link href="/">
+            <span className="flex items-center hover:text-foreground cursor-pointer" itemProp="item">
+              <Home className="w-4 h-4 mr-1" />
+              <span itemProp="name">Inicio</span>
+            </span>
+          </Link>
+          <meta itemProp="position" content="1" />
+        </li>
+        
+        {pathSegments.map((segment, index) => {
+          const url = `/${pathSegments.slice(0, index + 1).join("/")}`;
+          const isLast = index === pathSegments.length - 1;
+          const position = index + 2; // +2 porque Inicio es 1
+          
+          // No mostrar IDs numéricos como parte del breadcrumb
+          if (!isNaN(Number(segment))) return null;
+          
+          return (
+            <li 
+              key={segment} 
+              className="flex items-center" 
+              itemProp="itemListElement" 
+              itemScope 
+              itemType="https://schema.org/ListItem"
+            >
+              <ChevronRight className="w-3 h-3 mx-1" />
+              {isLast ? (
+                <span className="font-medium text-foreground" itemProp="name">
+                  {pathNames[segment] || segment.charAt(0).toUpperCase() + segment.slice(1)}
+                </span>
+              ) : (
+                <Link href={url}>
+                  <span className="hover:text-foreground cursor-pointer" itemProp="item">
+                    <span itemProp="name">
+                      {pathNames[segment] || segment.charAt(0).toUpperCase() + segment.slice(1)}
+                    </span>
+                  </span>
+                </Link>
+              )}
+              <meta itemProp="position" content={position.toString()} />
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
 }

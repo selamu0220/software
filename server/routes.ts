@@ -1590,7 +1590,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         youtubeId: result.videoId,
         youtubeUrl: result.url,
         // Las miniaturas se generan automáticamente por YouTube
-        uploadDate: new Date(),
+        // El campo createdAt registrará la fecha de subida
         isPublic: !isPrivate
       });
       
