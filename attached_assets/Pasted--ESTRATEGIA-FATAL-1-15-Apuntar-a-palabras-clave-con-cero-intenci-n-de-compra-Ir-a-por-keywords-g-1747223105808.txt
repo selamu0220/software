@@ -1,0 +1,206 @@
+ ESTRATEGIA FATAL (1–15)
+Apuntar a palabras clave con cero intención de compra.
+
+Ir a por keywords genéricas tipo “marketing”.
+
+No definir tu cliente ideal antes de hacer SEO.
+
+Escribir pensando en Google antes que en humanos.
+
+Obsesionarte con el tráfico, no con la conversión.
+
+Depender solo del SEO, sin email marketing ni redes.
+
+No hacer actualizaciones del contenido antiguo.
+
+Crear contenido sin estudiar la SERP actual.
+
+No tener una arquitectura de contenidos en silo.
+
+Tener 30 artículos desconectados entre sí.
+
+Crear contenido que no responde la búsqueda.
+
+Obviar los contenidos de medio y fondo de embudo.
+
+No tener CTAs claros en los artículos.
+
+No medir ROI de tus contenidos.
+
+No tener objetivos SEO claros (branding, leads, etc.).
+
+📄 CONTENIDO CAGADO (16–40)
+Copiar contenido de otros sitios.
+
+Escribir 300 palabras esperando posicionar.
+
+No usar subtítulos H2 y H3.
+
+Usar títulos clickbait sin relación real.
+
+No incluir sinónimos ni palabras relacionadas (LSI).
+
+Meter palabras clave como loco.
+
+Hacer párrafos gigantes.
+
+No meter ejemplos, listas o casos reales.
+
+No enlazar a fuentes externas de autoridad.
+
+No enlazar a tu propio contenido (interlinking).
+
+Dejar errores ortográficos (sí, Google se da cuenta).
+
+No responder directamente la intención de búsqueda en la intro.
+
+Usar lenguaje poco claro o técnico sin explicar.
+
+No tener un resumen o conclusión.
+
+No actualizar fechas de publicación.
+
+Usar imágenes sin alt-text.
+
+Tener contenido duplicado interno.
+
+No usar contenido multimedia (videos, tablas, etc.).
+
+No poner estructura de preguntas (FAQs).
+
+No incluir palabras clave long-tail.
+
+Escribir todo como si fuera un ensayo aburrido.
+
+No usar storytelling donde aplica.
+
+No tener una tabla de contenidos.
+
+No usar featured snippets como guía de estructura.
+
+Escribir para ti, no para quien busca.
+
+🏗️ ON-PAGE NULO (41–60)
+No tener una palabra clave principal por página.
+
+URLs largas y con números raros.
+
+URLs sin la keyword.
+
+No optimizar los meta titles.
+
+No escribir meta descriptions atractivas.
+
+No tener etiqueta H1 clara y única.
+
+Usar muchos H1 por página.
+
+No usar datos estructurados (schema).
+
+No optimizar el archivo robots.txt.
+
+No tener sitemap.xml.
+
+Permitir que se indexen páginas basura.
+
+No canonicalizar páginas duplicadas.
+
+No revisar los errores en Google Search Console.
+
+No tener breadcrumbs.
+
+No usar etiquetas Open Graph.
+
+Dejar imágenes de 2MB sin comprimir.
+
+No tener favicon.
+
+No bloquear páginas de admin en robots.
+
+Tener páginas huérfanas (sin enlaces entrantes).
+
+Meter sliders inútiles en la portada.
+
+📱 EXPERIENCIA DE USUARIO (61–75)
+Web no responsive.
+
+Tipografías ilegibles en móvil.
+
+Botones demasiado pequeños.
+
+Tiempo de carga > 3 segundos.
+
+Pop-ups agresivos.
+
+Scroll infinito mal hecho.
+
+No tener un menú limpio.
+
+Estructura confusa y sin jerarquía.
+
+No usar anchor links internos.
+
+No destacar los puntos clave visualmente.
+
+No poner botones claros para navegar.
+
+No dividir el contenido en bloques visuales.
+
+No facilitar el escaneo con negritas y listas.
+
+Poner anuncios en lugares ridículos.
+
+No tener un 404 personalizado.
+
+🔗 LINK BUILDING FEO (76–85)
+Comprar enlaces basura.
+
+Usar granjas de enlaces.
+
+Enlazar solo con "haz clic aquí".
+
+No diversificar anchor texts.
+
+Tener más enlaces salientes que entrantes.
+
+No construir enlaces internos estratégicamente.
+
+No aprovechar enlaces rotos de competidores.
+
+No pedir enlaces a sitios donde colaboras.
+
+Ignorar foros, entrevistas o podcasts como fuente de enlaces.
+
+No analizar los backlinks tóxicos.
+
+🛠️ TÉCNICA DEPRIMENTE (86–95)
+No usar HTTPS.
+
+No tener versión canonical para www / sin www.
+
+No redireccionar http → https.
+
+Duplicación por parámetros de URL.
+
+No tener AMP si tu público lo necesita.
+
+No tener versión para móvil optimizada.
+
+Errores 5xx o 4xx sin detectar.
+
+No revisar errores de rastreo.
+
+No hacer tests de velocidad periódicos.
+
+No usar Lazy Load para imágenes.
+
+📉 MONITORIZACIÓN AUSENTE (96–100)
+No usar Google Search Console.
+
+No usar Google Analytics.
+
+No medir las keywords que traen tráfico.
+
+No hacer seguimiento del ranking por página.
+
+No tener alertas para caídas de tráfico.

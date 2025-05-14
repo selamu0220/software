@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#111"/>
+  <text x="600" y="260" font-family="Arial, sans-serif" font-size="82" font-weight="bold" text-anchor="middle" fill="#ffffff">Red Creativa Gen</text>
+  <text x="600" y="350" font-family="Arial, sans-serif" font-size="42" text-anchor="middle" fill="#00aeff">Ideas de contenido impulsadas por IA</text>
+  <rect x="380" y="400" width="440" height="5" fill="#00aeff" rx="2.5" ry="2.5"/>
+  <text x="600" y="450" font-family="Arial, sans-serif" font-size="32" text-anchor="middle" fill="#ffffff">Generador de ideas y scripts para YouTube</text>
+</svg>
