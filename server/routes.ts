@@ -1749,6 +1749,343 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ];
   }
 
+  // Rutas de API para blog (mejora SEO)
+  // 1. Rutas para artículos de blog
+  app.post("/api/blog/posts", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const blogPostData = insertBlogPostSchema.parse({
+        ...req.body,
+        userId,
+        // Valores por defecto
+        published: req.body.published ?? false,
+        featured: req.body.featured ?? false,
+        seoTitle: req.body.seoTitle || req.body.title,
+        seoDescription: req.body.seoDescription || req.body.excerpt
+      });
+      
+      // Asegurar que el slug sea único
+      const existingPost = await storage.getBlogPostBySlug(blogPostData.slug);
+      if (existingPost) {
+        return res.status(400).json({ message: "Ya existe un artículo con ese slug" });
+      }
+      
+      const blogPost = await storage.createBlogPost(blogPostData);
+      
+      // Si se enviaron categorías, agregarlas
+      if (req.body.categories && Array.isArray(req.body.categories)) {
+        for (const categoryId of req.body.categories) {
+          await storage.addCategoryToBlogPost(blogPost.id, categoryId);
+        }
+      }
+      
+      res.status(201).json(blogPost);
+    } catch (error: any) {
+      console.error("Error creating blog post:", error);
+      if (error.name === "ZodError") {
+        return res.status(400).json({ message: "Datos inválidos", details: error.format() });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.get("/api/blog/posts", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const onlyPublished = req.query.published === "true";
+      const featuredOnly = req.query.featured === "true";
+      
+      let posts: BlogPost[];
+      
+      if (featuredOnly) {
+        posts = await storage.getFeaturedBlogPosts(limit);
+      } else if (onlyPublished) {
+        posts = await storage.getPublishedBlogPosts(limit, offset);
+      } else {
+        posts = await storage.getAllBlogPosts(limit, offset);
+      }
+      
+      // Enriquecer los posts con sus categorías
+      const enrichedPosts = await Promise.all(posts.map(async (post) => {
+        const categories = await storage.getBlogPostCategories(post.id);
+        return {
+          ...post,
+          categories
+        };
+      }));
+      
+      res.json(enrichedPosts);
+    } catch (error: any) {
+      console.error("Error fetching blog posts:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.get("/api/blog/posts/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const post = await storage.getBlogPost(id);
+      
+      if (!post) {
+        return res.status(404).json({ message: "Artículo no encontrado" });
+      }
+      
+      // Si el post no está publicado, solo el autor o admin puede verlo
+      if (!post.published && (!req.session.userId || post.userId !== req.session.userId)) {
+        return res.status(403).json({ message: "No tienes permiso para ver este artículo" });
+      }
+      
+      // Obtener categorías del post
+      const categories = await storage.getBlogPostCategories(post.id);
+      
+      res.json({
+        ...post,
+        categories
+      });
+    } catch (error: any) {
+      console.error("Error fetching blog post:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.get("/api/blog/posts/slug/:slug", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const post = await storage.getBlogPostBySlug(slug);
+      
+      if (!post) {
+        return res.status(404).json({ message: "Artículo no encontrado" });
+      }
+      
+      // Si el post no está publicado, solo el autor o admin puede verlo
+      if (!post.published && (!req.session.userId || post.userId !== req.session.userId)) {
+        return res.status(403).json({ message: "No tienes permiso para ver este artículo" });
+      }
+      
+      // Obtener categorías del post
+      const categories = await storage.getBlogPostCategories(post.id);
+      
+      res.json({
+        ...post,
+        categories
+      });
+    } catch (error: any) {
+      console.error("Error fetching blog post by slug:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.put("/api/blog/posts/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.session.userId!;
+      
+      const post = await storage.getBlogPost(id);
+      if (!post) {
+        return res.status(404).json({ message: "Artículo no encontrado" });
+      }
+      
+      // Solo el autor puede editar
+      if (post.userId !== userId) {
+        return res.status(403).json({ message: "No tienes permiso para editar este artículo" });
+      }
+      
+      // Actualizar post
+      const updatedPost = await storage.updateBlogPost(id, req.body);
+      
+      // Si se enviaron categorías, actualizar
+      if (req.body.categories && Array.isArray(req.body.categories)) {
+        // Obtener categorías actuales
+        const currentCategories = await storage.getBlogPostCategories(id);
+        const currentCategoryIds = currentCategories.map(c => c.id);
+        
+        // Eliminar categorías que ya no están
+        for (const categoryId of currentCategoryIds) {
+          if (!req.body.categories.includes(categoryId)) {
+            await storage.removeCategoryFromBlogPost(id, categoryId);
+          }
+        }
+        
+        // Agregar nuevas categorías
+        for (const categoryId of req.body.categories) {
+          if (!currentCategoryIds.includes(categoryId)) {
+            await storage.addCategoryToBlogPost(id, categoryId);
+          }
+        }
+      }
+      
+      // Obtener categorías actualizadas
+      const categories = await storage.getBlogPostCategories(id);
+      
+      res.json({
+        ...updatedPost,
+        categories
+      });
+    } catch (error: any) {
+      console.error("Error updating blog post:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.delete("/api/blog/posts/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.session.userId!;
+      
+      const post = await storage.getBlogPost(id);
+      if (!post) {
+        return res.status(404).json({ message: "Artículo no encontrado" });
+      }
+      
+      // Solo el autor puede eliminar
+      if (post.userId !== userId) {
+        return res.status(403).json({ message: "No tienes permiso para eliminar este artículo" });
+      }
+      
+      // Eliminar post
+      await storage.deleteBlogPost(id);
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error deleting blog post:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // 2. Rutas para categorías de blog
+  app.post("/api/blog/categories", requireAuth, async (req, res) => {
+    try {
+      const categoryData = insertBlogCategorySchema.parse(req.body);
+      
+      // Verificar que el slug sea único
+      const existingCategory = await storage.getBlogCategoryBySlug(categoryData.slug);
+      if (existingCategory) {
+        return res.status(400).json({ message: "Ya existe una categoría con ese slug" });
+      }
+      
+      const category = await storage.createBlogCategory(categoryData);
+      res.status(201).json(category);
+    } catch (error: any) {
+      console.error("Error creating blog category:", error);
+      if (error.name === "ZodError") {
+        return res.status(400).json({ message: "Datos inválidos", details: error.format() });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.get("/api/blog/categories", async (req, res) => {
+    try {
+      const categories = await storage.getAllBlogCategories();
+      res.json(categories);
+    } catch (error: any) {
+      console.error("Error fetching blog categories:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.get("/api/blog/categories/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const category = await storage.getBlogCategory(id);
+      
+      if (!category) {
+        return res.status(404).json({ message: "Categoría no encontrada" });
+      }
+      
+      res.json(category);
+    } catch (error: any) {
+      console.error("Error fetching blog category:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.get("/api/blog/categories/slug/:slug", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const category = await storage.getBlogCategoryBySlug(slug);
+      
+      if (!category) {
+        return res.status(404).json({ message: "Categoría no encontrada" });
+      }
+      
+      res.json(category);
+    } catch (error: any) {
+      console.error("Error fetching blog category by slug:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.get("/api/blog/categories/:id/posts", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const category = await storage.getBlogCategory(id);
+      
+      if (!category) {
+        return res.status(404).json({ message: "Categoría no encontrada" });
+      }
+      
+      const posts = await storage.getBlogPostsByCategory(id);
+      
+      // Filtrar solo posts publicados si el usuario no está autenticado
+      const filteredPosts = req.session.userId 
+        ? posts 
+        : posts.filter(post => post.published);
+      
+      res.json(filteredPosts);
+    } catch (error: any) {
+      console.error("Error fetching posts by category:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.put("/api/blog/categories/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      const category = await storage.getBlogCategory(id);
+      if (!category) {
+        return res.status(404).json({ message: "Categoría no encontrada" });
+      }
+      
+      // Verificar que el slug sea único si se está actualizando
+      if (req.body.slug && req.body.slug !== category.slug) {
+        const existingCategory = await storage.getBlogCategoryBySlug(req.body.slug);
+        if (existingCategory) {
+          return res.status(400).json({ message: "Ya existe una categoría con ese slug" });
+        }
+      }
+      
+      // Actualizar categoría
+      const updatedCategory = await storage.updateBlogCategory(id, req.body);
+      
+      res.json(updatedCategory);
+    } catch (error: any) {
+      console.error("Error updating blog category:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.delete("/api/blog/categories/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      const category = await storage.getBlogCategory(id);
+      if (!category) {
+        return res.status(404).json({ message: "Categoría no encontrada" });
+      }
+      
+      // Eliminar categoría
+      await storage.deleteBlogCategory(id);
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error deleting blog category:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
