@@ -320,6 +320,172 @@ export class MemStorage implements IStorage {
     this.userVideos.set(id, updatedVideo);
     return updatedVideo;
   }
+
+  // Blog post operations
+  async createBlogPost(post: InsertBlogPost): Promise<BlogPost> {
+    const id = this.blogPostIdCounter++;
+    const now = new Date();
+    
+    const blogPost: BlogPost = {
+      id,
+      ...post,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.blogPosts.set(id, blogPost);
+    return blogPost;
+  }
+  
+  async getBlogPost(id: number): Promise<BlogPost | undefined> {
+    return this.blogPosts.get(id);
+  }
+  
+  async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
+    return Array.from(this.blogPosts.values()).find(post => post.slug === slug);
+  }
+  
+  async getAllBlogPosts(limit = 10, offset = 0): Promise<BlogPost[]> {
+    return Array.from(this.blogPosts.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(offset, offset + limit);
+  }
+  
+  async getPublishedBlogPosts(limit = 10, offset = 0): Promise<BlogPost[]> {
+    return Array.from(this.blogPosts.values())
+      .filter(post => post.published)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(offset, offset + limit);
+  }
+  
+  async getFeaturedBlogPosts(limit = 3): Promise<BlogPost[]> {
+    return Array.from(this.blogPosts.values())
+      .filter(post => post.published && post.featured)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+  
+  async getBlogPostsByUser(userId: number): Promise<BlogPost[]> {
+    return Array.from(this.blogPosts.values())
+      .filter(post => post.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  async updateBlogPost(id: number, updates: Partial<BlogPost>): Promise<BlogPost> {
+    const post = await this.getBlogPost(id);
+    if (!post) {
+      throw new Error(`Blog post with id ${id} not found`);
+    }
+    
+    const updatedPost = { 
+      ...post, 
+      ...updates,
+      updatedAt: new Date() 
+    };
+    
+    this.blogPosts.set(id, updatedPost);
+    return updatedPost;
+  }
+  
+  async deleteBlogPost(id: number): Promise<boolean> {
+    return this.blogPosts.delete(id);
+  }
+  
+  // Blog category operations
+  async createBlogCategory(category: InsertBlogCategory): Promise<BlogCategory> {
+    const id = this.blogCategoryIdCounter++;
+    const now = new Date();
+    
+    const blogCategory: BlogCategory = {
+      id,
+      ...category,
+      createdAt: now
+    };
+    
+    this.blogCategories.set(id, blogCategory);
+    return blogCategory;
+  }
+  
+  async getBlogCategory(id: number): Promise<BlogCategory | undefined> {
+    return this.blogCategories.get(id);
+  }
+  
+  async getBlogCategoryBySlug(slug: string): Promise<BlogCategory | undefined> {
+    return Array.from(this.blogCategories.values()).find(category => category.slug === slug);
+  }
+  
+  async getAllBlogCategories(): Promise<BlogCategory[]> {
+    return Array.from(this.blogCategories.values())
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+  
+  async updateBlogCategory(id: number, updates: Partial<BlogCategory>): Promise<BlogCategory> {
+    const category = await this.getBlogCategory(id);
+    if (!category) {
+      throw new Error(`Blog category with id ${id} not found`);
+    }
+    
+    const updatedCategory = { ...category, ...updates };
+    this.blogCategories.set(id, updatedCategory);
+    return updatedCategory;
+  }
+  
+  async deleteBlogCategory(id: number): Promise<boolean> {
+    return this.blogCategories.delete(id);
+  }
+  
+  // Blog post-category relationship operations
+  async addCategoryToBlogPost(postId: number, categoryId: number): Promise<BlogPostCategory> {
+    const post = await this.getBlogPost(postId);
+    if (!post) {
+      throw new Error(`Blog post with id ${postId} not found`);
+    }
+    
+    const category = await this.getBlogCategory(categoryId);
+    if (!category) {
+      throw new Error(`Blog category with id ${categoryId} not found`);
+    }
+    
+    const id = this.blogPostCategoryIdCounter++;
+    const postCategory: BlogPostCategory = {
+      id,
+      postId,
+      categoryId
+    };
+    
+    this.blogPostCategories.set(id, postCategory);
+    return postCategory;
+  }
+  
+  async removeCategoryFromBlogPost(postId: number, categoryId: number): Promise<boolean> {
+    const postCategory = Array.from(this.blogPostCategories.values())
+      .find(pc => pc.postId === postId && pc.categoryId === categoryId);
+      
+    if (!postCategory) {
+      return false;
+    }
+    
+    return this.blogPostCategories.delete(postCategory.id);
+  }
+  
+  async getBlogPostCategories(postId: number): Promise<BlogCategory[]> {
+    const postCategoryIds = Array.from(this.blogPostCategories.values())
+      .filter(pc => pc.postId === postId)
+      .map(pc => pc.categoryId);
+      
+    return postCategoryIds.map(id => this.blogCategories.get(id)!)
+      .filter(Boolean);
+  }
+  
+  async getBlogPostsByCategory(categoryId: number): Promise<BlogPost[]> {
+    const categoryPostIds = Array.from(this.blogPostCategories.values())
+      .filter(pc => pc.categoryId === categoryId)
+      .map(pc => pc.postId);
+      
+    return categoryPostIds.map(id => this.blogPosts.get(id)!)
+      .filter(Boolean)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
 }
 
 export class DatabaseStorage implements IStorage {

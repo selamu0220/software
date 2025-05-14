@@ -13,8 +13,13 @@ import {
   insertCalendarEntrySchema,
   updateUserSchema,
   insertUserVideoSchema,
+  insertBlogPostSchema,
+  insertBlogCategorySchema,
+  insertBlogPostCategorySchema,
   UserVideo,
   VideoIdea,
+  BlogPost,
+  BlogCategory,
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import session from "express-session";

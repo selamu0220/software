@@ -1,5 +1,6 @@
 import { ChevronRight, Home } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { cn } from "@/lib/utils";
 
 // Exportación de componentes adicionales para el sistema de breadcrumbs
 export function BreadcrumbItem({ children }: { children: React.ReactNode }) {
@@ -26,8 +27,17 @@ export function BreadcrumbPage({ children }: { children: React.ReactNode }) {
   return <span className="text-foreground font-medium">{children}</span>;
 }
 
-export function Breadcrumb() {
+export function Breadcrumb({ children, className }: { children?: React.ReactNode, className?: string }) {
   const [location] = useLocation();
+  
+  // Si se pasan children directamente, renderizarlos en lugar de generar breadcrumbs automáticos
+  if (children) {
+    return (
+      <nav aria-label="Breadcrumbs" className={cn("flex items-center space-x-1 text-sm", className)}>
+        {children}
+      </nav>
+    );
+  }
   
   if (location === "/") return null; // No mostrar breadcrumbs en la página de inicio
   
