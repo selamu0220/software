@@ -824,6 +824,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error deleting video idea" });
     }
   });
+  
+  // Editar una idea de video
+  app.put("/api/video-ideas/:id", requireAuth, async (req, res) => {
+    try {
+      const ideaId = parseInt(req.params.id);
+      const { title, content } = req.body;
+      
+      // Verificar que la idea existe
+      const idea = await storage.getVideoIdea(ideaId);
+      
+      if (!idea) {
+        return res.status(404).json({ message: "Idea no encontrada" });
+      }
+      
+      // Verificar que la idea pertenece al usuario
+      if (idea.userId !== req.session.userId) {
+        return res.status(403).json({ message: "No autorizado para editar esta idea" });
+      }
+      
+      // Actualizar la idea
+      const updatedIdea = await storage.updateVideoIdea(ideaId, {
+        title: title || idea.title,
+        content: content || idea.content
+      });
+      
+      res.status(200).json({ 
+        message: "Idea actualizada correctamente", 
+        idea: updatedIdea 
+      });
+    } catch (error) {
+      console.error("Error al actualizar idea:", error);
+      res.status(500).json({ message: "Error al actualizar la idea" });
+    }
+  });
 
   // Generar ideas para toda una semana (disponible para usuarios gratuitos)
   app.post("/api/generate-ideas/week", requireAuth, async (req, res) => {
