@@ -1579,7 +1579,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         collectionId,
       };
 
-      const script = await storage.createScript(scriptData);
+      const script = await storage.addScriptToCollection(scriptData);
       res.status(201).json(script);
     } catch (error) {
       console.error("Error al crear guión:", error);
