@@ -678,31 +678,21 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
   
-  // Recurso operaciones - implementación temporal, usar tablas reales en producción
+  // Resource operations
   async getResourceCategoryBySlug(slug: string): Promise<any | undefined> {
-    // Implementación temporal para categorías de recursos
-    const categories = [
-      { id: 1, name: 'IA', slug: 'ia', description: 'Herramientas de inteligencia artificial' },
-      { id: 2, name: 'Plugins', slug: 'plugins', description: 'Plugins para diferentes plataformas' },
-      { id: 3, name: 'Software', slug: 'software', description: 'Software para creadores' },
-      { id: 4, name: 'Extensiones', slug: 'extensiones', description: 'Extensiones para navegadores' }
-    ];
-    return categories.find(c => c.slug === slug);
+    const [category] = await db
+      .select()
+      .from(resourceCategories)
+      .where(eq(resourceCategories.slug, slug));
+    return category;
   }
 
   async getResourceSubcategoryBySlug(slug: string): Promise<any | undefined> {
-    // Implementación temporal para subcategorías
-    const subcategories = [
-      { id: 1, categoryId: 1, name: 'Generación de texto', slug: 'generacion-texto' },
-      { id: 2, categoryId: 1, name: 'Generación de imágenes', slug: 'generacion-imagenes' },
-      { id: 3, categoryId: 2, name: 'Plugins para Premiere', slug: 'plugins-premiere' },
-      { id: 4, categoryId: 2, name: 'Plugins para After Effects', slug: 'plugins-after-effects' },
-      { id: 5, categoryId: 3, name: 'Editores de video', slug: 'editores-video' },
-      { id: 6, categoryId: 3, name: 'Teleprompters', slug: 'teleprompters' },
-      { id: 7, categoryId: 4, name: 'Extensiones para Chrome', slug: 'extensiones-chrome' },
-      { id: 8, categoryId: 4, name: 'Extensiones para Firefox', slug: 'extensiones-firefox' }
-    ];
-    return subcategories.find(s => s.slug === slug);
+    const [subcategory] = await db
+      .select()
+      .from(resourceSubcategories)
+      .where(eq(resourceSubcategories.slug, slug));
+    return subcategory;
   }
 
   async createResource(resourceData: any): Promise<Resource> {
