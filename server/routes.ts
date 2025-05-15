@@ -169,6 +169,14 @@ declare module "express-session" {
   }
 }
 
+// Middleware para verificar autenticación
+const requireAuth = (req: Request, res: Response, next: Function) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+  next();
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create session store
   const PgSession = connectPgSimple(session);
@@ -191,13 +199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }),
   );
 
-  // Middleware to check if user is authenticated
-  const requireAuth = (req: Request, res: Response, next: Function) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
-    next();
-  };
+  // Middleware to check if user is authenticated (declarado globalmente)
   
   // Rutas para subida de recursos (requiere autenticación)
   app.post("/api/recursos/upload", requireAuth, recursoUpload.fields([

@@ -148,6 +148,7 @@ export interface IStorage {
   getPublicResources(limit?: number, offset?: number): Promise<any[]>;
   getFeaturedResources(limit?: number): Promise<any[]>;
   getResourcesByUser(userId: number): Promise<any[]>;
+  getResourcesBySystem(): Promise<any[]>;
   getResourcesByCategory(categoryId: number, limit?: number, offset?: number): Promise<any[]>;
   getResourcesBySubcategory(subcategoryId: number, limit?: number, offset?: number): Promise<any[]>;
   updateResource(id: number, updates: any): Promise<any>;
@@ -807,7 +808,7 @@ export class DatabaseStorage implements IStorage {
       return await db
         .select()
         .from(resources)
-        .where(isNull(resources.userId))
+        .where(sql`${resources.userId} IS NULL`)
         .orderBy(desc(resources.createdAt));
     } catch (error) {
       console.error("Error getting system resources:", error);
