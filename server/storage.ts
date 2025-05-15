@@ -705,65 +705,145 @@ export class DatabaseStorage implements IStorage {
     return subcategories.find(s => s.slug === slug);
   }
 
-  async createResource(resourceData: any): Promise<any> {
-    // Implementación temporal, debe usar tablas reales en producción
-    const resourceWithId = {
-      ...resourceData,
-      id: Date.now(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    return resourceWithId;
+  async createResource(resourceData: any): Promise<Resource> {
+    try {
+      const [result] = await db.insert(resources).values(resourceData).returning();
+      return result;
+    } catch (error) {
+      console.error("Error al crear recurso:", error);
+      throw error;
+    }
   }
 
-  async getResource(id: number): Promise<any | undefined> {
-    // Implementación temporal
-    return undefined;
+  async getResource(id: number): Promise<Resource | undefined> {
+    try {
+      const [result] = await db.select()
+        .from(resources)
+        .where(eq(resources.id, id));
+      return result;
+    } catch (error) {
+      console.error("Error al obtener recurso:", error);
+      return undefined;
+    }
   }
 
-  async getResourceBySlug(slug: string): Promise<any | undefined> {
-    // Implementación temporal
-    return undefined;
+  async getResourceBySlug(slug: string): Promise<Resource | undefined> {
+    try {
+      const [result] = await db.select()
+        .from(resources)
+        .where(eq(resources.slug, slug));
+      return result;
+    } catch (error) {
+      console.error("Error al obtener recurso por slug:", error);
+      return undefined;
+    }
   }
 
-  async getAllResources(limit?: number, offset?: number): Promise<any[]> {
-    // Implementación temporal
-    return [];
+  async getAllResources(limit: number = 20, offset: number = 0): Promise<Resource[]> {
+    try {
+      return await db.select()
+        .from(resources)
+        .orderBy(desc(resources.createdAt))
+        .limit(limit)
+        .offset(offset);
+    } catch (error) {
+      console.error("Error al obtener todos los recursos:", error);
+      return [];
+    }
   }
 
-  async getPublicResources(limit?: number, offset?: number): Promise<any[]> {
-    // Implementación temporal
-    return [];
+  async getPublicResources(limit: number = 20, offset: number = 0): Promise<Resource[]> {
+    try {
+      return await db.select()
+        .from(resources)
+        .where(eq(resources.isPublic, true))
+        .orderBy(desc(resources.createdAt))
+        .limit(limit)
+        .offset(offset);
+    } catch (error) {
+      console.error("Error al obtener recursos públicos:", error);
+      return [];
+    }
   }
 
-  async getFeaturedResources(limit?: number): Promise<any[]> {
-    // Implementación temporal
-    return [];
+  async getFeaturedResources(limit: number = 6): Promise<Resource[]> {
+    try {
+      return await db.select()
+        .from(resources)
+        .where(and(
+          eq(resources.isPublic, true),
+          eq(resources.isFeatured, true)
+        ))
+        .orderBy(desc(resources.createdAt))
+        .limit(limit);
+    } catch (error) {
+      console.error("Error al obtener recursos destacados:", error);
+      return [];
+    }
   }
 
-  async getResourcesByUser(userId: number): Promise<any[]> {
-    // Implementación temporal
-    return [];
+  async getResourcesByUser(userId: number): Promise<Resource[]> {
+    try {
+      return await db.select()
+        .from(resources)
+        .where(eq(resources.userId, userId))
+        .orderBy(desc(resources.createdAt));
+    } catch (error) {
+      console.error("Error al obtener recursos del usuario:", error);
+      return [];
+    }
   }
 
-  async getResourcesByCategory(categoryId: number, limit?: number, offset?: number): Promise<any[]> {
-    // Implementación temporal
-    return [];
+  async getResourcesByCategory(categoryId: number, limit: number = 20, offset: number = 0): Promise<Resource[]> {
+    try {
+      return await db.select()
+        .from(resources)
+        .where(eq(resources.categoryId, categoryId))
+        .orderBy(desc(resources.createdAt))
+        .limit(limit)
+        .offset(offset);
+    } catch (error) {
+      console.error("Error al obtener recursos por categoría:", error);
+      return [];
+    }
   }
 
-  async getResourcesBySubcategory(subcategoryId: number, limit?: number, offset?: number): Promise<any[]> {
-    // Implementación temporal
-    return [];
+  async getResourcesBySubcategory(subcategoryId: number, limit: number = 20, offset: number = 0): Promise<Resource[]> {
+    try {
+      return await db.select()
+        .from(resources)
+        .where(eq(resources.subcategoryId, subcategoryId))
+        .orderBy(desc(resources.createdAt))
+        .limit(limit)
+        .offset(offset);
+    } catch (error) {
+      console.error("Error al obtener recursos por subcategoría:", error);
+      return [];
+    }
   }
 
-  async updateResource(id: number, updates: any): Promise<any> {
-    // Implementación temporal
-    return { id, ...updates };
+  async updateResource(id: number, updates: Partial<Resource>): Promise<Resource> {
+    try {
+      const [updated] = await db.update(resources)
+        .set(updates)
+        .where(eq(resources.id, id))
+        .returning();
+      return updated;
+    } catch (error) {
+      console.error("Error al actualizar recurso:", error);
+      throw error;
+    }
   }
 
   async deleteResource(id: number): Promise<boolean> {
-    // Implementación temporal
-    return true;
+    try {
+      const result = await db.delete(resources)
+        .where(eq(resources.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error("Error al eliminar recurso:", error);
+      return false;
+    }
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
