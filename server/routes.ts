@@ -115,7 +115,7 @@ const videoUpload = multer({
 const recursoUpload = multer({
   storage: fileStorage,
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit para recursos
+    fileSize: 200 * 1024 * 1024, // 200MB limit para recursos (aumentado de 50MB)
   }
 });
 
@@ -262,7 +262,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error al subir recurso:", error);
-      res.status(500).json({ message: "Error al subir el recurso" });
+      
+      // Proporcionar mensajes de error más descriptivos
+      if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({ 
+            message: "Error: El archivo es demasiado grande. El límite máximo es de 200MB." 
+          });
+        }
+        return res.status(400).json({ 
+          message: `Error en la subida del archivo: ${error.message}` 
+        });
+      }
+      
+      res.status(500).json({ 
+        message: `Error al subir el recurso: ${error.message || 'Error desconocido'}` 
+      });
     }
   });
   
