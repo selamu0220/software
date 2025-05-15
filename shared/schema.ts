@@ -76,7 +76,7 @@ export const resourceSubcategories = pgTable("resource_subcategories", {
   name: text("name").notNull(),
   slug: text("slug").notNull(),
   description: text("description"),
-  iconName: text("icon_name"),
+  // Campo iconName eliminado para coincidir con la estructura de la tabla
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
