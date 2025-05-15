@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Twitter, Youtube, Instagram } from "lucide-react";
+import { Twitter, Youtube, Instagram, Star } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -8,11 +8,11 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-4">
             <div className="flex">
-              <span className="text-foreground font-heading font-bold text-xl">TubeIdeaGen</span>
+              <span className="text-foreground font-heading font-bold text-xl">Red Creativa Gen</span>
               <span className="beta-badge">BETA</span>
             </div>
             <p className="text-muted-foreground text-sm">
-              Generate engaging YouTube video ideas with AI, plan your content calendar, and never run out of inspiration.
+              Plataforma integral para creadores de contenido con herramientas de IA, planificación y recursos creativos.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -32,22 +32,32 @@ export default function Footer() {
           
           <div>
             <h3 className="text-xs font-mono font-medium text-foreground uppercase tracking-wider mb-4">
-              Product
+              Producto
             </h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Generator
+                  Generador
                 </Link>
               </li>
               <li>
                 <Link href="/calendar" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Calendar
+                  Calendario
+                </Link>
+              </li>
+              <li>
+                <Link href="/recursos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Recursos
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Blog
                 </Link>
               </li>
               <li>
                 <Link href="/#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Pricing
+                  Precios
                 </Link>
               </li>
             </ul>
@@ -55,22 +65,27 @@ export default function Footer() {
 
           <div>
             <h3 className="text-xs font-mono font-medium text-foreground uppercase tracking-wider mb-4">
-              Support
+              Soporte
             </h3>
             <ul className="space-y-2">
               <li>
                 <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Help
+                  Ayuda
                 </a>
               </li>
               <li>
                 <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Documentation
+                  Documentación
                 </a>
               </li>
               <li>
                 <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Contact
+                  Contacto
+                </a>
+              </li>
+              <li>
+                <a href="https://es.trustpilot.com/review/redcreativa.pro" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                  <Star className="h-4 w-4" /> Reseñas Trustpilot
                 </a>
               </li>
             </ul>
@@ -83,12 +98,12 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Privacy
+                  Privacidad
                 </a>
               </li>
               <li>
                 <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Terms
+                  Términos
                 </a>
               </li>
             </ul>
@@ -97,7 +112,7 @@ export default function Footer() {
         
         <div className="mt-12 border-t border-border pt-8">
           <p className="text-xs text-muted-foreground text-center">
-            &copy; {new Date().getFullYear()} TubeIdeaGen. All rights reserved.
+            &copy; {new Date().getFullYear()} Red Creativa Gen. Todos los derechos reservados.
           </p>
         </div>
       </div>
