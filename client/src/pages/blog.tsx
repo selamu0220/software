@@ -218,9 +218,11 @@ export default function BlogPage() {
             <Button
               onClick={() => navigate("/blog/new")}
               className="flex items-center gap-2"
+              variant="default"
+              size="lg"
             >
               <Plus size={16} />
-              Nuevo artículo
+              <span className="font-bold">Nuevo artículo</span>
             </Button>
           </div>
         )}
@@ -372,17 +374,21 @@ export default function BlogPage() {
             <Button 
               onClick={() => navigate("/blog/new")}
               className="flex items-center gap-2"
+              size="lg"
+              variant="default"
             >
               <PenTool size={16} />
-              Escribir artículo
+              <span className="font-bold">Escribir artículo</span>
             </Button>
           ) : (
             <Button 
               onClick={() => navigate("/login?redirect=/blog/new")}
               className="flex items-center gap-2"
+              size="lg"
+              variant="default"
             >
               <PenTool size={16} />
-              Inicia sesión para escribir
+              <span className="font-bold">Inicia sesión para escribir</span>
             </Button>
           )}
         </CardContent>
