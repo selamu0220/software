@@ -1648,7 +1648,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await aiAssistant({
         prompt: req.body.prompt,
         content: req.body.content,
-        model: req.body.model || "gemini-pro",
+        entireScript: req.body.entireScript || false,
+        geminiApiKey: req.body.geminiApiKey
       });
 
       res.json(result);
