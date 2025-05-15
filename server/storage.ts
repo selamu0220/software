@@ -17,6 +17,7 @@ import {
   type InsertUser, 
   type VideoIdea, 
   type InsertVideoIdea, 
+  type UpdateVideoIdea,
   type CalendarEntry, 
   type InsertCalendarEntry,
   type UserVideo,
@@ -62,6 +63,7 @@ export interface IStorage {
   getVideoIdea(id: number): Promise<VideoIdea | undefined>;
   getVideoIdeasByUser(userId: number): Promise<VideoIdea[]>;
   getVideoIdeasByDateRange(userId: number, startDate: Date, endDate: Date): Promise<VideoIdea[]>;
+  updateVideoIdea(id: number, updates: UpdateVideoIdea): Promise<VideoIdea>;
   deleteVideoIdea(id: number): Promise<boolean>;
   
   // Calendar entries operations
@@ -293,6 +295,22 @@ export class MemStorage implements IStorage {
     });
   }
 
+  async updateVideoIdea(id: number, updates: UpdateVideoIdea): Promise<VideoIdea> {
+    const videoIdea = this.videoIdeas.get(id);
+    if (!videoIdea) {
+      throw new Error(`Video idea with id ${id} not found`);
+    }
+    
+    const updatedIdea = {
+      ...videoIdea,
+      ...(updates.title ? { title: updates.title } : {}),
+      ...(updates.content ? { content: updates.content } : {})
+    };
+    
+    this.videoIdeas.set(id, updatedIdea);
+    return updatedIdea;
+  }
+  
   async deleteVideoIdea(id: number): Promise<boolean> {
     return this.videoIdeas.delete(id);
   }
@@ -967,6 +985,15 @@ export class DatabaseStorage implements IStorage {
       );
   }
 
+  async updateVideoIdea(id: number, updates: UpdateVideoIdea): Promise<VideoIdea> {
+    const [videoIdea] = await db.update(videoIdeas)
+      .set(updates)
+      .where(eq(videoIdeas.id, id))
+      .returning();
+    
+    return videoIdea;
+  }
+  
   async deleteVideoIdea(id: number): Promise<boolean> {
     const result = await db.delete(videoIdeas)
       .where(eq(videoIdeas.id, id))

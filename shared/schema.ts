@@ -349,6 +349,12 @@ export const userScriptsRelations = relations(userScripts, ({ one }) => ({
 
 
 
+// Update schemas
+export type UpdateVideoIdea = {
+  title?: string;
+  content?: any;
+}
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
