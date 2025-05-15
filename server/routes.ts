@@ -1049,17 +1049,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const calendarData = insertCalendarEntrySchema.parse({
         ...restData,
         userId: req.session.userId,
-        videoIdeaId: videoIdeaId || null
+        videoIdeaId: videoIdeaId || null,
+        completed: restData.completed !== undefined ? restData.completed : false,
+        notes: restData.notes || null,
+        color: restData.color || "#3b82f6",
       });
 
       const entry = await storage.createCalendarEntry(calendarData);
       res.status(201).json(entry);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Error de validación:", error.errors);
         res
           .status(400)
           .json({ message: "Invalid input", errors: error.errors });
       } else {
+        console.error("Error creando entrada de calendario:", error);
+        res.status(500).json({ message: "Error creating calendar entry" });
+      }
+    }
+  });
+  
+  // Para compatibilidad con el frontend, también crear endpoint /api/calendar/entry
+  app.post("/api/calendar/entry", requireAuth, async (req, res) => {
+    try {
+      let videoIdeaId = req.body.videoIdeaId;
+      
+      // Convertir la fecha si es necesario
+      let formattedDate = req.body.date;
+      if (typeof formattedDate === 'string' && !formattedDate.includes('T')) {
+        // Si la fecha viene en formato YYYY-MM-DD, convertirla a ISO
+        formattedDate = new Date(formattedDate).toISOString();
+      }
+      
+      // Validar y crear entrada
+      const calendarData = insertCalendarEntrySchema.parse({
+        userId: req.session.userId,
+        videoIdeaId: videoIdeaId || null,
+        title: req.body.title,
+        date: new Date(formattedDate),
+        completed: req.body.completed !== undefined ? req.body.completed : false,
+        notes: req.body.description || req.body.notes || null,
+        color: req.body.color || "#3b82f6",
+      });
+
+      const entry = await storage.createCalendarEntry(calendarData);
+      res.status(201).json(entry);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        console.error("Error de validación:", error.errors);
+        res
+          .status(400)
+          .json({ message: "Invalid input", errors: error.errors });
+      } else {
+        console.error("Error creando entrada de calendario:", error);
         res.status(500).json({ message: "Error creating calendar entry" });
       }
     }
@@ -1115,7 +1158,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedEntry = await storage.updateCalendarEntry(entryId, req.body);
       res.json(updatedEntry);
     } catch (error) {
+      console.error("Error updating calendar entry:", error);
       res.status(500).json({ message: "Error updating calendar entry" });
+    }
+  });
+  
+  // También soportar PATCH con el endpoint /api/calendar/entry/:id 
+  app.patch("/api/calendar/entry/:id", requireAuth, async (req, res) => {
+    try {
+      const entryId = parseInt(req.params.id);
+      const entry = await storage.getCalendarEntry(entryId);
+
+      if (!entry) {
+        return res.status(404).json({ message: "Entrada no encontrada" });
+      }
+
+      // Verificar que la entrada pertenece al usuario autenticado
+      if (entry.userId !== req.session.userId) {
+        return res
+          .status(403)
+          .json({ message: "No tienes permiso para modificar esta entrada" });
+      }
+
+      const updatedEntry = await storage.updateCalendarEntry(entryId, req.body);
+      res.json(updatedEntry);
+    } catch (error) {
+      console.error("Error updating calendar entry:", error);
+      res.status(500).json({ message: "Error al actualizar la entrada" });
     }
   });
 
@@ -1138,7 +1207,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteCalendarEntry(entryId);
       res.json({ message: "Calendar entry deleted successfully" });
     } catch (error) {
+      console.error("Error deleting calendar entry:", error);
       res.status(500).json({ message: "Error deleting calendar entry" });
+    }
+  });
+  
+  // También soportar DELETE con el endpoint /api/calendar/entry/:id
+  app.delete("/api/calendar/entry/:id", requireAuth, async (req, res) => {
+    try {
+      const entryId = parseInt(req.params.id);
+      const entry = await storage.getCalendarEntry(entryId);
+
+      if (!entry) {
+        return res.status(404).json({ message: "Entrada no encontrada" });
+      }
+
+      // Verificar que la entrada pertenece al usuario autenticado
+      if (entry.userId !== req.session.userId) {
+        return res
+          .status(403)
+          .json({ message: "No tienes permiso para eliminar esta entrada" });
+      }
+
+      await storage.deleteCalendarEntry(entryId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting calendar entry:", error);
+      res.status(500).json({ message: "Error al eliminar la entrada" });
     }
   });
 
