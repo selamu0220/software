@@ -384,8 +384,6 @@ export const insertUserVideoSchema = createInsertSchema(userVideos).pick({
   mimeType: true,
   duration: true,
   thumbnailPath: true,
-  youtubeId: true,
-  youtubeUrl: true,
   isPublic: true,
 });
 
