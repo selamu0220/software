@@ -22,10 +22,12 @@ export const videoIdeas = pgTable("video_ideas", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
   title: text("title").notNull(),
+  slug: text("slug").notNull(),
   category: text("category").notNull(),
   subcategory: text("subcategory").notNull(),
   videoLength: text("video_length").notNull(),
   content: json("content").notNull(),
+  isPublic: boolean("is_public").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -365,10 +367,12 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const insertVideoIdeaSchema = createInsertSchema(videoIdeas).pick({
   userId: true,
   title: true,
+  slug: true,
   category: true,
   subcategory: true,
   videoLength: true,
   content: true,
+  isPublic: true,
 });
 
 export const insertCalendarEntrySchema = createInsertSchema(calendarEntries).pick({
