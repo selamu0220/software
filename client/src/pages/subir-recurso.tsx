@@ -173,26 +173,6 @@ export default function SubirRecursoPage() {
   
   // Función para manejar el envío del formulario
   const onSubmit = async (values: FormValues) => {
-    // Si no hay archivo ni enlace externo
-    if (!archivoSubido && !values.enlaceExterno) {
-      toast({
-        variant: "destructive",
-        title: "Error al subir el recurso",
-        description: "Debes subir un archivo o proporcionar un enlace externo.",
-      });
-      return;
-    }
-    
-    // Si no hay imagen de vista previa
-    if (!imagen) {
-      toast({
-        variant: "destructive",
-        title: "Error al subir el recurso",
-        description: "Debes subir una imagen de vista previa.",
-      });
-      return;
-    }
-    
     setUploading(true);
     
     try {
@@ -201,7 +181,6 @@ export default function SubirRecursoPage() {
       
       // Obtener el ID de la categoría seleccionada
       const categoriaSeleccionada = categorias.find(cat => cat.name === values.categoria);
-      const subcategoriaSeleccionada = subcategorias.find(subcat => subcat.name === values.subcategoria);
       
       if (!categoriaSeleccionada) {
         throw new Error('Debes seleccionar una categoría válida');
@@ -209,16 +188,10 @@ export default function SubirRecursoPage() {
       
       // Agregar los valores del formulario
       formData.append('titulo', values.titulo);
-      formData.append('descripcion', values.descripcion);
-      if (values.contenido) formData.append('contenido', values.contenido);
+      if (values.descripcion) formData.append('descripcion', values.descripcion);
       formData.append('categoria', categoriaSeleccionada.slug); // Usar el slug en lugar del nombre
       
-      if (subcategoriaSeleccionada) {
-        formData.append('subcategoria', subcategoriaSeleccionada.slug); // Usar el slug en lugar del nombre
-      }
-      
       if (values.enlaceExterno) formData.append('enlaceExterno', values.enlaceExterno);
-      if (values.version) formData.append('version', values.version);
       formData.append('esPublico', values.esPublico.toString());
       
       // Agregar tags como string separado por comas
@@ -323,17 +296,11 @@ export default function SubirRecursoPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {cargandoCategorias ? (
-                              <SelectItem value="cargando">Cargando categorías...</SelectItem>
-                            ) : categorias.length > 0 ? (
-                              categorias.map((categoria) => (
-                                <SelectItem key={categoria.id} value={categoria.name}>
-                                  {categoria.name}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value="no-categories">No hay categorías disponibles</SelectItem>
-                            )}
+                            {categorias.map((categoria) => (
+                              <SelectItem key={categoria.id} value={categoria.name}>
+                                {categoria.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -343,34 +310,16 @@ export default function SubirRecursoPage() {
                   
                   <FormField
                     control={form.control}
-                    name="subcategoria"
+                    name="enlaceExterno"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Subcategoría</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          disabled={subcategorias.length === 0}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecciona una subcategoría" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {cargandoSubcategorias ? (
-                              <SelectItem value="cargando">Cargando subcategorías...</SelectItem>
-                            ) : subcategorias.length > 0 ? (
-                              subcategorias.map((subcategoria) => (
-                                <SelectItem key={subcategoria.id} value={subcategoria.name}>
-                                  {subcategoria.name}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value="no-subcategories">No hay subcategorías disponibles</SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Enlace (opcional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://ejemplo.com/mi-recurso" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          URL del recurso o sitio web relacionado
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
