@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GenerationRequest } from "@shared/schema";
 import { z } from "zod";
-import slugify from "../client/src/lib/utils/slugify";
+import { slugify } from "../client/src/lib/utils/slugify";
 
 // Verificar si la clave API de Gemini está configurada
 if (!process.env.GEMINI_API_KEY) {

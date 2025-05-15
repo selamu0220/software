@@ -975,7 +975,9 @@ export class DatabaseStorage implements IStorage {
   async createVideoIdea(idea: InsertVideoIdea): Promise<VideoIdea> {
     // Aseguramos que haya un slug y sea generado a partir del título si no existe
     if (!idea.slug) {
-      const slug = generateSlug(idea.title);
+      // Importamos la función de slugify desde el archivo de utilidades
+      const { slugify } = require('./utils/slugify');
+      const slug = slugify(idea.title);
       idea = { ...idea, slug };
     }
     
