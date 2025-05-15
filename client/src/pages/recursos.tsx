@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Link } from "wouter";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "wouter";
+import { Helmet } from "react-helmet";
 import { 
   Tabs, 
   TabsContent, 
@@ -237,6 +238,57 @@ export default function RecursosPage() {
   const [filtroActivo, setFiltroActivo] = useState(false);
   const [buscando, setBuscando] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoriaActual, setCategoriaActual] = useState<string>("todos");
+  const [location] = useLocation();
+
+  // Determinar SEO información basada en la URL y filtros
+  const getSeoInfo = () => {
+    // Si estamos en edición de video
+    if (location.includes("edicion-video") || categoriaActual === "edicion-video") {
+      return {
+        title: "Recursos para Edición de Video | Plugins, Efectos y Herramientas | Red Creativa Pro",
+        description: "Biblioteca completa con los mejores recursos para edición de video: plugins, efectos, transiciones, LUTs y herramientas para mejorar tus producciones audiovisuales.",
+        keywords: "recursos edición de video, plugins edición, efectos de video, herramientas edición, LUTs profesionales, transiciones video, Red Creativa Pro",
+        schema: {
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          "name": "Recursos para Edición de Video",
+          "description": "Biblioteca de recursos profesionales para edición de video: plugins, efectos, transiciones y herramientas.",
+          "url": "https://redcreativa.pro/recursos",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "Red Creativa Pro",
+            "url": "https://redcreativa.pro/"
+          },
+          "about": {
+            "@type": "Thing",
+            "name": "Edición de Video",
+          }
+        }
+      };
+    }
+    
+    // Para todas las demás categorías o la página principal de recursos
+    return {
+      title: "Biblioteca de Recursos Creativos | Red Creativa Pro",
+      description: "Explora nuestra biblioteca de recursos para creadores: plugins, efectos, herramientas de edición, recursos gráficos, sonidos y más para mejorar tu contenido audiovisual.",
+      keywords: "recursos creativos, biblioteca edición, herramientas creatividad, plugins, efectos, recursos diseño, Red Creativa Pro",
+      schema: {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "Biblioteca de Recursos Creativos",
+        "description": "Colección de recursos para creadores de contenido y profesionales audiovisuales.",
+        "url": "https://redcreativa.pro/recursos",
+        "isPartOf": {
+          "@type": "WebSite",
+          "name": "Red Creativa Pro",
+          "url": "https://redcreativa.pro/"
+        }
+      }
+    };
+  };
+  
+  const seoInfo = getSeoInfo();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -251,6 +303,16 @@ export default function RecursosPage() {
 
   return (
     <div className="container mx-auto py-10 px-4 sm:px-6">
+      <Helmet>
+        <title>{seoInfo.title}</title>
+        <meta name="description" content={seoInfo.description} />
+        <meta name="keywords" content={seoInfo.keywords} />
+        <link rel="canonical" href="https://redcreativa.pro/recursos" />
+        <script type="application/ld+json">
+          {JSON.stringify(seoInfo.schema)}
+        </script>
+      </Helmet>
+      
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Biblioteca de Recursos</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
