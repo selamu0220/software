@@ -322,6 +322,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Obtener todas las categorías de recursos
+  app.get("/api/recursos/categorias", async (req, res) => {
+    try {
+      const categories = await storage.getAllResourceCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error al obtener categorías:", error);
+      res.status(500).json({ message: "Error al obtener las categorías de recursos" });
+    }
+  });
+
+  // Obtener todas las subcategorías de recursos
+  app.get("/api/recursos/subcategorias", async (req, res) => {
+    try {
+      const subcategories = await storage.getAllResourceSubcategories();
+      res.json(subcategories);
+    } catch (error) {
+      console.error("Error al obtener subcategorías:", error);
+      res.status(500).json({ message: "Error al obtener las subcategorías de recursos" });
+    }
+  });
+
+  // Obtener subcategorías por categoría
+  app.get("/api/recursos/categoria/:id/subcategorias", async (req, res) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+      const subcategories = await storage.getResourceSubcategoriesByCategory(categoryId);
+      res.json(subcategories);
+    } catch (error) {
+      console.error("Error al obtener subcategorías:", error);
+      res.status(500).json({ message: "Error al obtener las subcategorías de la categoría" });
+    }
+  });
+
   // Obtener recursos por categoría
   app.get("/api/recursos/categoria/:slug", async (req, res) => {
     try {

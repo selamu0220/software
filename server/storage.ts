@@ -685,7 +685,22 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Resource operations
-  async getResourceCategoryBySlug(slug: string): Promise<any | undefined> {
+  async getAllResourceCategories(): Promise<ResourceCategory[]> {
+    return await db.select().from(resourceCategories);
+  }
+
+  async getAllResourceSubcategories(): Promise<ResourceSubcategory[]> {
+    return await db.select().from(resourceSubcategories);
+  }
+
+  async getResourceSubcategoriesByCategory(categoryId: number): Promise<ResourceSubcategory[]> {
+    return await db
+      .select()
+      .from(resourceSubcategories)
+      .where(eq(resourceSubcategories.categoryId, categoryId));
+  }
+
+  async getResourceCategoryBySlug(slug: string): Promise<ResourceCategory | undefined> {
     const [category] = await db
       .select()
       .from(resourceCategories)
@@ -693,7 +708,7 @@ export class DatabaseStorage implements IStorage {
     return category;
   }
 
-  async getResourceSubcategoryBySlug(slug: string): Promise<any | undefined> {
+  async getResourceSubcategoryBySlug(slug: string): Promise<ResourceSubcategory | undefined> {
     const [subcategory] = await db
       .select()
       .from(resourceSubcategories)
