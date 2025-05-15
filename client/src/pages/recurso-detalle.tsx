@@ -100,14 +100,8 @@ const recursoEjemplo = {
   tamanoArchivo: "156 MB",
   tipo: "ZIP",
   version: "2.1",
-  vistas: 1285,
-  descargas: 458,
-  likes: 127,
-  dislikes: 14,
   destacado: true,
   verificado: true,
-  valoracionPromedio: 4.7,
-  numeroValoraciones: 87,
   imagen: "https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1200&h=600",
   enlaceExterno: "",
   enlaceDescarga: "/descargas/pack-transiciones-davinci.zip",
@@ -383,10 +377,9 @@ export default function RecursoDetallePage() {
             </div>
             
             <Tabs defaultValue="descripcion" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="descripcion">Descripción</TabsTrigger>
                 <TabsTrigger value="comentarios">Comentarios ({recurso.comentarios.length})</TabsTrigger>
-                <TabsTrigger value="estadisticas">Estadísticas</TabsTrigger>
               </TabsList>
               
               <TabsContent value="descripcion" className="py-4">
@@ -449,63 +442,7 @@ export default function RecursoDetallePage() {
                 </div>
               </TabsContent>
               
-              <TabsContent value="estadisticas" className="py-4">
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-muted-foreground">Valoración</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center">
-                        <div className="text-2xl font-bold mr-2">{recurso.valoracionPromedio}</div>
-                        <RatingStars rating={recurso.valoracionPromedio} />
-                        <span className="text-sm text-muted-foreground ml-2">({recurso.numeroValoraciones})</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-muted-foreground">Popularidad</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center text-sm">
-                          <Eye className="w-4 h-4 mr-2 text-muted-foreground" /> {recurso.vistas} vistas
-                        </div>
-                        <div className="flex items-center text-sm">
-                          <Download className="w-4 h-4 mr-2 text-muted-foreground" /> {recurso.descargas} descargas
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Interacción</CardTitle>
-                    <CardDescription>Cómo ha interactuado la comunidad con este recurso</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pb-6">
-                    <div className="flex justify-around items-center">
-                      <div className="flex flex-col items-center">
-                        <ThumbsUp className="h-10 w-10 text-primary mb-2" />
-                        <span className="text-2xl font-bold">{recurso.likes}</span>
-                        <span className="text-sm text-muted-foreground">Me gusta</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <ThumbsDown className="h-10 w-10 text-muted-foreground mb-2" />
-                        <span className="text-2xl font-bold">{recurso.dislikes}</span>
-                        <span className="text-sm text-muted-foreground">No me gusta</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <MessageSquare className="h-10 w-10 text-muted-foreground mb-2" />
-                        <span className="text-2xl font-bold">{recurso.comentarios.length}</span>
-                        <span className="text-sm text-muted-foreground">Comentarios</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+
             </Tabs>
           </div>
         </div>
@@ -547,12 +484,6 @@ export default function RecursoDetallePage() {
                     <span className="font-medium">{recurso.ultimaActualizacion}</span>
                   </div>
                   
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Download className="w-4 h-4 mr-2" /> Descargas
-                    </div>
-                    <span className="font-medium">{recurso.descargas}</span>
-                  </div>
                 </div>
               </CardContent>
               <CardContent className="pt-0">
@@ -567,12 +498,9 @@ export default function RecursoDetallePage() {
                     </Button>
                   )}
                   
-                  <div className="flex justify-between">
-                    <Button variant="ghost" size="sm" className="w-full gap-1">
-                      <ThumbsUp className="w-4 h-4" /> {recurso.likes}
-                    </Button>
-                    <Button variant="ghost" size="sm" className="w-full gap-1">
-                      <ThumbsDown className="w-4 h-4" /> {recurso.dislikes}
+                  <div className="flex justify-center">
+                    <Button variant="outline" size="sm" className="w-full gap-1">
+                      <Share2 className="w-4 h-4" /> Compartir recurso
                     </Button>
                   </div>
                 </div>
