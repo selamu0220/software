@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -37,6 +38,7 @@ import {
   Check,
   FileText,
   Info,
+  Link as LinkIcon,
   Loader2,
   Upload,
   X,
@@ -59,6 +61,7 @@ const formSchema = z.object({
     message: "El título debe tener al menos 2 caracteres",
   }),
   descripcion: z.string().optional(),
+  contenido: z.string().optional(),
   categoria: z.string({
     required_error: "Por favor selecciona una categoría",
   }),
@@ -67,6 +70,7 @@ const formSchema = z.object({
   }).optional().or(z.literal("")),
   esPublico: z.boolean().default(true),
   tags: z.array(z.string()).optional(),
+  version: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -87,10 +91,12 @@ export default function SubirRecursoPage() {
     defaultValues: {
       titulo: "",
       descripcion: "",
+      contenido: "",
       categoria: "",
       enlaceExterno: "",
       esPublico: true,
       tags: [],
+      version: "",
     },
   });
   
