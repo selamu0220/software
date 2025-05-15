@@ -363,6 +363,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error al obtener las subcategorías de recursos" });
     }
   });
+  
+  // Ruta para eliminar todos los recursos preestablecidos (solo usuarios autorizados)
+  app.delete("/api/recursos/preestablecidos", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const user = await storage.getUser(userId);
+      
+      // Verificar si es un usuario autorizado
+      if (user.username !== 'sela_gr' && user.username !== 'redcreativa') {
+        return res.status(403).json({ message: "No tienes permisos para realizar esta acción" });
+      }
+      
+      // Obtener todos los recursos creados por el sistema (userId es null)
+      const recursos = await storage.getResourcesBySystem();
+      
+      // Eliminar cada recurso
+      let eliminados = 0;
+      if (recursos && recursos.length > 0) {
+        for (const recurso of recursos) {
+          await storage.deleteResource(recurso.id);
+          eliminados++;
+        }
+      }
+      
+      res.json({ 
+        message: `Se han eliminado ${eliminados} recursos preestablecidos`,
+        count: eliminados
+      });
+    } catch (error) {
+      console.error("Error eliminando recursos preestablecidos:", error);
+      res.status(500).json({ message: "Error al eliminar recursos preestablecidos" });
+    }
+  });
 
   // Obtener subcategorías por categoría
   app.get("/api/recursos/categoria/:id/subcategorias", async (req, res) => {
