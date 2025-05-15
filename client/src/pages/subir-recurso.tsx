@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { 
   Form,
@@ -21,7 +21,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -29,37 +28,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import {
-  AlertTriangle,
   Check,
-  File,
   FileText,
   Loader2,
-  MapPin,
-  Plus,
-  Shield,
-  Tag,
-  Upload,
   X,
   LucideImage,
-  Info,
-  Link as LinkIcon,
 } from "lucide-react";
 
 // Categorías simplificadas para el formulario
@@ -580,57 +558,20 @@ export default function SubirRecursoPage() {
                 />
               </CardContent>
               <CardFooter className="flex flex-col space-y-4">
-                <div className="rounded-lg bg-muted/50 p-4 text-sm">
-                  <div className="flex items-center mb-2">
-                    <Shield className="h-5 w-5 text-primary mr-2" />
-                    <h4 className="font-medium">Políticas de contenido</h4>
-                  </div>
-                  <p className="text-muted-foreground">
-                    Al subir cualquier recurso, confirmas que tienes los derechos necesarios sobre el contenido
-                    y aceptas nuestras políticas de uso. Los recursos serán revisados antes de ser publicados.
-                  </p>
-                </div>
-                
                 <div className="flex justify-between w-full">
                   <Button type="button" variant="outline" onClick={() => setLocation("/recursos")}>
                     Cancelar
                   </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button type="button" disabled={uploading}>
-                        {uploading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Subiendo...
-                          </>
-                        ) : (
-                          'Subir recurso'
-                        )}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Al confirmar, tu recurso será enviado para revisión. Esto puede tardar hasta 48 horas.
-                          ¿Deseas continuar?
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={form.handleSubmit(onSubmit)} disabled={uploading}>
-                          {uploading ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Subiendo...
-                            </>
-                          ) : (
-                            'Confirmar y subir'
-                          )}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <Button type="button" onClick={form.handleSubmit(onSubmit)} disabled={uploading}>
+                  {uploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Subiendo...
+                    </>
+                  ) : (
+                    'Subir recurso'
+                  )}
+                </Button>
                 </div>
               </CardFooter>
             </Card>
