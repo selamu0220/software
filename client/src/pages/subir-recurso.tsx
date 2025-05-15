@@ -252,11 +252,46 @@ export default function SubirRecursoPage() {
     setUploading(true);
     
     try {
-      // Simular una carga
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Crear un FormData para enviar archivos
+      const formData = new FormData();
       
-      // En una implementación real, aquí harías el POST a la API
-      // con los valores del formulario y los archivos
+      // Agregar los valores del formulario
+      formData.append('titulo', values.titulo);
+      formData.append('descripcion', values.descripcion);
+      if (values.contenido) formData.append('contenido', values.contenido);
+      formData.append('categoria', values.categoria);
+      formData.append('subcategoria', values.subcategoria);
+      if (values.enlaceExterno) formData.append('enlaceExterno', values.enlaceExterno);
+      if (values.version) formData.append('version', values.version);
+      formData.append('esPublico', values.esPublico.toString());
+      
+      // Agregar tags como string separado por comas
+      if (values.tags && values.tags.length > 0) {
+        formData.append('tags', values.tags.join(','));
+      }
+      
+      // Agregar archivos
+      if (archivoSubido) {
+        formData.append('archivo', archivoSubido);
+      }
+      
+      if (imagen) {
+        formData.append('imagen', imagen);
+      }
+      
+      // Enviar a la API
+      const response = await fetch('/api/recursos/upload', {
+        method: 'POST',
+        body: formData,
+        // No incluir Content-Type - lo establece automáticamente para multipart/form-data
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al subir el recurso');
+      }
+      
+      const result = await response.json();
       
       toast({
         variant: "default",
@@ -267,11 +302,11 @@ export default function SubirRecursoPage() {
       // Redireccionar a la página de recursos
       setTimeout(() => setLocation("/recursos"), 1500);
       
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error al subir el recurso",
-        description: "Ha ocurrido un error. Por favor, inténtalo de nuevo.",
+        description: error.message || "Ha ocurrido un error. Por favor, inténtalo de nuevo.",
       });
     } finally {
       setUploading(false);
