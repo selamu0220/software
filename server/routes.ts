@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateVideoIdea, aiAssistant, aiAssistRequestSchema, VideoIdeaContent, generateBlogPosts, blogPostGenerationSchema } from "./gemini";
-import slugify from "../client/src/lib/utils/slugify";
+import { generateSlug } from "./utils/slugify";
 
 /**
  * Función auxiliar para crear una idea de video con slug y campos adicionales
@@ -17,7 +17,7 @@ async function createVideoIdeaWithSlug(params: {
   isPublic?: boolean
 }) {
   // Generar un slug a partir del título
-  const ideaSlug = slugify(params.title);
+  const ideaSlug = generateSlug(params.title);
   
   // Crear la idea con el slug generado
   return await storage.createVideoIdea({
@@ -235,7 +235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let subcategoriaObj = null;
       
       // Convertir el nombre del recurso a slug
-      const slug = slugify(titulo);
+      const slug = generateSlug(titulo);
       
       // Preparar los datos del recurso
       const resourceData = {
@@ -2438,7 +2438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       for (let i = 0; i < blogPosts.length; i++) {
         const post = blogPosts[i];
-        const slug = slugify(post.title);
+        const slug = generateSlug(post.title);
         
         // Verificar si el slug ya existe
         const existingPost = await storage.getBlogPostBySlug(slug);

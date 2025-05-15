@@ -61,6 +61,7 @@ export interface IStorage {
   // Video idea operations
   createVideoIdea(idea: InsertVideoIdea): Promise<VideoIdea>;
   getVideoIdea(id: number): Promise<VideoIdea | undefined>;
+  getVideoIdeaBySlug(slug: string): Promise<VideoIdea | undefined>;
   getVideoIdeasByUser(userId: number): Promise<VideoIdea[]>;
   getVideoIdeasByDateRange(userId: number, startDate: Date, endDate: Date): Promise<VideoIdea[]>;
   updateVideoIdea(id: number, updates: UpdateVideoIdea): Promise<VideoIdea>;

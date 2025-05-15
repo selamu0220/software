@@ -24,26 +24,15 @@ export function slugify(text: string): string {
 /**
  * Genera un slug único añadiendo un número aleatorio si es necesario
  * @param text Texto base para el slug
- * @param existingSlugs Array de slugs existentes para evitar duplicados
  * @returns Slug único
  */
-export function generateUniqueSlug(text: string, existingSlugs: string[] = []): string {
+export function generateSlug(text: string): string {
   let slug = slugify(text);
   
   // Si el slug está vacío (porque el texto solo contenía caracteres especiales)
   // generamos uno aleatorio
   if (!slug) {
-    slug = 'idea-' + Math.floor(Math.random() * 1000);
-  }
-  
-  // Si el slug ya existe, añadimos un número aleatorio al final
-  if (existingSlugs.includes(slug)) {
-    slug = `${slug}-${Math.floor(Math.random() * 1000)}`;
-    
-    // Comprobamos de nuevo para evitar una colisión improbable
-    if (existingSlugs.includes(slug)) {
-      return generateUniqueSlug(text, existingSlugs);
-    }
+    slug = 'idea-' + Math.floor(Math.random() * 10000);
   }
   
   return slug;
