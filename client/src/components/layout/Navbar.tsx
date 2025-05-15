@@ -21,8 +21,8 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: "Generador", href: "/" },
     { name: "Recursos", href: "/recursos" },
+    { name: "Generador", href: "/" },
     { name: "Blog", href: "/blog" },
     { name: "Calendario", href: "/calendar" },
     { name: "Teleprompter", href: "/teleprompter" },
@@ -81,6 +81,18 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
+                    <Link href="/recursos" className="flex items-center">
+                      <Library className="mr-2 h-4 w-4" />
+                      Biblioteca de Recursos
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/recursos/subir" className="flex items-center">
+                      <Library className="mr-2 h-4 w-4" />
+                      Subir Recurso
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href="/dashboard" className="flex items-center">
                       <UserIcon className="mr-2 h-4 w-4" />
                       Dashboard
@@ -108,12 +120,6 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     <Link href="/metrics" className="flex items-center">
                       <BarChart3 className="mr-2 h-4 w-4" />
                       Métricas
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/recursos" className="flex items-center">
-                      <Library className="mr-2 h-4 w-4" />
-                      Biblioteca de Recursos
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -213,6 +219,26 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                 </div>
                 <div className="mt-3 space-y-0.5">
                   <Link
+                    href="/recursos"
+                    className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="flex items-center">
+                      <Library className="mr-2 h-4 w-4" />
+                      <span>Biblioteca de Recursos</span>
+                    </div>
+                  </Link>
+                  <Link
+                    href="/recursos/subir"
+                    className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="flex items-center">
+                      <Library className="mr-2 h-4 w-4" />
+                      <span>Subir Recurso</span>
+                    </div>
+                  </Link>
+                  <Link
                     href="/dashboard"
                     className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
                     onClick={() => setMobileMenuOpen(false)}
@@ -257,16 +283,6 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     <div className="flex items-center">
                       <BarChart3 className="mr-2 h-4 w-4" />
                       <span>Métricas</span>
-                    </div>
-                  </Link>
-                  <Link
-                    href="/recursos"
-                    className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <div className="flex items-center">
-                      <Library className="mr-2 h-4 w-4" />
-                      <span>Biblioteca de Recursos</span>
                     </div>
                   </Link>
                   <Link

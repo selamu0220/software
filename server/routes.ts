@@ -167,17 +167,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
   
-  // Rutas para subida de recursos
-  app.post("/api/recursos/upload", requireAuth, recursoUpload.fields([
+  // Rutas para subida de recursos (no requiere autenticación)
+  app.post("/api/recursos/upload", recursoUpload.fields([
     { name: 'archivo', maxCount: 1 },
     { name: 'imagen', maxCount: 1 }
   ]), async (req, res) => {
     try {
-      if (!req.session.userId) {
-        return res.status(401).json({ message: "No autenticado" });
-      }
-
-      const userId = req.session.userId;
+      // Usuario anónimo o autenticado
+      const userId = req.session.userId || 1; // Usar 1 como ID para usuarios anónimos
       const { 
         titulo, 
         descripcion,
@@ -244,8 +241,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileType: files.archivo ? files.archivo[0].mimetype : null,
         version: version || null,
         tags: tags ? tags.split(',').map((tag: string) => tag.trim()) : [],
-        isVerified: false, // Los recursos necesitan verificación
-        isPublic: esPublico === 'true',
+        isVerified: true, // Los recursos se publican sin necesidad de verificación
+        isPublic: true, // Todos los recursos son públicos por defecto
         isFeatured: false // Solo admin puede marcar como destacado
       };
       
