@@ -973,6 +973,12 @@ export class DatabaseStorage implements IStorage {
 
   // Video idea operations
   async createVideoIdea(idea: InsertVideoIdea): Promise<VideoIdea> {
+    // Aseguramos que haya un slug y sea generado a partir del título si no existe
+    if (!idea.slug) {
+      const slug = generateSlug(idea.title);
+      idea = { ...idea, slug };
+    }
+    
     const [videoIdea] = await db.insert(videoIdeas)
       .values(idea)
       .returning();
