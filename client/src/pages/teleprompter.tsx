@@ -359,34 +359,20 @@ export default function Teleprompter({ user }: TeleprompterProps) {
               </CardContent>
             </Card>
             
-            {/* Recording Controls */}
+            {/* Keyboard Shortcuts */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Camera className="h-5 w-5" />
-                  Control de Grabación
+                  <Keyboard className="h-5 w-5" />
+                  Atajos de Teclado
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button 
-                  onClick={toggleRecording} 
-                  variant={isRecording ? "destructive" : "default"}
-                  className="w-full"
-                >
-                  <Camera className="mr-2 h-4 w-4" />
-                  {isRecording ? "Detener Grabación" : "Iniciar Grabación"}
-                </Button>
-                
                 <div className="p-3 bg-muted rounded-md text-sm">
-                  <h4 className="font-medium mb-1">Atajos de teclado:</h4>
                   <ul className="space-y-1 text-muted-foreground">
                     <li className="flex justify-between">
                       <span>Iniciar/Pausar:</span>
                       <span className="font-mono bg-background px-2 rounded">Espacio</span>
-                    </li>
-                    <li className="flex justify-between">
-                      <span>Iniciar/Detener grabación:</span>
-                      <span className="font-mono bg-background px-2 rounded">{TOGGLE_RECORDING_SHORTCUT}</span>
                     </li>
                     <li className="flex justify-between">
                       <span>Aumentar velocidad:</span>
