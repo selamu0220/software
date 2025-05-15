@@ -50,9 +50,29 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-const videoStorage = multer.diskStorage({
+const fileStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, uploadDir);
+    // Determina la carpeta de destino según el tipo de archivo
+    let destDir = uploadDir;
+    
+    // Si es un recurso, usar una carpeta diferente
+    if (req.path.includes('/recursos')) {
+      destDir = path.join(uploadDir, 'recursos');
+      // Asegurarse de que la carpeta exista
+      if (!fs.existsSync(destDir)) {
+        fs.mkdirSync(destDir, { recursive: true });
+      }
+    }
+    // Si es una imagen de blog, usar otra carpeta
+    else if (req.path.includes('/blog')) {
+      destDir = path.join(uploadDir, 'blog');
+      // Asegurarse de que la carpeta exista
+      if (!fs.existsSync(destDir)) {
+        fs.mkdirSync(destDir, { recursive: true });
+      }
+    }
+    
+    cb(null, destDir);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -64,7 +84,7 @@ const videoStorage = multer.diskStorage({
 });
 
 const videoUpload = multer({
-  storage: videoStorage,
+  storage: fileStorage,
   limits: {
     fileSize: 100 * 1024 * 1024, // 100MB max file size
   },
