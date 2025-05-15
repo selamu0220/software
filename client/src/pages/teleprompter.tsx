@@ -14,7 +14,6 @@ import {
   MoveDown, 
   SlidersHorizontal,
   Upload, 
-  Camera,
   Keyboard,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -34,16 +33,12 @@ export default function Teleprompter({ user }: TeleprompterProps) {
   const [textColor, setTextColor] = useState<string>("#ffffff");
   const [backgroundColor, setBackgroundColor] = useState<string>("#000000");
   const [isMirrored, setIsMirrored] = useState<boolean>(false);
-  const [isRecording, setIsRecording] = useState<boolean>(false);
   const [showControls, setShowControls] = useState<boolean>(true);
   const [savedScripts, setSavedScripts] = useState<{id: number, title: string, content: string}[]>([]);
   
   const prompterRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Keyboard shortcut constant
-  const TOGGLE_RECORDING_SHORTCUT = "Alt+H";
 
   // Scroll speed conversion (user-friendly 1-100 to ms between movements)
   const getActualScrollSpeed = () => {
@@ -65,12 +60,6 @@ export default function Teleprompter({ user }: TeleprompterProps) {
       if (e.code === "Space" && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
         e.preventDefault();
         setIsRunning(prev => !prev);
-      }
-
-      // Toggle recording with Alt+H
-      if (e.altKey && e.key === "h") {
-        e.preventDefault();
-        toggleRecording();
       }
 
       // Increase speed with up arrow
@@ -196,19 +185,7 @@ export default function Teleprompter({ user }: TeleprompterProps) {
     }
   };
 
-  // Toggle recording state
-  const toggleRecording = () => {
-    // Here we would integrate with the browser's API to start recording
-    // For now, just toggle the state and show a message
-    setIsRecording(!isRecording);
-    
-    toast({
-      title: isRecording ? "Grabación detenida" : "Grabación iniciada",
-      description: isRecording 
-        ? "La grabación de pantalla ha sido detenida." 
-        : `La grabación de pantalla ha comenzado. Presiona ${TOGGLE_RECORDING_SHORTCUT} para detener.`,
-    });
-  };
+  // La función de grabación ha sido eliminada
 
   // Upload a script file
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
