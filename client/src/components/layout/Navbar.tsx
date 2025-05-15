@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video, BarChart3, BookOpen, Library, FileText } from "lucide-react";
+import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video, BarChart3, BookOpen, Library, FileText, Star } from "lucide-react";
 
 interface NavbarProps {
   user: User | null;

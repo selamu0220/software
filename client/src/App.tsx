@@ -24,6 +24,7 @@ import BlogEditorPage from "@/pages/blog-editor";
 // Páginas de guiones de vídeo
 import MisGuiones from "@/pages/mis-guiones";
 import ScriptEditor from "@/pages/script-editor";
+import Testimonios from "@/pages/testimonios";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AssistantSidebar } from "@/components/ui/assistant-sidebar";
@@ -119,6 +120,9 @@ function App() {
             {/* Rutas para la biblioteca de guiones */}
             <ProtectedRoute path="/mis-guiones" component={() => <MisGuiones />} />
             <ProtectedRoute path="/script-editor/:id?" component={ScriptEditor} />
+            
+            {/* Página de testimonios y opiniones */}
+            <Route path="/testimonios" component={() => <Testimonios />} />
             
             <Route component={NotFound} />
           </Switch>
