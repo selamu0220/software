@@ -801,6 +801,31 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
   }
+  
+  async getResourcesBySystem(): Promise<Resource[]> {
+    try {
+      return await db
+        .select()
+        .from(resources)
+        .where(isNull(resources.userId))
+        .orderBy(desc(resources.createdAt));
+    } catch (error) {
+      console.error("Error getting system resources:", error);
+      return [];
+    }
+  }
+  
+  async deleteResource(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(resources)
+        .where(eq(resources.id, id));
+      return true;
+    } catch (error) {
+      console.error("Error deleting resource:", error);
+      return false;
+    }
+  }
 
   async getPublicResources(limit: number = 20, offset: number = 0): Promise<Resource[]> {
     try {

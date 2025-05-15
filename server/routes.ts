@@ -270,8 +270,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.addResourceToCollection({
             collectionId: defaultCollection.id,
             resourceId: resource.id,
-            orderIndex: 0,
-            notes: null
+            notes: null,
+            favorite: false
           });
         }
       } catch (collectionError) {
