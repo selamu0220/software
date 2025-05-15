@@ -1,49 +1,23 @@
 // Script para inicializar las tablas de recursos
-require('dotenv').config();
-const { Pool } = require('pg');
-const { drizzle } = require('drizzle-orm/node-postgres');
-const { eq } = require('drizzle-orm');
-const { resourceCategories, resourceSubcategories } = require('../dist/shared/schema');
+import pkg from 'pg';
+const { Pool } = pkg;
+import { eq } from 'drizzle-orm';
 
 // Establece la conexión con la base de datos
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-// Inicializa drizzle
-const db = drizzle(pool);
+// Acceder a la variable de entorno DATABASE_URL directamente
+console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Existe' : 'No existe');
 
-// Categorías de recursos
+// Categorías de recursos predefinidas para la inserción directa
 const defaultCategories = [
   { name: 'IA', slug: 'ia', description: 'Herramientas y recursos de inteligencia artificial', iconName: 'Brain' },
   { name: 'Extensiones', slug: 'extensiones', description: 'Complementos para navegadores y aplicaciones', iconName: 'Puzzle' },
   { name: 'Software', slug: 'software', description: 'Programas y aplicaciones para creadores de contenido', iconName: 'LayoutGrid' },
   { name: 'Plugins', slug: 'plugins', description: 'Complementos para software de edición', iconName: 'PlugZap' }
 ];
-
-// Subcategorías por cada categoría
-const subcategoriesByCategory = {
-  'ia': [
-    { name: 'Generación de texto', slug: 'generacion-texto', description: 'Herramientas para crear texto con IA' },
-    { name: 'Generación de imágenes', slug: 'generacion-imagenes', description: 'Herramientas para crear imágenes con IA' },
-    { name: 'Asistentes virtuales', slug: 'asistentes-virtuales', description: 'Asistentes basados en IA' }
-  ],
-  'extensiones': [
-    { name: 'Chrome', slug: 'chrome', description: 'Extensiones para Google Chrome' },
-    { name: 'Firefox', slug: 'firefox', description: 'Extensiones para Mozilla Firefox' },
-    { name: 'Edge', slug: 'edge', description: 'Extensiones para Microsoft Edge' }
-  ],
-  'software': [
-    { name: 'Edición de vídeo', slug: 'edicion-video', description: 'Software para editar vídeos' },
-    { name: 'Edición de audio', slug: 'edicion-audio', description: 'Software para editar audio' },
-    { name: 'Diseño gráfico', slug: 'diseno-grafico', description: 'Software para diseño gráfico' }
-  ],
-  'plugins': [
-    { name: 'Adobe Premiere', slug: 'adobe-premiere', description: 'Plugins para Adobe Premiere' },
-    { name: 'Final Cut Pro', slug: 'final-cut-pro', description: 'Plugins para Final Cut Pro' },
-    { name: 'DaVinci Resolve', slug: 'davinci-resolve', description: 'Plugins para DaVinci Resolve' }
-  ]
-};
 
 async function initializeResourceTables() {
   console.log('Inicializando tablas de recursos...');
@@ -60,72 +34,27 @@ async function initializeResourceTables() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
       );
-      
-      CREATE TABLE IF NOT EXISTS resource_subcategories (
-        id SERIAL PRIMARY KEY,
-        category_id INTEGER NOT NULL REFERENCES resource_categories(id),
-        name TEXT NOT NULL,
-        slug TEXT NOT NULL UNIQUE,
-        description TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
-      );
-      
-      CREATE TABLE IF NOT EXISTS resources (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(id),
-        category_id INTEGER NOT NULL REFERENCES resource_categories(id),
-        subcategory_id INTEGER REFERENCES resource_subcategories(id),
-        title TEXT NOT NULL,
-        slug TEXT NOT NULL UNIQUE,
-        description TEXT,
-        content TEXT,
-        file_path TEXT,
-        image_path TEXT NOT NULL,
-        external_link TEXT,
-        version TEXT,
-        tags TEXT[],
-        download_count INTEGER DEFAULT 0,
-        views_count INTEGER DEFAULT 0,
-        likes_count INTEGER DEFAULT 0,
-        dislikes_count INTEGER DEFAULT 0,
-        is_public BOOLEAN DEFAULT true NOT NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
-      );
-      
-      CREATE TABLE IF NOT EXISTS resource_comments (
-        id SERIAL PRIMARY KEY,
-        resource_id INTEGER NOT NULL REFERENCES resources(id),
-        user_id INTEGER NOT NULL REFERENCES users(id),
-        content TEXT NOT NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
-      );
     `);
 
-    console.log('Tablas creadas correctamente');
+    console.log('Tabla de categorías creada correctamente');
 
-    // Insertar categorías por defecto
+    // Insertar categorías directamente con SQL para evitar dependencias de Drizzle
     for (const category of defaultCategories) {
-      // Verificar si la categoría ya existe
-      const existingCategory = await db.select().from(resourceCategories).where(eq(resourceCategories.slug, category.slug));
-      
-      if (existingCategory.length === 0) {
-        console.log(`Insertando categoría: ${category.name}`);
-        const [insertedCategory] = await db.insert(resourceCategories).values(category).returning();
+      try {
+        console.log(`Intentando insertar categoría: ${category.name}`);
         
-        // Insertar subcategorías para esta categoría
-        const subcategories = subcategoriesByCategory[category.slug] || [];
-        for (const subcategory of subcategories) {
-          console.log(`Insertando subcategoría: ${subcategory.name}`);
-          await db.insert(resourceSubcategories).values({
-            ...subcategory,
-            categoryId: insertedCategory.id
-          });
+        const result = await pool.query(
+          'INSERT INTO resource_categories (name, slug, description, icon_name) VALUES ($1, $2, $3, $4) ON CONFLICT (slug) DO NOTHING RETURNING id',
+          [category.name, category.slug, category.description, category.iconName]
+        );
+        
+        if (result.rows.length > 0) {
+          console.log(`Categoría ${category.name} insertada correctamente con ID: ${result.rows[0].id}`);
+        } else {
+          console.log(`La categoría ${category.name} ya existe, omitiendo...`);
         }
-      } else {
-        console.log(`La categoría ${category.name} ya existe, omitiendo...`);
+      } catch (error) {
+        console.error(`Error al insertar categoría ${category.name}:`, error);
       }
     }
 
