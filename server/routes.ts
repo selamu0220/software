@@ -1059,8 +1059,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             geminiApiKey: baseParams.geminiApiKey,
           });
           
-          // Guardar la idea en la base de datos
-          const videoIdea = await storage.createVideoIdea({
+          // Guardar la idea en la base de datos usando la función helper
+          const videoIdea = await createVideoIdeaWithSlug({
             userId,
             title: generatedIdea.title,
             category: baseParams.category,

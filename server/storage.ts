@@ -1003,6 +1003,19 @@ export class DatabaseStorage implements IStorage {
     
     return videoIdea;
   }
+  
+  async toggleVideoIdeaVisibility(id: number, isPublic: boolean): Promise<VideoIdea> {
+    const [updatedIdea] = await db.update(videoIdeas)
+      .set({ isPublic })
+      .where(eq(videoIdeas.id, id))
+      .returning();
+    
+    if (!updatedIdea) {
+      throw new Error(`Video idea with id ${id} not found`);
+    }
+    
+    return updatedIdea;
+  }
 
   async getVideoIdeasByUser(userId: number): Promise<VideoIdea[]> {
     return db.select()

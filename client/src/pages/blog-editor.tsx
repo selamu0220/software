@@ -37,7 +37,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { ArrowLeft, Check, Loader2, Save, X, Tag } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import slugify from "@/lib/utils/slugify";
+import { slugify } from "@/lib/utils/slugify";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
