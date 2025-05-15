@@ -1839,10 +1839,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/blog/posts/:id", async (req, res) => {
+  app.get("/api/blog/posts/:identifier", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      const post = await storage.getBlogPost(id);
+      let post;
+      const { identifier } = req.params;
+      
+      // Verificar si el identificador es un número (ID) o un string (slug)
+      const id = parseInt(identifier);
+      
+      console.log(`Buscando artículo con identifier: ${identifier}, id: ${id}`);
+      
+      if (!isNaN(id)) {
+        // Si es un número válido, buscar por ID
+        post = await storage.getBlogPost(id);
+      } else {
+        // Si no es un número, asumir que es un slug
+        post = await storage.getBlogPostBySlug(identifier);
+      }
       
       if (!post) {
         return res.status(404).json({ message: "Artículo no encontrado" });
