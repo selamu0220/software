@@ -62,56 +62,34 @@ import {
   Link as LinkIcon,
 } from "lucide-react";
 
-// Interfaces para categorías y subcategorías
-interface Categoria {
-  id: number;
-  name: string; // En la base de datos es 'name'
-  slug: string;
-  description?: string;
-  iconName?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+// Categorías simplificadas para el formulario
+const categorias = [
+  { id: 1, name: "IA", slug: "ia" },
+  { id: 2, name: "Extensiones", slug: "extensiones" },
+  { id: 3, name: "Software", slug: "software" },
+  { id: 4, name: "Plugins", slug: "plugins" },
+  { id: 5, name: "Tutoriales", slug: "tutoriales" },
+  { id: 6, name: "Herramientas", slug: "herramientas" },
+];
 
-interface Subcategoria {
-  id: number;
-  categoryId: number;
-  name: string; // En la base de datos es 'name'
-  slug: string;
-  description?: string;
-  iconName?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-// Estado inicial vacío para categorías y subcategorías
-const categoriasIniciales: Categoria[] = [];
-
-// Esquema de validación para el formulario
+// Esquema de validación simplificado para el formulario
 const formSchema = z.object({
-  titulo: z.string().min(5, {
-    message: "El título debe tener al menos 5 caracteres",
+  titulo: z.string().min(3, {
+    message: "El título debe tener al menos 3 caracteres",
   }).max(100, {
     message: "El título no puede exceder los 100 caracteres",
   }),
-  descripcion: z.string().min(20, {
-    message: "La descripción debe tener al menos 20 caracteres",
+  descripcion: z.string().min(10, {
+    message: "La descripción debe tener al menos 10 caracteres",
   }).max(500, {
     message: "La descripción no puede exceder los 500 caracteres",
-  }),
-  contenido: z.string().min(50, {
-    message: "El contenido debe tener al menos 50 caracteres",
   }).optional(),
   categoria: z.string({
     required_error: "Por favor selecciona una categoría",
   }),
-  subcategoria: z.string({
-    required_error: "Por favor selecciona una subcategoría",
-  }),
   enlaceExterno: z.string().url({
     message: "Por favor ingresa una URL válida",
   }).optional().or(z.literal("")),
-  version: z.string().optional(),
   esPublico: z.boolean().default(true),
   tags: z.array(z.string()).optional(),
 });
@@ -125,37 +103,8 @@ export default function SubirRecursoPage() {
   const [imagen, setImagen] = useState<File | null>(null);
   const [imagenPreview, setImagenPreview] = useState<string>("");
   const [uploading, setUploading] = useState(false);
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [subcategorias, setSubcategorias] = useState<Subcategoria[]>([]);
-  const [cargandoCategorias, setCargandoCategorias] = useState(true);
-  const [cargandoSubcategorias, setCargandoSubcategorias] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  
-  // Cargar categorías al iniciar el componente
-  useEffect(() => {
-    const fetchCategorias = async () => {
-      try {
-        const response = await fetch('/api/recursos/categorias');
-        if (!response.ok) {
-          throw new Error('Error al cargar las categorías');
-        }
-        const data = await response.json();
-        setCategorias(data);
-      } catch (error) {
-        console.error('Error al cargar categorías:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "No se pudieron cargar las categorías. Por favor, intenta nuevamente.",
-        });
-      } finally {
-        setCargandoCategorias(false);
-      }
-    };
-    
-    fetchCategorias();
-  }, []);
   
   // Configuración del formulario con validación
   const form = useForm<FormValues>({
@@ -163,47 +112,16 @@ export default function SubirRecursoPage() {
     defaultValues: {
       titulo: "",
       descripcion: "",
-      contenido: "",
       categoria: "",
-      subcategoria: "",
       enlaceExterno: "",
-      version: "",
       esPublico: true,
       tags: [],
     },
   });
   
   // Función para manejar el cambio de categoría
-  const handleCategoriaChange = async (value: string) => {
+  const handleCategoriaChange = (value: string) => {
     form.setValue("categoria", value);
-    form.setValue("subcategoria", "");
-    
-    // Encontrar la categoría seleccionada por nombre para obtener su ID
-    const categoriaSeleccionada = categorias.find(cat => cat.name === value);
-    
-    if (categoriaSeleccionada) {
-      setCargandoSubcategorias(true);
-      try {
-        const response = await fetch(`/api/recursos/categoria/${categoriaSeleccionada.id}/subcategorias`);
-        if (!response.ok) {
-          throw new Error('Error al cargar subcategorías');
-        }
-        const data = await response.json();
-        setSubcategorias(data);
-      } catch (error) {
-        console.error('Error al cargar subcategorías:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "No se pudieron cargar las subcategorías. Por favor, intenta nuevamente.",
-        });
-        setSubcategorias([]);
-      } finally {
-        setCargandoSubcategorias(false);
-      }
-    } else {
-      setSubcategorias([]);
-    }
   };
   
   // Función para agregar etiquetas
