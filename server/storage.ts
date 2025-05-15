@@ -11,6 +11,8 @@ import {
   userScriptCollections,
   userScripts,
   resources,
+  resourceCategories,
+  resourceSubcategories,
   type User, 
   type InsertUser, 
   type VideoIdea, 
@@ -34,7 +36,11 @@ import {
   type InsertUserScriptCollection,
   type UserScript,
   type InsertUserScript,
-  type Resource
+  type Resource,
+  type ResourceCategory,
+  type InsertResourceCategory,
+  type ResourceSubcategory,
+  type InsertResourceSubcategory
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, SQL, sql, desc, asc, isNotNull, lte, gt, gte } from "drizzle-orm";
