@@ -358,37 +358,7 @@ export default function RecursosPage() {
           Explora los mejores recursos para creadores de contenido: plantillas, efectos, tutoriales y mucho más
         </p>
         
-        {/* Mostrar botón de eliminación para usuarios autorizados */}
-        {currentUser && (currentUser.username === 'sela_gr' || currentUser.username === 'redcreativa') && (
-          <div className="mt-4">
-            <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="mx-auto" disabled={eliminandoRecursos}>
-                  {eliminandoRecursos ? "Eliminando..." : "Eliminar recursos preestablecidos"}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta acción eliminará todos los recursos preestablecidos del sistema.
-                    Esta operación no se puede deshacer.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={handleEliminarRecursosPreestablecidos}
-                    disabled={eliminandoRecursos}
-                    className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                  >
-                    {eliminandoRecursos ? "Eliminando..." : "Eliminar"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        )}
+
         
         {/* Buscador */}
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto mt-6 relative">
