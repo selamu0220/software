@@ -8,17 +8,10 @@ export default function TrustpilotBanner() {
     <div className="bg-gradient-to-r from-[#0a3740] to-[#051b20] py-12 border-y border-[#00b67a]/30">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto flex flex-col items-center">
-          <div className="flex items-center mb-4">
-            {Array(5).fill(null).map((_, i) => (
-              <Star key={i} className="h-8 w-8 text-[#00b67a] fill-[#00b67a]" />
-            ))}
-          </div>
-          
-          <h2 className="text-3xl font-bold mb-4 text-center">¿Qué opinan nuestros usuarios?</h2>
+          <h2 className="text-3xl font-bold mb-4 text-center">Comparte tu experiencia</h2>
           
           <p className="text-lg text-center text-muted-foreground mb-8">
-            Miles de creadores de contenido ya confían en Red Creativa Pro para impulsar sus canales. 
-            Lee sus opiniones o comparte la tuya en Trustpilot.
+            Tu opinión nos ayuda a mejorar. Si has utilizado Red Creativa Pro, nos encantaría conocer tu experiencia en Trustpilot.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4">

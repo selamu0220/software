@@ -87,68 +87,19 @@ const TestimoniosPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-        {/* Las tarjetas de testimonios dinámicos serán reemplazadas por el widget de Trustpilot */}
-        {/* Esto son ejemplos estáticos que se mostrarán solo si el widget no carga */}
-        <Card className="bg-black/50">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <div className="flex text-yellow-400 mb-2">
-                {Array(5).fill(0).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-current" />
-                ))}
-              </div>
-            </CardTitle>
-            <CardDescription>Verificado por Trustpilot</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm">"Red Creativa Pro ha revolucionado mi canal de YouTube. Ahora genero ideas mucho más rápido y la calidad de mis videos ha mejorado notablemente."</p>
-          </CardContent>
-          <CardFooter className="flex justify-between text-sm text-muted-foreground">
-            <span>Ana M.</span>
-            <span>2 mayo, 2025</span>
-          </CardFooter>
-        </Card>
-
-        <Card className="bg-black/50">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <div className="flex text-yellow-400 mb-2">
-                {Array(5).fill(0).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-current" />
-                ))}
-              </div>
-            </CardTitle>
-            <CardDescription>Verificado por Trustpilot</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm">"El generador de ideas es simplemente genial. He pasado de publicar 1 video a la semana a 3, y todo gracias a que ya no me quedo sin ideas."</p>
-          </CardContent>
-          <CardFooter className="flex justify-between text-sm text-muted-foreground">
-            <span>Carlos G.</span>
-            <span>18 abril, 2025</span>
-          </CardFooter>
-        </Card>
-
-        <Card className="bg-black/50">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <div className="flex text-yellow-400 mb-2">
-                {Array(4).fill(0).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-current" />
-                ))}
-              </div>
-            </CardTitle>
-            <CardDescription>Verificado por Trustpilot</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm">"La versión premium vale cada céntimo. El calendario y la biblioteca de recursos son herramientas imprescindibles para cualquier creador serio."</p>
-          </CardContent>
-          <CardFooter className="flex justify-between text-sm text-muted-foreground">
-            <span>Laura T.</span>
-            <span>5 abril, 2025</span>
-          </CardFooter>
-        </Card>
+      {/* Widget de Trustpilot - Panel más grande */}
+      <div className="mb-12 w-full max-w-4xl mx-auto">
+        <div className="trustpilot-widget" 
+             data-locale="es-ES" 
+             data-template-id="5419b6a8b0d04a076446a9ad" 
+             data-businessunit-id="657f479e3c2e7be73f752c01" 
+             data-style-height="500px" 
+             data-style-width="100%" 
+             data-theme="dark">
+          <a href="https://es.trustpilot.com/review/redcreativa.pro" target="_blank" rel="noopener">
+            Ver reseñas de Red Creativa Pro en Trustpilot
+          </a>
+        </div>
       </div>
 
       <div className="text-center">
