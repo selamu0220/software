@@ -11,6 +11,7 @@ import IdeasViewer from "@/components/home/IdeasViewer";
 import CalendarPreview from "@/components/home/CalendarPreview";
 import Templates from "@/components/home/Templates";
 import ThumbnailIdeas from "@/components/home/ThumbnailIdeas";
+import TrustpilotBanner from "@/components/home/TrustpilotBanner";
 import Pricing from "@/components/home/Pricing";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -212,6 +213,8 @@ export default function Home({ user }: HomeProps) {
       <Templates />
       
       <ThumbnailIdeas />
+      
+      <TrustpilotBanner />
       
       <Pricing user={user} />
     </div>

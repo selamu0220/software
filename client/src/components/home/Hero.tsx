@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { User } from "@shared/schema";
 import { Button } from "@/components/ui/button";
+import { Star, ExternalLink } from "lucide-react";
 
 interface HeroProps {
   user: User | null;
@@ -31,6 +32,15 @@ export default function Hero({ user }: HeroProps) {
                     Generar Ideas
                   </Button>
                 </Link>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="w-full sm:w-auto px-8 bg-[#00b67a] hover:bg-[#00a066] text-white border-[#00b67a] hover:border-[#00a066]"
+                  onClick={() => window.open("https://es.trustpilot.com/review/redcreativa.pro", "_blank")}
+                >
+                  <Star className="mr-2 h-5 w-5 fill-white" />
+                  Opiniones en Trustpilot
+                </Button>
               </div>
             </div>
           </main>
