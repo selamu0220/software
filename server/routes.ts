@@ -167,14 +167,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
   
-  // Rutas para subida de recursos (no requiere autenticación)
-  app.post("/api/recursos/upload", recursoUpload.fields([
+  // Rutas para subida de recursos (requiere autenticación)
+  app.post("/api/recursos/upload", requireAuth, recursoUpload.fields([
     { name: 'archivo', maxCount: 1 },
     { name: 'imagen', maxCount: 1 }
   ]), async (req, res) => {
     try {
-      // Usuario anónimo o autenticado
-      const userId = req.session.userId || 1; // Usar 1 como ID para usuarios anónimos
+      // Obtener el ID del usuario autenticado
+      const userId = req.session.userId as number;
       const { 
         titulo, 
         descripcion,

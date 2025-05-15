@@ -165,6 +165,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   userVideos: many(userVideos),
   resources: many(resources),
   resourceComments: many(resourceComments),
+  resourceCollections: many(userResourceCollections),
+  scriptCollections: many(userScriptCollections),
 }));
 
 export const videoIdeasRelations = relations(videoIdeas, ({ one, many }) => ({
@@ -245,6 +247,53 @@ export const blogCategoriesRelations = relations(blogCategories, ({ many }) => (
   posts: many(blogPostCategories),
 }));
 
+// Biblioteca personal de recursos
+export const userResourceCollections = pgTable("user_resource_collections", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const userResourceItems = pgTable("user_resource_items", {
+  id: serial("id").primaryKey(),
+  collectionId: integer("collection_id").references(() => userResourceCollections.id).notNull(),
+  resourceId: integer("resource_id").references(() => resources.id).notNull(),
+  notes: text("notes"),
+  favorite: boolean("favorite").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Biblioteca personal de guiones
+export const userScriptCollections = pgTable("user_script_collections", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const userScripts = pgTable("user_scripts", {
+  id: serial("id").primaryKey(),
+  collectionId: integer("collection_id").references(() => userScriptCollections.id).notNull(),
+  videoIdeaId: integer("video_idea_id").references(() => videoIdeas.id),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  category: text("category"),
+  subcategory: text("subcategory"),
+  tags: text("tags").array(),
+  timings: json("timings"),
+  version: integer("version").default(1).notNull(),
+  isTemplate: boolean("is_template").default(false).notNull(),
+  favorite: boolean("favorite").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const blogPostCategoriesRelations = relations(blogPostCategories, ({ one }) => ({
   post: one(blogPosts, {
     fields: [blogPostCategories.postId],
@@ -253,6 +302,46 @@ export const blogPostCategoriesRelations = relations(blogPostCategories, ({ one 
   category: one(blogCategories, {
     fields: [blogPostCategories.categoryId],
     references: [blogCategories.id],
+  }),
+}));
+
+// Relaciones para las colecciones de recursos personales
+export const userResourceCollectionsRelations = relations(userResourceCollections, ({ one, many }) => ({
+  user: one(users, {
+    fields: [userResourceCollections.userId],
+    references: [users.id],
+  }),
+  items: many(userResourceItems),
+}));
+
+export const userResourceItemsRelations = relations(userResourceItems, ({ one }) => ({
+  collection: one(userResourceCollections, {
+    fields: [userResourceItems.collectionId],
+    references: [userResourceCollections.id],
+  }),
+  resource: one(resources, {
+    fields: [userResourceItems.resourceId],
+    references: [resources.id],
+  }),
+}));
+
+// Relaciones para las colecciones de guiones personales
+export const userScriptCollectionsRelations = relations(userScriptCollections, ({ one, many }) => ({
+  user: one(users, {
+    fields: [userScriptCollections.userId],
+    references: [users.id],
+  }),
+  scripts: many(userScripts),
+}));
+
+export const userScriptsRelations = relations(userScripts, ({ one }) => ({
+  collection: one(userScriptCollections, {
+    fields: [userScripts.collectionId],
+    references: [userScriptCollections.id],
+  }),
+  videoIdea: one(videoIdeas, {
+    fields: [userScripts.videoIdeaId],
+    references: [videoIdeas.id],
   }),
 }));
 
