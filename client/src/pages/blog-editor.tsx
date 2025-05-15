@@ -35,24 +35,28 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { ArrowLeft, Check, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Save, X, Tag } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import slugify from "@/lib/utils/slugify";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 
 // Esquema de validación para el formulario de blog
 const blogPostSchema = z.object({
   title: z.string().min(5, "El título debe tener al menos 5 caracteres").max(100, "El título es demasiado largo"),
   slug: z.string().min(5, "La URL debe tener al menos 5 caracteres").regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "La URL solo puede contener letras minúsculas, números y guiones"),
   content: z.string().min(50, "El contenido debe tener al menos 50 caracteres"),
-  excerpt: z.string().max(200, "El extracto no puede tener más de 200 caracteres").optional(),
+  excerpt: z.string().max(200, "El extracto no puede tener más de 200 caracteres").min(10, "El extracto debe tener al menos 10 caracteres"),
+  coverImage: z.string().url("Debe ser una URL válida").default("https://via.placeholder.com/1200x630?text=Red+Creativa+Pro"),
   featuredImage: z.string().url("Debe ser una URL válida").optional().or(z.literal("")),
   published: z.boolean().default(false),
   featured: z.boolean().default(false),
   seoTitle: z.string().max(60, "El título SEO no debe exceder los 60 caracteres").optional().or(z.literal("")),
   seoDescription: z.string().max(160, "La descripción SEO no debe exceder los 160 caracteres").optional().or(z.literal("")),
   categoryIds: z.array(z.number()).optional(),
+  tags: z.array(z.string()).default(["edición", "vídeo", "youtube"]),
+  readingTime: z.number().min(1).default(1),
 });
 
 type BlogPostFormValues = z.infer<typeof blogPostSchema>;
@@ -163,12 +167,15 @@ export default function BlogEditorPage() {
       slug: "",
       content: "",
       excerpt: "",
+      coverImage: "https://via.placeholder.com/1200x630?text=Red+Creativa+Pro",
       featuredImage: "",
       published: false,
       featured: false,
       seoTitle: "",
       seoDescription: "",
       categoryIds: [],
+      tags: ["edición", "vídeo", "youtube"],
+      readingTime: 1,
     },
   });
 
@@ -182,12 +189,15 @@ export default function BlogEditorPage() {
         slug: post.slug,
         content: post.content,
         excerpt: post.excerpt || "",
+        coverImage: post.coverImage || "https://via.placeholder.com/1200x630?text=Red+Creativa+Pro",
         featuredImage: post.featuredImage || "",
         published: post.published,
         featured: post.featured || false,
         seoTitle: post.seoTitle || "",
         seoDescription: post.seoDescription || "",
         categoryIds: categoryIds,
+        tags: post.tags || ["edición", "vídeo", "youtube"],
+        readingTime: post.readingTime || calculateReadingTime(post.content),
       });
       
       // Marcar el slug como editado para evitar que se sobrescriba automáticamente
@@ -213,10 +223,21 @@ export default function BlogEditorPage() {
 
   // Manejar envío del formulario
   const onSubmit = async (data: BlogPostFormValues) => {
+    // Calcular automáticamente el tiempo de lectura basado en el contenido
+    const readingTime = calculateReadingTime(data.content);
+    
+    // Preparar los datos con valores actualizados
+    const submissionData = {
+      ...data,
+      readingTime,
+      excerpt: data.excerpt || data.content.substring(0, 160) + "...",
+      tags: data.tags.length > 0 ? data.tags : ["edición", "vídeo", "youtube"], 
+    };
+    
     if (isEditing) {
-      updatePostMutation.mutate(data);
+      updatePostMutation.mutate(submissionData);
     } else {
-      createPostMutation.mutate(data);
+      createPostMutation.mutate(submissionData);
     }
   };
 
@@ -531,6 +552,96 @@ export default function BlogEditorPage() {
             <CardContent>
               <Form {...form}>
                 <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="tags"
+                    render={({ field }) => {
+                      const [newTag, setNewTag] = useState("");
+                      
+                      // Maneja la adición de etiquetas
+                      const handleAddTag = () => {
+                        if (newTag.trim() && !field.value.includes(newTag.trim())) {
+                          const updatedTags = [...field.value, newTag.trim()];
+                          field.onChange(updatedTags);
+                          setNewTag("");
+                        }
+                      };
+                      
+                      // Maneja la eliminación de etiquetas
+                      const handleRemoveTag = (tag: string) => {
+                        const updatedTags = field.value.filter(t => t !== tag);
+                        field.onChange(updatedTags);
+                      };
+                      
+                      // Maneja el envío con Enter
+                      const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddTag();
+                        }
+                      };
+                      
+                      return (
+                        <FormItem>
+                          <FormLabel>Etiquetas</FormLabel>
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {field.value.map((tag, index) => (
+                              <Badge key={index} variant="secondary" className="gap-1 px-3 py-1">
+                                {tag}
+                                <X 
+                                  size={14} 
+                                  className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+                                  onClick={() => handleRemoveTag(tag)}
+                                />
+                              </Badge>
+                            ))}
+                          </div>
+                          <div className="flex w-full max-w-sm items-center space-x-2">
+                            <Input
+                              placeholder="Añadir etiqueta..."
+                              value={newTag}
+                              onChange={(e) => setNewTag(e.target.value)}
+                              onKeyDown={handleKeyDown}
+                            />
+                            <Button 
+                              type="button" 
+                              onClick={handleAddTag}
+                              disabled={!newTag.trim()}
+                              size="sm"
+                            >
+                              <Tag className="h-4 w-4 mr-1" />
+                              Añadir
+                            </Button>
+                          </div>
+                          <FormDescription>
+                            Las etiquetas ayudan a clasificar y encontrar tu artículo (edición, vídeo, youtube, etc)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="coverImage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Imagen de portada</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="https://ejemplo.com/imagen.jpg" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          URL de la imagen de portada (1200x630px recomendado)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
                   <FormField
                     control={form.control}
                     name="featuredImage"
