@@ -37,7 +37,12 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/">
+              <Link href="/" className="flex items-center gap-2">
+                <img 
+                  src="/images/logo.png" 
+                  alt="Red Creativa Gen Logo" 
+                  className="h-9 w-auto"
+                />
                 <span className="text-foreground font-heading font-bold text-xl cursor-pointer">
                   Red Creativa Gen
                 </span>
@@ -195,9 +200,11 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
               <>
                 <div className="flex items-center px-4">
                   <div className="flex-shrink-0">
-                    <div className="h-9 w-9 rounded-md bg-secondary/70 flex items-center justify-center">
-                      <UserIcon className="h-5 w-5 text-foreground" />
-                    </div>
+                    <img 
+                      src="/images/logo.png" 
+                      alt="Red Creativa Gen Logo" 
+                      className="h-9 w-auto"
+                    />
                   </div>
                   <div className="ml-3">
                     <div className="text-sm font-medium text-foreground">{user.username}</div>
