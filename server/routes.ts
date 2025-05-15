@@ -444,51 +444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add video idea to calendar
-  app.post(
-    "/api/video-ideas/:id/add-to-calendar",
-    requireAuth,
-    async (req, res) => {
-      try {
-        const videoIdeaId = parseInt(req.params.id);
-        const { date } = req.body;
-
-        if (!date) {
-          return res.status(400).json({ message: "Date is required" });
-        }
-
-        // Get the video idea
-        const videoIdea = await storage.getVideoIdea(videoIdeaId);
-        if (!videoIdea) {
-          return res.status(404).json({ message: "Video idea not found" });
-        }
-
-        // Check if the video idea belongs to the user
-        if (videoIdea.userId !== req.session.userId) {
-          return res.status(403).json({ message: "Unauthorized" });
-        }
-
-        // Create a calendar entry
-        const calendarEntry = await storage.createCalendarEntry({
-          userId: req.session.userId,
-          videoIdeaId: videoIdeaId,
-          date: new Date(date),
-          title: videoIdea.title,
-          completed: false,
-        });
-
-        res.status(201).json({
-          message: "Video idea added to calendar",
-          calendarEntry,
-        });
-      } catch (error) {
-        console.error("Error adding video idea to calendar:", error);
-        res
-          .status(500)
-          .json({ message: "Failed to add video idea to calendar" });
-      }
-    },
-  );
+  // Funcionalidad movida a la sección "AGREGAR IDEA A CALENDARIO" más abajo
 
   // Helper function to check if user has reached free idea generation limit
   const hasReachedDailyLimit = async (userId: number): Promise<boolean> => {
