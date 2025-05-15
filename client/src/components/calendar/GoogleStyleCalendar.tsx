@@ -224,20 +224,26 @@ export default function GoogleStyleCalendar({ user }: GoogleStyleCalendarProps) 
     if (!user) return;
     
     try {
+      // Asegurarse de que la fecha es válida antes de enviarla al servidor
+      if (!newEntry.date || isNaN(newEntry.date.getTime())) {
+        throw new Error("La fecha seleccionada no es válida");
+      }
+      
       const response = await apiRequest(
         "POST", 
         "/api/calendar", 
         {
           userId: user.id,
           title: newEntry.title,
-          date: newEntry.date.toISOString(),
+          date: newEntry.date,
           notes: newEntry.notes || "",
           color: newEntry.color,
         }
       );
       
       if (!response.ok) {
-        throw new Error("Error al crear la entrada");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Error al crear la entrada");
       }
       
       const createdEntry = await response.json();

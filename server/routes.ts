@@ -1134,11 +1134,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Asegurarse de que la fecha es un objeto Date
+      let dateValue = restData.date;
+      if (typeof dateValue === 'string') {
+        try {
+          dateValue = new Date(dateValue);
+          if (isNaN(dateValue.getTime())) {
+            throw new Error("Fecha inválida");
+          }
+        } catch (e) {
+          return res.status(400).json({ 
+            message: "Formato de fecha inválido", 
+            details: "La fecha debe estar en formato ISO o ser un objeto Date válido" 
+          });
+        }
+      }
+      
       // Validar y crear entrada
       const calendarData = insertCalendarEntrySchema.parse({
         ...restData,
         userId: req.session.userId,
         videoIdeaId: videoIdeaId || null,
+        date: dateValue, // Usar la fecha ya convertida
         completed: restData.completed !== undefined ? restData.completed : false,
         notes: restData.notes || null,
         color: restData.color || "#3b82f6",
@@ -1164,11 +1181,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       let videoIdeaId = req.body.videoIdeaId;
       
-      // Convertir la fecha si es necesario
-      let formattedDate = req.body.date;
-      if (typeof formattedDate === 'string' && !formattedDate.includes('T')) {
-        // Si la fecha viene en formato YYYY-MM-DD, convertirla a ISO
-        formattedDate = new Date(formattedDate).toISOString();
+      // Asegurarse de que la fecha es un objeto Date
+      let dateValue = req.body.date;
+      if (typeof dateValue === 'string') {
+        try {
+          dateValue = new Date(dateValue);
+          if (isNaN(dateValue.getTime())) {
+            throw new Error("Fecha inválida");
+          }
+        } catch (e) {
+          return res.status(400).json({ 
+            message: "Formato de fecha inválido", 
+            details: "La fecha debe estar en formato ISO o ser un objeto Date válido" 
+          });
+        }
       }
       
       // Validar y crear entrada
@@ -1176,7 +1202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.session.userId,
         videoIdeaId: videoIdeaId || null,
         title: req.body.title,
-        date: new Date(formattedDate),
+        date: dateValue,
         completed: req.body.completed !== undefined ? req.body.completed : false,
         notes: req.body.description || req.body.notes || null,
         color: req.body.color || "#3b82f6",
