@@ -3,6 +3,29 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateVideoIdea, aiAssistant, aiAssistRequestSchema, VideoIdeaContent, generateBlogPosts, blogPostGenerationSchema } from "./gemini";
 import slugify from "../client/src/lib/utils/slugify";
+
+/**
+ * Función auxiliar para crear una idea de video con slug y campos adicionales
+ */
+async function createVideoIdeaWithSlug(params: {
+  userId: number, 
+  title: string, 
+  category: string, 
+  subcategory: string, 
+  videoLength: string, 
+  content: any,
+  isPublic?: boolean
+}) {
+  // Generar un slug a partir del título
+  const ideaSlug = slugify(params.title);
+  
+  // Crear la idea con el slug generado
+  return await storage.createVideoIdea({
+    ...params,
+    slug: ideaSlug,
+    isPublic: params.isPublic || false,
+  });
+}
 import {
   createMonthlySubscription,
   createLifetimePayment,
@@ -694,13 +717,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generar y guardar la idea
       const generatedIdea = await generateVideoIdea(params);
 
-      // Crear un slug para la URL amigable a SEO
-      const ideaSlug = slugify(generatedIdea.title);
-
-      await storage.createVideoIdea({
+      await createVideoIdeaWithSlug({
         userId: req.session.userId,
         title: generatedIdea.title,
-        slug: ideaSlug,
         category: params.category,
         subcategory: params.subcategory,
         videoLength: params.videoLength,
@@ -763,8 +782,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Video idea not found" });
       }
 
-      // Check if the idea belongs to the authenticated user
-      if (idea.userId !== req.session.userId) {
+      // Check if the idea belongs to the authenticated user or is public
+      if (!idea.isPublic && idea.userId !== req.session.userId) {
         return res
           .status(403)
           .json({ message: "Not authorized to view this idea" });
@@ -773,6 +792,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(idea);
     } catch (error) {
       res.status(500).json({ message: "Error fetching video idea" });
+    }
+  });
+  
+  // Endpoint para ver una idea pública por su slug
+  app.get("/api/public/video-ideas/:slug", async (req, res) => {
+    try {
+      const slug = req.params.slug;
+      const idea = await storage.getVideoIdeaBySlug(slug);
+      
+      if (!idea || !idea.isPublic) {
+        return res.status(404).json({ message: "Video idea not found" });
+      }
+      
+      res.json(idea);
+    } catch (error) {
+      console.error("Error al obtener idea pública:", error);
+      res.status(500).json({ message: "Error fetching public video idea" });
+    }
+  });
+
+  // Endpoint para hacer pública o privada una idea
+  app.post("/api/video-ideas/:id/visibility", requireAuth, async (req, res) => {
+    try {
+      const ideaId = parseInt(req.params.id);
+      const { isPublic } = req.body;
+      
+      if (typeof isPublic !== 'boolean') {
+        return res.status(400).json({ message: "isPublic parameter must be a boolean" });
+      }
+      
+      // Verificar que la idea exista
+      const idea = await storage.getVideoIdea(ideaId);
+      if (!idea) {
+        return res.status(404).json({ message: "Video idea not found" });
+      }
+      
+      // Verificar que el usuario sea el propietario
+      if (idea.userId !== req.session.userId) {
+        return res.status(403).json({ message: "Not authorized to modify this idea" });
+      }
+      
+      // Actualizar la visibilidad
+      const updatedIdea = await storage.updateVideoIdea(ideaId, { isPublic });
+      res.json(updatedIdea);
+    } catch (error) {
+      console.error("Error al cambiar visibilidad de idea:", error);
+      res.status(500).json({ message: "Error updating video idea visibility" });
     }
   });
 

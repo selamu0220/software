@@ -986,6 +986,14 @@ export class DatabaseStorage implements IStorage {
     
     return videoIdea;
   }
+  
+  async getVideoIdeaBySlug(slug: string): Promise<VideoIdea | undefined> {
+    const [videoIdea] = await db.select()
+      .from(videoIdeas)
+      .where(eq(videoIdeas.slug, slug));
+    
+    return videoIdea;
+  }
 
   async getVideoIdeasByUser(userId: number): Promise<VideoIdea[]> {
     return db.select()
