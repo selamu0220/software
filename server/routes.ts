@@ -1237,6 +1237,247 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  /*
+   * API para la gestión de colecciones de guiones
+   */
+  // Obtener todas las colecciones de guiones del usuario
+  app.get("/api/script-collections", requireAuth, async (req, res) => {
+    try {
+      const collections = await storage.getScriptCollectionsByUser(
+        req.session.userId!
+      );
+      res.json(collections);
+    } catch (error) {
+      console.error("Error al obtener colecciones de guiones:", error);
+      res.status(500).json({ message: "Error al obtener colecciones de guiones" });
+    }
+  });
+
+  // Obtener una colección específica con sus guiones
+  app.get("/api/script-collections/:id", requireAuth, async (req, res) => {
+    try {
+      const collectionId = parseInt(req.params.id);
+      const collection = await storage.getScriptCollection(collectionId);
+
+      if (!collection) {
+        return res.status(404).json({ message: "Colección no encontrada" });
+      }
+
+      // Verificar que la colección pertenece al usuario autenticado
+      if (collection.userId !== req.session.userId) {
+        return res.status(403).json({ message: "No tienes permiso para ver esta colección" });
+      }
+
+      // Obtener guiones de la colección
+      const scripts = await storage.getScriptsByCollection(collectionId);
+      
+      res.json({
+        ...collection,
+        scripts
+      });
+    } catch (error) {
+      console.error("Error al obtener colección de guiones:", error);
+      res.status(500).json({ message: "Error al obtener colección de guiones" });
+    }
+  });
+
+  // Crear una nueva colección
+  app.post("/api/script-collections", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      
+      // Validar datos de la colección
+      const collectionData = {
+        userId,
+        name: req.body.name,
+        description: req.body.description || null
+      };
+
+      const collection = await storage.createScriptCollection(collectionData);
+      res.status(201).json(collection);
+    } catch (error) {
+      console.error("Error al crear colección de guiones:", error);
+      res.status(500).json({ message: "Error al crear colección de guiones" });
+    }
+  });
+
+  // Actualizar una colección
+  app.put("/api/script-collections/:id", requireAuth, async (req, res) => {
+    try {
+      const collectionId = parseInt(req.params.id);
+      const collection = await storage.getScriptCollection(collectionId);
+
+      if (!collection) {
+        return res.status(404).json({ message: "Colección no encontrada" });
+      }
+
+      // Verificar que la colección pertenece al usuario autenticado
+      if (collection.userId !== req.session.userId) {
+        return res.status(403).json({ message: "No tienes permiso para editar esta colección" });
+      }
+
+      const updatedCollection = await storage.updateScriptCollection(
+        collectionId,
+        req.body
+      );
+      
+      res.json(updatedCollection);
+    } catch (error) {
+      console.error("Error al actualizar colección de guiones:", error);
+      res.status(500).json({ message: "Error al actualizar colección de guiones" });
+    }
+  });
+
+  // Eliminar una colección
+  app.delete("/api/script-collections/:id", requireAuth, async (req, res) => {
+    try {
+      const collectionId = parseInt(req.params.id);
+      const collection = await storage.getScriptCollection(collectionId);
+
+      if (!collection) {
+        return res.status(404).json({ message: "Colección no encontrada" });
+      }
+
+      // Verificar que la colección pertenece al usuario autenticado
+      if (collection.userId !== req.session.userId) {
+        return res.status(403).json({ message: "No tienes permiso para eliminar esta colección" });
+      }
+
+      await storage.deleteScriptCollection(collectionId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error al eliminar colección de guiones:", error);
+      res.status(500).json({ message: "Error al eliminar colección de guiones" });
+    }
+  });
+
+  /*
+   * API para la gestión de guiones
+   */
+  // Obtener un guión específico
+  app.get("/api/scripts/:id", requireAuth, async (req, res) => {
+    try {
+      const scriptId = parseInt(req.params.id);
+      const script = await storage.getScript(scriptId);
+
+      if (!script) {
+        return res.status(404).json({ message: "Guión no encontrado" });
+      }
+
+      // Verificar que el guión pertenece a una colección del usuario autenticado
+      const collection = await storage.getScriptCollection(script.collectionId);
+      
+      if (collection?.userId !== req.session.userId) {
+        return res.status(403).json({ message: "No tienes permiso para ver este guión" });
+      }
+
+      res.json(script);
+    } catch (error) {
+      console.error("Error al obtener guión:", error);
+      res.status(500).json({ message: "Error al obtener guión" });
+    }
+  });
+
+  // Crear un nuevo guión en una colección
+  app.post("/api/script-collections/:id/scripts", requireAuth, async (req, res) => {
+    try {
+      const collectionId = parseInt(req.params.id);
+      const collection = await storage.getScriptCollection(collectionId);
+
+      if (!collection) {
+        return res.status(404).json({ message: "Colección no encontrada" });
+      }
+
+      // Verificar que la colección pertenece al usuario autenticado
+      if (collection.userId !== req.session.userId) {
+        return res.status(403).json({ message: "No tienes permiso para añadir guiones a esta colección" });
+      }
+
+      // Validar y crear el guión
+      const scriptData = {
+        ...req.body,
+        collectionId,
+      };
+
+      const script = await storage.createScript(scriptData);
+      res.status(201).json(script);
+    } catch (error) {
+      console.error("Error al crear guión:", error);
+      res.status(500).json({ message: "Error al crear guión" });
+    }
+  });
+
+  // Actualizar un guión
+  app.put("/api/scripts/:id", requireAuth, async (req, res) => {
+    try {
+      const scriptId = parseInt(req.params.id);
+      const script = await storage.getScript(scriptId);
+
+      if (!script) {
+        return res.status(404).json({ message: "Guión no encontrado" });
+      }
+
+      // Verificar que el usuario tiene acceso al guión
+      const collection = await storage.getScriptCollection(script.collectionId);
+      
+      if (collection?.userId !== req.session.userId) {
+        return res.status(403).json({ message: "No tienes permiso para editar este guión" });
+      }
+
+      const updatedScript = await storage.updateScript(scriptId, req.body);
+      res.json(updatedScript);
+    } catch (error) {
+      console.error("Error al actualizar guión:", error);
+      res.status(500).json({ message: "Error al actualizar guión" });
+    }
+  });
+
+  // Eliminar un guión
+  app.delete("/api/scripts/:id", requireAuth, async (req, res) => {
+    try {
+      const scriptId = parseInt(req.params.id);
+      const script = await storage.getScript(scriptId);
+
+      if (!script) {
+        return res.status(404).json({ message: "Guión no encontrado" });
+      }
+
+      // Verificar que el usuario tiene acceso al guión
+      const collection = await storage.getScriptCollection(script.collectionId);
+      
+      if (collection?.userId !== req.session.userId) {
+        return res.status(403).json({ message: "No tienes permiso para eliminar este guión" });
+      }
+
+      await storage.deleteScript(scriptId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error al eliminar guión:", error);
+      res.status(500).json({ message: "Error al eliminar guión" });
+    }
+  });
+
+  // Endpoint para analizar guiones con IA
+  app.post("/api/ai-assist", requireAuth, async (req, res) => {
+    try {
+      if (!req.body.prompt || !req.body.content) {
+        return res.status(400).json({ message: "Se requieren prompt y content" });
+      }
+
+      // Pasar a la función de asistente IA
+      const result = await aiAssistant({
+        prompt: req.body.prompt,
+        content: req.body.content,
+        model: req.body.model || "gemini-pro",
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error en asistente IA:", error);
+      res.status(500).json({ message: "Error procesando la solicitud de IA" });
+    }
+  });
+
   // Subscription Management
   app.post("/api/subscriptions/monthly", requireAuth, async (req, res) => {
     try {
