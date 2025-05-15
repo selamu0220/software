@@ -64,6 +64,8 @@ export interface IStorage {
   getVideoIdeasByUser(userId: number): Promise<VideoIdea[]>;
   getVideoIdeasByDateRange(userId: number, startDate: Date, endDate: Date): Promise<VideoIdea[]>;
   updateVideoIdea(id: number, updates: UpdateVideoIdea): Promise<VideoIdea>;
+  countVideoIdeasByUser(userId: number): Promise<number>;
+  countVideoIdeasByUserInMonth(userId: number, date: Date): Promise<number>;
   deleteVideoIdea(id: number): Promise<boolean>;
   
   // Calendar entries operations
@@ -309,6 +311,24 @@ export class MemStorage implements IStorage {
     
     this.videoIdeas.set(id, updatedIdea);
     return updatedIdea;
+  }
+  
+  async countVideoIdeasByUser(userId: number): Promise<number> {
+    return Array.from(this.videoIdeas.values()).filter(
+      (idea) => idea.userId === userId
+    ).length;
+  }
+  
+  async countVideoIdeasByUserInMonth(userId: number, date: Date): Promise<number> {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    return Array.from(this.videoIdeas.values()).filter(
+      (idea) => {
+        if (idea.userId !== userId) return false;
+        const createdAt = new Date(idea.createdAt);
+        return createdAt.getFullYear() === year && createdAt.getMonth() === month;
+      }
+    ).length;
   }
   
   async deleteVideoIdea(id: number): Promise<boolean> {
@@ -992,6 +1012,31 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return videoIdea;
+  }
+  
+  async countVideoIdeasByUser(userId: number): Promise<number> {
+    const result = await db.select({ count: count() })
+      .from(videoIdeas)
+      .where(eq(videoIdeas.userId, userId));
+    
+    return result[0].count || 0;
+  }
+  
+  async countVideoIdeasByUserInMonth(userId: number, date: Date): Promise<number> {
+    const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+    
+    const result = await db.select({ count: count() })
+      .from(videoIdeas)
+      .where(
+        and(
+          eq(videoIdeas.userId, userId),
+          gte(videoIdeas.createdAt, startOfMonth),
+          lte(videoIdeas.createdAt, endOfMonth)
+        )
+      );
+    
+    return result[0].count || 0;
   }
   
   async deleteVideoIdea(id: number): Promise<boolean> {

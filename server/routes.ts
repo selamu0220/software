@@ -444,7 +444,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Funcionalidad movida a la sección "AGREGAR IDEA A CALENDARIO" más abajo
+  app.get("/api/video-ideas/stats", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const stats = {
+        total: await storage.countVideoIdeasByUser(userId),
+        month: await storage.countVideoIdeasByUserInMonth(userId, new Date())
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error("Error obteniendo estadísticas de ideas:", error);
+      res.status(500).json({ message: "Error al obtener estadísticas" });
+    }
+  });
 
   // Helper function to check if user has reached free idea generation limit
   const hasReachedDailyLimit = async (userId: number): Promise<boolean> => {
@@ -1973,7 +1985,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req, res) => {
       try {
         const ideaId = parseInt(req.params.id);
-        const { date } = req.body;
+        const { date, timeOfDay } = req.body;
 
         if (!date) {
           return res.status(400).json({ message: "Se requiere una fecha" });
@@ -1999,6 +2011,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           videoIdeaId: ideaId,
           title: idea.title,
           date: new Date(date),
+          timeOfDay: timeOfDay || "12:00", // Hora predeterminada al mediodía si no se proporciona
           completed: false,
         });
 
