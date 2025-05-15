@@ -19,6 +19,34 @@ const defaultCategories = [
   { name: 'Plugins', slug: 'plugins', description: 'Complementos para software de edición', iconName: 'PlugZap' }
 ];
 
+// Subcategorías predefinidas por categoría
+const defaultSubcategories = {
+  'ia': [
+    { name: 'Generadores de texto', slug: 'generadores-texto', description: 'Herramientas para generar texto con IA' },
+    { name: 'Generadores de imágenes', slug: 'generadores-imagenes', description: 'Herramientas para crear imágenes con IA' },
+    { name: 'Edición de video', slug: 'edicion-video-ia', description: 'IA para edición y procesamiento de video' },
+    { name: 'Transcripción', slug: 'transcripcion', description: 'Convertir audio a texto mediante IA' }
+  ],
+  'extensiones': [
+    { name: 'Chrome', slug: 'chrome', description: 'Extensiones para Google Chrome' },
+    { name: 'Firefox', slug: 'firefox', description: 'Complementos para Mozilla Firefox' },
+    { name: 'Edge', slug: 'edge', description: 'Extensiones para Microsoft Edge' },
+    { name: 'Safari', slug: 'safari', description: 'Extensiones para Safari' }
+  ],
+  'software': [
+    { name: 'Edición de video', slug: 'edicion-video', description: 'Software para editar videos' },
+    { name: 'Diseño gráfico', slug: 'diseno-grafico', description: 'Programas para diseño y gráficos' },
+    { name: 'Audio', slug: 'audio', description: 'Software para grabación y edición de audio' },
+    { name: 'Streaming', slug: 'streaming', description: 'Programas para transmisiones en vivo' }
+  ],
+  'plugins': [
+    { name: 'Adobe Premiere', slug: 'premiere', description: 'Plugins para Adobe Premiere Pro' },
+    { name: 'After Effects', slug: 'after-effects', description: 'Plugins para Adobe After Effects' },
+    { name: 'DaVinci Resolve', slug: 'davinci-resolve', description: 'Plugins para DaVinci Resolve' },
+    { name: 'Final Cut Pro', slug: 'final-cut', description: 'Plugins para Final Cut Pro' }
+  ]
+};
+
 async function initializeResourceTables() {
   console.log('Inicializando tablas de recursos...');
 
@@ -35,8 +63,23 @@ async function initializeResourceTables() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
       );
     `);
+    
+    // Crear tabla de subcategorías si no existe
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS resource_subcategories (
+        id SERIAL PRIMARY KEY,
+        category_id INTEGER REFERENCES resource_categories(id) NOT NULL,
+        name TEXT NOT NULL,
+        slug TEXT NOT NULL,
+        description TEXT,
+        icon_name TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        UNIQUE(category_id, slug)
+      );
+    `);
 
-    console.log('Tabla de categorías creada correctamente');
+    console.log('Tablas de categorías y subcategorías creadas correctamente');
 
     // Insertar categorías directamente con SQL para evitar dependencias de Drizzle
     for (const category of defaultCategories) {
@@ -48,10 +91,47 @@ async function initializeResourceTables() {
           [category.name, category.slug, category.description, category.iconName]
         );
         
+        let categoryId;
+        
         if (result.rows.length > 0) {
-          console.log(`Categoría ${category.name} insertada correctamente con ID: ${result.rows[0].id}`);
+          categoryId = result.rows[0].id;
+          console.log(`Categoría ${category.name} insertada correctamente con ID: ${categoryId}`);
         } else {
-          console.log(`La categoría ${category.name} ya existe, omitiendo...`);
+          // Si la categoría ya existe, obtener su ID
+          const existingCategory = await pool.query(
+            'SELECT id FROM resource_categories WHERE slug = $1',
+            [category.slug]
+          );
+          
+          if (existingCategory.rows.length > 0) {
+            categoryId = existingCategory.rows[0].id;
+            console.log(`Categoría ${category.name} ya existe con ID: ${categoryId}`);
+          } else {
+            console.error(`No se pudo obtener el ID para la categoría ${category.name}`);
+            continue; // Saltarse las subcategorías si no se puede obtener el ID
+          }
+        }
+        
+        // Insertar subcategorías para esta categoría
+        if (defaultSubcategories[category.slug] && categoryId) {
+          for (const subcategory of defaultSubcategories[category.slug]) {
+            try {
+              console.log(`Intentando insertar subcategoría: ${subcategory.name} para categoría ${category.name}`);
+              
+              const subResult = await pool.query(
+                'INSERT INTO resource_subcategories (category_id, name, slug, description) VALUES ($1, $2, $3, $4) ON CONFLICT (category_id, slug) DO NOTHING RETURNING id',
+                [categoryId, subcategory.name, subcategory.slug, subcategory.description]
+              );
+              
+              if (subResult.rows.length > 0) {
+                console.log(`Subcategoría ${subcategory.name} insertada correctamente con ID: ${subResult.rows[0].id}`);
+              } else {
+                console.log(`Subcategoría ${subcategory.name} ya existe para categoría ${category.name}, omitiendo...`);
+              }
+            } catch (error) {
+              console.error(`Error al insertar subcategoría ${subcategory.name}:`, error);
+            }
+          }
         }
       } catch (error) {
         console.error(`Error al insertar categoría ${category.name}:`, error);
