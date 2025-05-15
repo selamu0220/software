@@ -130,7 +130,7 @@ function App() {
             <Route path="/ideas/:slug" component={IdeaPublica} />
             
             {/* Ruta para gestionar todas las ideas del usuario */}
-            <ProtectedRoute path="/mis-ideas" component={MisIdeas} />
+            <ProtectedRoute path="/mis-ideas" component={() => <MisIdeas />} />
             
             <Route component={NotFound} />
           </Switch>

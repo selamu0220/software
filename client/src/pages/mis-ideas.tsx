@@ -42,8 +42,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+// Estos componentes ya se renderizan a nivel de App
+// import Navbar from "@/components/layout/Navbar";
+// import Footer from "@/components/layout/Footer";
 
 export default function MisIdeas() {
   const queryClient = useQueryClient();
@@ -117,7 +118,7 @@ export default function MisIdeas() {
         />
       </Helmet>
 
-      <Navbar />
+      {/* El componente Navbar se renderiza a nivel de App, no lo necesitamos aquí */}
 
       <main className="container max-w-6xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
@@ -323,7 +324,7 @@ export default function MisIdeas() {
         )}
       </main>
 
-      <Footer />
+      {/* El Footer se renderiza a nivel de App */}
     </>
   );
 }
