@@ -258,6 +258,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Guardar el recurso en la base de datos
       const resource = await storage.createResource(resourceData);
       
+      // Añadir a la colección predeterminada del usuario (si existe)
+      try {
+        const collections = await storage.getResourceCollectionsByUser(userId);
+        if (collections && collections.length > 0) {
+          // Usar la primera colección como predeterminada
+          const defaultCollection = collections[0];
+          await storage.addResourceToCollection({
+            collectionId: defaultCollection.id,
+            resourceId: resource.id,
+            orderIndex: 0,
+            notes: null
+          });
+        }
+      } catch (collectionError) {
+        console.error("Error al añadir recurso a colección predeterminada:", collectionError);
+        // No interrumpir el flujo si falla esta parte
+      }
+      
       res.status(201).json({ 
         message: "Recurso subido exitosamente", 
         resource 
@@ -265,6 +283,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error al subir recurso:", error);
       res.status(500).json({ message: "Error al subir el recurso" });
+    }
+  });
+  
+  // Obtener todos los recursos públicos (no requiere autenticación)
+  app.get("/api/recursos", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const recursos = await storage.getPublicResources(limit, offset);
+      res.json(recursos);
+    } catch (error) {
+      console.error("Error al obtener recursos:", error);
+      res.status(500).json({ message: "Error al obtener recursos" });
+    }
+  });
+  
+  // Obtener un recurso específico por slug
+  app.get("/api/recursos/:slug", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const recurso = await storage.getResourceBySlug(slug);
+      
+      if (!recurso) {
+        return res.status(404).json({ message: "Recurso no encontrado" });
+      }
+      
+      // Incrementar contador de vistas
+      await storage.updateResource(recurso.id, {
+        viewCount: recurso.viewCount + 1
+      });
+      
+      res.json(recurso);
+    } catch (error) {
+      console.error("Error al obtener recurso:", error);
+      res.status(500).json({ message: "Error al obtener el recurso" });
+    }
+  });
+  
+  // Obtener recursos por categoría
+  app.get("/api/recursos/categoria/:slug", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      // Obtener primero la categoría
+      const categoria = await storage.getResourceCategoryBySlug(slug);
+      if (!categoria) {
+        return res.status(404).json({ message: "Categoría no encontrada" });
+      }
+      
+      const recursos = await storage.getResourcesByCategory(categoria.id, limit, offset);
+      res.json(recursos);
+    } catch (error) {
+      console.error("Error al obtener recursos por categoría:", error);
+      res.status(500).json({ message: "Error al obtener recursos por categoría" });
     }
   });
 
