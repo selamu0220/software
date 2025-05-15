@@ -159,6 +159,53 @@ export const resourceComments = pgTable("resource_comments", {
 });
 
 // Define relations
+// Biblioteca personal de recursos
+export const userResourceCollections = pgTable("user_resource_collections", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const userResourceItems = pgTable("user_resource_items", {
+  id: serial("id").primaryKey(),
+  collectionId: integer("collection_id").references(() => userResourceCollections.id).notNull(),
+  resourceId: integer("resource_id").references(() => resources.id).notNull(),
+  notes: text("notes"),
+  favorite: boolean("favorite").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Biblioteca personal de guiones
+export const userScriptCollections = pgTable("user_script_collections", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const userScripts = pgTable("user_scripts", {
+  id: serial("id").primaryKey(),
+  collectionId: integer("collection_id").references(() => userScriptCollections.id).notNull(),
+  videoIdeaId: integer("video_idea_id").references(() => videoIdeas.id),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  category: text("category"),
+  subcategory: text("subcategory"),
+  tags: text("tags").array(),
+  timings: json("timings"),
+  version: integer("version").default(1).notNull(),
+  isTemplate: boolean("is_template").default(false).notNull(),
+  favorite: boolean("favorite").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   videoIdeas: many(videoIdeas),
   calendarEntries: many(calendarEntries),
@@ -247,52 +294,7 @@ export const blogCategoriesRelations = relations(blogCategories, ({ many }) => (
   posts: many(blogPostCategories),
 }));
 
-// Biblioteca personal de recursos
-export const userResourceCollections = pgTable("user_resource_collections", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  name: text("name").notNull(),
-  description: text("description"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
 
-export const userResourceItems = pgTable("user_resource_items", {
-  id: serial("id").primaryKey(),
-  collectionId: integer("collection_id").references(() => userResourceCollections.id).notNull(),
-  resourceId: integer("resource_id").references(() => resources.id).notNull(),
-  notes: text("notes"),
-  favorite: boolean("favorite").default(false).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-// Biblioteca personal de guiones
-export const userScriptCollections = pgTable("user_script_collections", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  name: text("name").notNull(),
-  description: text("description"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const userScripts = pgTable("user_scripts", {
-  id: serial("id").primaryKey(),
-  collectionId: integer("collection_id").references(() => userScriptCollections.id).notNull(),
-  videoIdeaId: integer("video_idea_id").references(() => videoIdeas.id),
-  title: text("title").notNull(),
-  content: text("content").notNull(),
-  category: text("category"),
-  subcategory: text("subcategory"),
-  tags: text("tags").array(),
-  timings: json("timings"),
-  version: integer("version").default(1).notNull(),
-  isTemplate: boolean("is_template").default(false).notNull(),
-  favorite: boolean("favorite").default(false).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
 
 export const blogPostCategoriesRelations = relations(blogPostCategories, ({ one }) => ({
   post: one(blogPosts, {
@@ -344,6 +346,8 @@ export const userScriptsRelations = relations(userScripts, ({ one }) => ({
     references: [videoIdeas.id],
   }),
 }));
+
+
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -472,6 +476,40 @@ export const insertBlogPostCategorySchema = createInsertSchema(blogPostCategorie
   categoryId: true,
 });
 
+// Esquemas para bibliotecas personales
+export const insertUserResourceCollectionSchema = createInsertSchema(userResourceCollections).pick({
+  userId: true,
+  name: true,
+  description: true,
+});
+
+export const insertUserResourceItemSchema = createInsertSchema(userResourceItems).pick({
+  collectionId: true,
+  resourceId: true,
+  notes: true,
+  favorite: true,
+});
+
+export const insertUserScriptCollectionSchema = createInsertSchema(userScriptCollections).pick({
+  userId: true,
+  name: true,
+  description: true,
+});
+
+export const insertUserScriptSchema = createInsertSchema(userScripts).pick({
+  collectionId: true,
+  videoIdeaId: true,
+  title: true,
+  content: true,
+  category: true,
+  subcategory: true,
+  tags: true,
+  timings: true,
+  version: true,
+  isTemplate: true,
+  favorite: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -496,6 +534,16 @@ export type InsertBlogCategory = z.infer<typeof insertBlogCategorySchema>;
 export type BlogCategory = typeof blogCategories.$inferSelect;
 export type InsertBlogPostCategory = z.infer<typeof insertBlogPostCategorySchema>;
 export type BlogPostCategory = typeof blogPostCategories.$inferSelect;
+
+// Tipos para bibliotecas personales
+export type InsertUserResourceCollection = z.infer<typeof insertUserResourceCollectionSchema>;
+export type UserResourceCollection = typeof userResourceCollections.$inferSelect;
+export type InsertUserResourceItem = z.infer<typeof insertUserResourceItemSchema>;
+export type UserResourceItem = typeof userResourceItems.$inferSelect;
+export type InsertUserScriptCollection = z.infer<typeof insertUserScriptCollectionSchema>;
+export type UserScriptCollection = typeof userScriptCollections.$inferSelect;
+export type InsertUserScript = z.infer<typeof insertUserScriptSchema>;
+export type UserScript = typeof userScripts.$inferSelect;
 
 // User profile update schema
 export const updateUserSchema = z.object({
