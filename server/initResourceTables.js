@@ -1,7 +1,6 @@
 // Script para inicializar las tablas de recursos
-import pkg from 'pg';
-const { Pool } = pkg;
-import { eq } from 'drizzle-orm';
+import pg from 'pg';
+const { Pool } = pg;
 
 // Establece la conexión con la base de datos
 const pool = new Pool({
@@ -47,103 +46,129 @@ const defaultSubcategories = {
   ]
 };
 
-async function initializeResourceTables() {
+function initializeResourceTables() {
   console.log('Inicializando tablas de recursos...');
 
-  try {
-    // Crear tablas si no existen
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS resource_categories (
-        id SERIAL PRIMARY KEY, 
-        name TEXT NOT NULL UNIQUE, 
-        slug TEXT NOT NULL UNIQUE, 
-        description TEXT, 
-        icon_name TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
-      );
-    `);
-    
-    // Crear tabla de subcategorías si no existe
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS resource_subcategories (
-        id SERIAL PRIMARY KEY,
-        category_id INTEGER REFERENCES resource_categories(id) NOT NULL,
-        name TEXT NOT NULL,
-        slug TEXT NOT NULL,
-        description TEXT,
-        icon_name TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        UNIQUE(category_id, slug)
-      );
-    `);
-
-    console.log('Tablas de categorías y subcategorías creadas correctamente');
-
-    // Insertar categorías directamente con SQL para evitar dependencias de Drizzle
-    for (const category of defaultCategories) {
-      try {
-        console.log(`Intentando insertar categoría: ${category.name}`);
-        
-        const result = await pool.query(
-          'INSERT INTO resource_categories (name, slug, description, icon_name) VALUES ($1, $2, $3, $4) ON CONFLICT (slug) DO NOTHING RETURNING id',
-          [category.name, category.slug, category.description, category.iconName]
+  return Promise.resolve()
+    .then(() => {
+      // Crear tablas si no existen
+      return pool.query(`
+        CREATE TABLE IF NOT EXISTS resource_categories (
+          id SERIAL PRIMARY KEY, 
+          name TEXT NOT NULL UNIQUE, 
+          slug TEXT NOT NULL UNIQUE, 
+          description TEXT, 
+          icon_name TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
         );
-        
-        let categoryId;
-        
-        if (result.rows.length > 0) {
-          categoryId = result.rows[0].id;
-          console.log(`Categoría ${category.name} insertada correctamente con ID: ${categoryId}`);
-        } else {
-          // Si la categoría ya existe, obtener su ID
-          const existingCategory = await pool.query(
-            'SELECT id FROM resource_categories WHERE slug = $1',
-            [category.slug]
-          );
+      `);
+    })
+    .then(() => {
+      // Crear tabla de subcategorías si no existe
+      return pool.query(`
+        CREATE TABLE IF NOT EXISTS resource_subcategories (
+          id SERIAL PRIMARY KEY,
+          category_id INTEGER REFERENCES resource_categories(id) NOT NULL,
+          name TEXT NOT NULL,
+          slug TEXT NOT NULL,
+          description TEXT,
+          icon_name TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+          UNIQUE(category_id, slug)
+        );
+      `);
+    })
+    .then(() => {
+      console.log('Tablas de categorías y subcategorías creadas correctamente');
+      
+      // Procesar categorías secuencialmente con promesas
+      return defaultCategories.reduce((promise, category) => {
+        return promise.then(() => {
+          console.log(`Intentando insertar categoría: ${category.name}`);
           
-          if (existingCategory.rows.length > 0) {
-            categoryId = existingCategory.rows[0].id;
-            console.log(`Categoría ${category.name} ya existe con ID: ${categoryId}`);
-          } else {
-            console.error(`No se pudo obtener el ID para la categoría ${category.name}`);
-            continue; // Saltarse las subcategorías si no se puede obtener el ID
-          }
-        }
-        
-        // Insertar subcategorías para esta categoría
-        if (defaultSubcategories[category.slug] && categoryId) {
-          for (const subcategory of defaultSubcategories[category.slug]) {
-            try {
-              console.log(`Intentando insertar subcategoría: ${subcategory.name} para categoría ${category.name}`);
-              
-              const subResult = await pool.query(
-                'INSERT INTO resource_subcategories (category_id, name, slug, description) VALUES ($1, $2, $3, $4) ON CONFLICT (category_id, slug) DO NOTHING RETURNING id',
-                [categoryId, subcategory.name, subcategory.slug, subcategory.description]
-              );
-              
-              if (subResult.rows.length > 0) {
-                console.log(`Subcategoría ${subcategory.name} insertada correctamente con ID: ${subResult.rows[0].id}`);
-              } else {
-                console.log(`Subcategoría ${subcategory.name} ya existe para categoría ${category.name}, omitiendo...`);
-              }
-            } catch (error) {
-              console.error(`Error al insertar subcategoría ${subcategory.name}:`, error);
+          return pool.query(
+            'INSERT INTO resource_categories (name, slug, description, icon_name) VALUES ($1, $2, $3, $4) ON CONFLICT (slug) DO NOTHING RETURNING id',
+            [category.name, category.slug, category.description, category.iconName]
+          )
+          .then((result) => {
+            let categoryIdPromise;
+            
+            if (result.rows.length > 0) {
+              const categoryId = result.rows[0].id;
+              console.log(`Categoría ${category.name} insertada correctamente con ID: ${categoryId}`);
+              categoryIdPromise = Promise.resolve(categoryId);
+            } else {
+              // Si la categoría ya existe, obtener su ID
+              categoryIdPromise = pool.query(
+                'SELECT id FROM resource_categories WHERE slug = $1',
+                [category.slug]
+              )
+              .then((existingCategory) => {
+                if (existingCategory.rows.length > 0) {
+                  const categoryId = existingCategory.rows[0].id;
+                  console.log(`Categoría ${category.name} ya existe con ID: ${categoryId}`);
+                  return categoryId;
+                } else {
+                  console.error(`No se pudo obtener el ID para la categoría ${category.name}`);
+                  return null;
+                }
+              });
             }
-          }
-        }
-      } catch (error) {
-        console.error(`Error al insertar categoría ${category.name}:`, error);
-      }
-    }
-
-    console.log('Inicialización de tablas de recursos completada');
-  } catch (error) {
-    console.error('Error inicializando tablas de recursos:', error);
-  } finally {
-    await pool.end();
-  }
+            
+            return categoryIdPromise.then((categoryId) => {
+              if (!categoryId || !defaultSubcategories[category.slug]) {
+                return Promise.resolve();
+              }
+              
+              // Procesar subcategorías secuencialmente
+              return defaultSubcategories[category.slug].reduce((subPromise, subcategory) => {
+                return subPromise.then(() => {
+                  console.log(`Intentando insertar subcategoría: ${subcategory.name} para categoría ${category.name}`);
+                  
+                  return pool.query(
+                    'INSERT INTO resource_subcategories (category_id, name, slug, description) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING id',
+                    [categoryId, subcategory.name, subcategory.slug, subcategory.description]
+                  )
+                  .then((subResult) => {
+                    if (subResult.rows.length > 0) {
+                      console.log(`Subcategoría ${subcategory.name} insertada correctamente con ID: ${subResult.rows[0].id}`);
+                    } else {
+                      console.log(`Subcategoría ${subcategory.name} ya existe para categoría ${category.name}, omitiendo...`);
+                    }
+                  })
+                  .catch((error) => {
+                    console.error(`Error al insertar subcategoría ${subcategory.name}:`, error);
+                  });
+                });
+              }, Promise.resolve());
+            });
+          })
+          .catch((error) => {
+            console.error(`Error al insertar categoría ${category.name}:`, error);
+          });
+        });
+      }, Promise.resolve());
+    })
+    .then(() => {
+      console.log('Inicialización de tablas de recursos completada');
+      return pool.end();
+    })
+    .catch((error) => {
+      console.error('Error inicializando tablas de recursos:', error);
+      return pool.end();
+    });
 }
 
-initializeResourceTables();
+// Solo ejecutar automáticamente si es el archivo principal (para testing)
+if (import.meta.url.includes(process.argv[1])) {
+  console.log('Ejecutando inicialización desde línea de comandos');
+  initializeResourceTables().catch(err => {
+    console.error('Error al inicializar tablas:', err);
+    process.exit(1);
+  });
+}
+
+// Exportar para acceder desde otros archivos
+export { initializeResourceTables };
