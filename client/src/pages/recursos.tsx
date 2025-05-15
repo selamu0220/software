@@ -225,6 +225,8 @@ export default function RecursosPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [eliminandoRecursos, setEliminandoRecursos] = useState(false);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+  const [recursosReales, setRecursosReales] = useState<any[]>([]);
+  const [cargandoRecursos, setCargandoRecursos] = useState(false);
   const { toast } = useToast();
   
   // Obtener información del usuario actual
@@ -242,6 +244,29 @@ export default function RecursosPage() {
     };
     
     fetchCurrentUser();
+  }, []);
+  
+  // Cargar los recursos reales desde el servidor
+  useEffect(() => {
+    const fetchRecursos = async () => {
+      setCargandoRecursos(true);
+      try {
+        const response = await fetch('/api/recursos');
+        if (response.ok) {
+          const data = await response.json();
+          setRecursosReales(data);
+          console.log("Recursos cargados:", data);
+        } else {
+          console.error("Error al cargar recursos:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Error al cargar recursos:", error);
+      } finally {
+        setCargandoRecursos(false);
+      }
+    };
+    
+    fetchRecursos();
   }, []);
 
   // Determinar SEO información basada en la URL y filtros
