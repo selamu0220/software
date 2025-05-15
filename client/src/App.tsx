@@ -26,6 +26,7 @@ import MisGuiones from "@/pages/mis-guiones";
 import ScriptEditor from "@/pages/script-editor";
 import Testimonios from "@/pages/testimonios";
 import IdeaPublica from "@/pages/idea-publica";
+import MisIdeas from "@/pages/mis-ideas";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AssistantSidebar } from "@/components/ui/assistant-sidebar";
@@ -127,6 +128,9 @@ function App() {
             
             {/* Ruta para ideas de video públicas con URLs amigables para SEO */}
             <Route path="/ideas/:slug" component={IdeaPublica} />
+            
+            {/* Ruta para gestionar todas las ideas del usuario */}
+            <ProtectedRoute path="/mis-ideas" component={MisIdeas} />
             
             <Route component={NotFound} />
           </Switch>
