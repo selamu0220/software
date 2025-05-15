@@ -26,6 +26,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
     { name: "Blog", href: "/blog" },
     { name: "Calendario", href: "/calendar" },
     { name: "Teleprompter", href: "/teleprompter" },
+    { name: "Testimonios", href: "/testimonios" },
     { name: "Grabación", href: "/recording" },
     { name: "Métricas", href: "/metrics" },
     { name: "Precios", href: "/#pricing" },
@@ -126,6 +127,12 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     <Link href="/blog" className="flex items-center">
                       <FileText className="mr-2 h-4 w-4" />
                       Blog
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/testimonios" className="flex items-center">
+                      <Star className="mr-2 h-4 w-4" />
+                      Testimonios
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
