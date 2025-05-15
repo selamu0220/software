@@ -23,6 +23,9 @@ import SubirRecurso from "@/pages/subir-recurso";
 import BlogPage from "@/pages/blog";
 import BlogPostPage from "@/pages/blog-post";
 import BlogEditorPage from "@/pages/blog-editor";
+// Páginas de guiones de vídeo
+import MisGuiones from "@/pages/mis-guiones";
+import ScriptEditor from "@/pages/script-editor";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AssistantSidebar } from "@/components/ui/assistant-sidebar";
@@ -116,6 +119,10 @@ function App() {
             <ProtectedRoute path="/blog/new" component={() => <BlogEditorPage />} />
             <ProtectedRoute path="/blog/edit/:id" component={() => <BlogEditorPage />} />
             <Route path="/blog/:slug" component={BlogPostPage} />
+            
+            {/* Rutas para la biblioteca de guiones */}
+            <ProtectedRoute path="/mis-guiones" component={() => <MisGuiones />} />
+            <ProtectedRoute path="/script-editor/:id?" component={ScriptEditor} />
             
             <Route component={NotFound} />
           </Switch>
