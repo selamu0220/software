@@ -21,6 +21,7 @@ interface CalendarEntry {
   id: number;
   title: string;
   date: string;
+  timeOfDay?: string;
   userId: number;
   videoIdeaId?: number;
   status?: string;
@@ -34,6 +35,7 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
   const [entries, setEntries] = useState<CalendarEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedTime, setSelectedTime] = useState("12:00");
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
 
@@ -86,6 +88,28 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
       return;
     }
     
+    // Abrimos un diálogo para configurar la hora
+    const timeInput = window.prompt("¿A qué hora quieres grabar el video? (formato HH:MM)", selectedTime);
+    
+    // Si el usuario cancela, no hacemos nada
+    if (timeInput === null) return;
+    
+    // Validar formato de hora
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
+    const isValidTime = timeRegex.test(timeInput);
+    
+    if (!isValidTime) {
+      toast({
+        title: "Formato de hora incorrecto",
+        description: "Por favor, usa el formato HH:MM (ejemplo: 14:30)",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Guardar la hora seleccionada para futuras referencias
+    setSelectedTime(timeInput);
+    
     try {
       setIsGenerating(true);
       
@@ -130,6 +154,7 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
       const calendarResponse = await apiRequest("POST", "/api/calendar", {
         title: savedIdea.title,
         date: new Date(formattedDate), // Asegurarnos de que se envía como objeto Date
+        timeOfDay: selectedTime, // Hora para grabación
         videoIdeaId: savedIdea.id,
         color: "#3b82f6", // Azul para ideas programadas
       });
@@ -145,7 +170,7 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
       
       toast({
         title: "¡Idea agregada!",
-        description: `Se ha programado "${savedIdea.title}" para el ${day} de ${getMonthAndYear(targetDate)}`,
+        description: `Se ha programado "${savedIdea.title}" para el ${day} de ${getMonthAndYear(targetDate)} a las ${selectedTime}`,
       });
       
     } catch (error) {
@@ -188,7 +213,11 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
       days.push({ 
         day, 
         currentMonth: true,
-        entry: entry ? { title: entry.title, color: entry.color || "blue" } : undefined,
+        entry: entry ? { 
+          title: entry.title, 
+          color: entry.color || "blue",
+          timeOfDay: entry.timeOfDay || "12:00"
+        } : undefined,
         date: formattedDate,
       });
       
@@ -273,7 +302,8 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
                           </div>
                           {day.entry && (
                             <div className={`calendar-day-idea calendar-day-idea-${day.entry.color || 'blue'}`}>
-                              {day.entry.title}
+                              <div className="text-xs mb-1 font-bold">{day.entry.timeOfDay || "12:00"}</div>
+                              <div>{day.entry.title}</div>
                             </div>
                           )}
                           
