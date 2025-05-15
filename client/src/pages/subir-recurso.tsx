@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { 
   Form,
@@ -62,52 +62,30 @@ import {
   Link as LinkIcon,
 } from "lucide-react";
 
-// Datos de ejemplo para categorías y subcategorías
-const categorias = [
-  { 
-    id: 1, 
-    nombre: "Edición de Video", 
-    subcategorias: [
-      { id: 101, nombre: "Transiciones" },
-      { id: 102, nombre: "LUTs" },
-      { id: 103, nombre: "Efectos" },
-      { id: 104, nombre: "Plantillas" },
-      { id: 105, nombre: "Tutoriales" },
-    ]
-  },
-  { 
-    id: 2, 
-    nombre: "Diseño 3D", 
-    subcategorias: [
-      { id: 201, nombre: "Materiales" },
-      { id: 202, nombre: "Modelos" },
-      { id: 203, nombre: "Texturas" },
-      { id: 204, nombre: "Plugins" },
-      { id: 205, nombre: "Scripts" },
-    ]
-  },
-  { 
-    id: 3, 
-    nombre: "Efectos de Sonido", 
-    subcategorias: [
-      { id: 301, nombre: "Música" },
-      { id: 302, nombre: "SFX" },
-      { id: 303, nombre: "Voces" },
-      { id: 304, nombre: "Ambientes" },
-    ]
-  },
-  { 
-    id: 4, 
-    nombre: "Plugins y Extensiones", 
-    subcategorias: [
-      { id: 401, nombre: "DaVinci Resolve" },
-      { id: 402, nombre: "Premiere Pro" },
-      { id: 403, nombre: "After Effects" },
-      { id: 404, nombre: "Blender" },
-      { id: 405, nombre: "OBS Studio" },
-    ]
-  },
-];
+// Interfaces para categorías y subcategorías
+interface Categoria {
+  id: number;
+  name: string; // En la base de datos es 'name'
+  slug: string;
+  description?: string;
+  iconName?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface Subcategoria {
+  id: number;
+  categoryId: number;
+  name: string; // En la base de datos es 'name'
+  slug: string;
+  description?: string;
+  iconName?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Estado inicial vacío para categorías y subcategorías
+const categoriasIniciales: Categoria[] = [];
 
 // Esquema de validación para el formulario
 const formSchema = z.object({
@@ -147,9 +125,37 @@ export default function SubirRecursoPage() {
   const [imagen, setImagen] = useState<File | null>(null);
   const [imagenPreview, setImagenPreview] = useState<string>("");
   const [uploading, setUploading] = useState(false);
-  const [subcategorias, setSubcategorias] = useState<any[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [subcategorias, setSubcategorias] = useState<Subcategoria[]>([]);
+  const [cargandoCategorias, setCargandoCategorias] = useState(true);
+  const [cargandoSubcategorias, setCargandoSubcategorias] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  
+  // Cargar categorías al iniciar el componente
+  useEffect(() => {
+    const fetchCategorias = async () => {
+      try {
+        const response = await fetch('/api/recursos/categorias');
+        if (!response.ok) {
+          throw new Error('Error al cargar las categorías');
+        }
+        const data = await response.json();
+        setCategorias(data);
+      } catch (error) {
+        console.error('Error al cargar categorías:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "No se pudieron cargar las categorías. Por favor, intenta nuevamente.",
+        });
+      } finally {
+        setCargandoCategorias(false);
+      }
+    };
+    
+    fetchCategorias();
+  }, []);
   
   // Configuración del formulario con validación
   const form = useForm<FormValues>({
@@ -168,13 +174,33 @@ export default function SubirRecursoPage() {
   });
   
   // Función para manejar el cambio de categoría
-  const handleCategoriaChange = (value: string) => {
+  const handleCategoriaChange = async (value: string) => {
     form.setValue("categoria", value);
     form.setValue("subcategoria", "");
     
-    const categoriaSeleccionada = categorias.find(cat => cat.nombre === value);
+    // Encontrar la categoría seleccionada por nombre para obtener su ID
+    const categoriaSeleccionada = categorias.find(cat => cat.name === value);
+    
     if (categoriaSeleccionada) {
-      setSubcategorias(categoriaSeleccionada.subcategorias);
+      setCargandoSubcategorias(true);
+      try {
+        const response = await fetch(`/api/recursos/categoria/${categoriaSeleccionada.id}/subcategorias`);
+        if (!response.ok) {
+          throw new Error('Error al cargar subcategorías');
+        }
+        const data = await response.json();
+        setSubcategorias(data);
+      } catch (error) {
+        console.error('Error al cargar subcategorías:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "No se pudieron cargar las subcategorías. Por favor, intenta nuevamente.",
+        });
+        setSubcategorias([]);
+      } finally {
+        setCargandoSubcategorias(false);
+      }
     } else {
       setSubcategorias([]);
     }
@@ -255,12 +281,24 @@ export default function SubirRecursoPage() {
       // Crear un FormData para enviar archivos
       const formData = new FormData();
       
+      // Obtener el ID de la categoría seleccionada
+      const categoriaSeleccionada = categorias.find(cat => cat.name === values.categoria);
+      const subcategoriaSeleccionada = subcategorias.find(subcat => subcat.name === values.subcategoria);
+      
+      if (!categoriaSeleccionada) {
+        throw new Error('Debes seleccionar una categoría válida');
+      }
+      
       // Agregar los valores del formulario
       formData.append('titulo', values.titulo);
       formData.append('descripcion', values.descripcion);
       if (values.contenido) formData.append('contenido', values.contenido);
-      formData.append('categoria', values.categoria);
-      formData.append('subcategoria', values.subcategoria);
+      formData.append('categoria', categoriaSeleccionada.slug); // Usar el slug en lugar del nombre
+      
+      if (subcategoriaSeleccionada) {
+        formData.append('subcategoria', subcategoriaSeleccionada.slug); // Usar el slug en lugar del nombre
+      }
+      
       if (values.enlaceExterno) formData.append('enlaceExterno', values.enlaceExterno);
       if (values.version) formData.append('version', values.version);
       formData.append('esPublico', values.esPublico.toString());
@@ -367,11 +405,17 @@ export default function SubirRecursoPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {categorias.map((categoria) => (
-                              <SelectItem key={categoria.id} value={categoria.nombre}>
-                                {categoria.nombre}
-                              </SelectItem>
-                            ))}
+                            {cargandoCategorias ? (
+                              <SelectItem value="cargando">Cargando categorías...</SelectItem>
+                            ) : categorias.length > 0 ? (
+                              categorias.map((categoria) => (
+                                <SelectItem key={categoria.id} value={categoria.name}>
+                                  {categoria.name}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="no-categories">No hay categorías disponibles</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -396,11 +440,17 @@ export default function SubirRecursoPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {subcategorias.map((subcategoria) => (
-                              <SelectItem key={subcategoria.id} value={subcategoria.nombre}>
-                                {subcategoria.nombre}
-                              </SelectItem>
-                            ))}
+                            {cargandoSubcategorias ? (
+                              <SelectItem value="cargando">Cargando subcategorías...</SelectItem>
+                            ) : subcategorias.length > 0 ? (
+                              subcategorias.map((subcategoria) => (
+                                <SelectItem key={subcategoria.id} value={subcategoria.name}>
+                                  {subcategoria.name}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="no-subcategories">No hay subcategorías disponibles</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
