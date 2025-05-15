@@ -64,7 +64,8 @@ import {
   Box,
   Headphones,
   Cpu,
-  Loader2
+  Loader2,
+  FileQuestion
 } from "lucide-react";
 
 // Datos de categorías de ejemplo
@@ -476,19 +477,101 @@ export default function RecursosPage() {
         
         {/* Contenido de las pestañas */}
         <TabsContent value="destacados" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {recursoDestacados.map((recurso) => (
-              <RecursoCard key={recurso.id} recurso={recurso} />
-            ))}
-          </div>
+          {cargandoRecursos ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
+              <p>Cargando recursos destacados...</p>
+            </div>
+          ) : recursosReales.length === 0 ? (
+            <div className="text-center py-10 border border-dashed rounded-lg">
+              <FileQuestion className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+              <h3 className="text-lg font-medium">No hay recursos disponibles</h3>
+              <p className="text-muted-foreground mt-1">
+                Aún no se han subido recursos o no hay recursos que coincidan con tu búsqueda.
+              </p>
+              {currentUser && (
+                <Button asChild className="mt-4">
+                  <Link href="/subir-recurso">Subir un recurso</Link>
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {recursosReales.filter(r => r.isFeatured).length > 0 ? 
+                recursosReales.filter(r => r.isFeatured).map((recurso) => (
+                  <RecursoCard 
+                    key={recurso.id} 
+                    recurso={{
+                      id: recurso.id,
+                      titulo: recurso.title,
+                      descripcion: recurso.description,
+                      categoria: recurso.categoryId.toString(),
+                      autor: "Usuario " + recurso.userId,
+                      autorVerificado: recurso.isVerified,
+                      imagen: recurso.thumbnailUrl || '/placeholder-image.jpg'
+                    }} 
+                  />
+                )) : 
+                recursosReales.slice(0, 4).map((recurso) => (
+                  <RecursoCard 
+                    key={recurso.id} 
+                    recurso={{
+                      id: recurso.id,
+                      titulo: recurso.title,
+                      descripcion: recurso.description,
+                      categoria: recurso.categoryId.toString(),
+                      autor: "Usuario " + recurso.userId,
+                      autorVerificado: recurso.isVerified,
+                      imagen: recurso.thumbnailUrl || '/placeholder-image.jpg'
+                    }} 
+                  />
+                ))
+              }
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="populares" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {recursosMasPopulares.map((recurso) => (
-              <RecursoCard key={recurso.id} recurso={recurso} />
-            ))}
-          </div>
+          {cargandoRecursos ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
+              <p>Cargando recursos populares...</p>
+            </div>
+          ) : recursosReales.length === 0 ? (
+            <div className="text-center py-10 border border-dashed rounded-lg">
+              <FileQuestion className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+              <h3 className="text-lg font-medium">No hay recursos disponibles</h3>
+              <p className="text-muted-foreground mt-1">
+                Aún no se han subido recursos o no hay recursos que coincidan con tu búsqueda.
+              </p>
+              {currentUser && (
+                <Button asChild className="mt-4">
+                  <Link href="/subir-recurso">Subir un recurso</Link>
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {recursosReales
+                .sort((a, b) => (b.viewCount + b.downloadCount) - (a.viewCount + a.downloadCount))
+                .slice(0, 8)
+                .map((recurso) => (
+                  <RecursoCard 
+                    key={recurso.id} 
+                    recurso={{
+                      id: recurso.id,
+                      titulo: recurso.title,
+                      descripcion: recurso.description,
+                      categoria: recurso.categoryId.toString(),
+                      autor: "Usuario " + recurso.userId,
+                      autorVerificado: recurso.isVerified,
+                      imagen: recurso.thumbnailUrl || '/placeholder-image.jpg'
+                    }} 
+                  />
+                ))
+              }
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="recientes" className="mt-6">
