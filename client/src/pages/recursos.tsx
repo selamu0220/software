@@ -29,6 +29,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   ChevronDown,
   Download,
   ExternalLink,
@@ -211,6 +222,27 @@ export default function RecursosPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoriaActual, setCategoriaActual] = useState<string>("todos");
   const [location] = useLocation();
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [eliminandoRecursos, setEliminandoRecursos] = useState(false);
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+  const { toast } = useToast();
+  
+  // Obtener información del usuario actual
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await fetch('/api/me');
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUser(userData);
+        }
+      } catch (error) {
+        console.error("Error al obtener datos del usuario:", error);
+      }
+    };
+    
+    fetchCurrentUser();
+  }, []);
 
   // Determinar SEO información basada en la URL y filtros
   const getSeoInfo = () => {
@@ -261,6 +293,42 @@ export default function RecursosPage() {
   
   const seoInfo = getSeoInfo();
 
+  // Función para manejar la eliminación de recursos preestablecidos
+  const handleEliminarRecursosPreestablecidos = async () => {
+    if (!currentUser || (currentUser.username !== 'sela_gr' && currentUser.username !== 'redcreativa')) {
+      toast({
+        title: "Acceso denegado",
+        description: "No tienes permisos para realizar esta acción",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setEliminandoRecursos(true);
+    try {
+      const response = await apiRequest('DELETE', '/api/recursos/preestablecidos');
+      const data = await response.json();
+      
+      toast({
+        title: "Operación completada",
+        description: data.message,
+        variant: "default"
+      });
+      
+      // Cerrar el diálogo
+      setAlertDialogOpen(false);
+    } catch (error) {
+      console.error("Error al eliminar recursos:", error);
+      toast({
+        title: "Error",
+        description: "Ha ocurrido un error al eliminar los recursos preestablecidos",
+        variant: "destructive"
+      });
+    } finally {
+      setEliminandoRecursos(false);
+    }
+  };
+  
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -289,6 +357,38 @@ export default function RecursosPage() {
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           Explora los mejores recursos para creadores de contenido: plantillas, efectos, tutoriales y mucho más
         </p>
+        
+        {/* Mostrar botón de eliminación para usuarios autorizados */}
+        {currentUser && (currentUser.username === 'sela_gr' || currentUser.username === 'redcreativa') && (
+          <div className="mt-4">
+            <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="mx-auto" disabled={eliminandoRecursos}>
+                  {eliminandoRecursos ? "Eliminando..." : "Eliminar recursos preestablecidos"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción eliminará todos los recursos preestablecidos del sistema.
+                    Esta operación no se puede deshacer.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleEliminarRecursosPreestablecidos}
+                    disabled={eliminandoRecursos}
+                    className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                  >
+                    {eliminandoRecursos ? "Eliminando..." : "Eliminar"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
         
         {/* Buscador */}
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto mt-6 relative">
