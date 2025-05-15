@@ -37,6 +37,7 @@ import {
   Check,
   FileText,
   Loader2,
+  Upload,
   X,
   LucideImage,
 } from "lucide-react";
