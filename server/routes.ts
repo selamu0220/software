@@ -94,11 +94,39 @@ const videoUpload = multer({
     const extname = filetypes.test(
       path.extname(file.originalname).toLowerCase(),
     );
-
+    
     if (mimetype && extname) {
       return cb(null, true);
     }
     cb(new Error("Error: Solo se permiten videos (webm, mp4, mov, avi)"));
+  },
+});
+
+// Configuración para subida de recursos
+const recursoUpload = multer({
+  storage: fileStorage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB limit para recursos
+  }
+});
+
+// Configuración para subida de imágenes de blog
+const blogImageUpload = multer({
+  storage: fileStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit para imágenes
+  },
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png|gif|webp/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(
+      path.extname(file.originalname).toLowerCase(),
+    );
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error("Error: Solo se permiten imágenes (JPEG, PNG, GIF, WEBP)"));
   },
 });
 
@@ -138,6 +166,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     next();
   };
+  
+  // Rutas para subida de recursos
+  app.post("/api/recursos/upload", requireAuth, recursoUpload.fields([
+    { name: 'archivo', maxCount: 1 },
+    { name: 'imagen', maxCount: 1 }
+  ]), async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+
+      const userId = req.session.userId;
+      const { 
+        titulo, 
+        descripcion,
+        contenido,
+        categoria,
+        subcategoria,
+        enlaceExterno,
+        version,
+        esPublico,
+        tags
+      } = req.body;
+      
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      
+      // Verificar si se proporcionó un archivo o un enlace externo
+      if (!files?.archivo && !enlaceExterno) {
+        return res.status(400).json({ 
+          message: "Debes proporcionar un archivo o un enlace externo" 
+        });
+      }
+      
+      // Verificar si se proporcionó una imagen
+      if (!files?.imagen) {
+        return res.status(400).json({ 
+          message: "Debes proporcionar una imagen de vista previa" 
+        });
+      }
+      
+      // Obtener la categoría de la base de datos
+      const categoriaObj = await storage.getResourceCategoryBySlug(categoria);
+      if (!categoriaObj) {
+        return res.status(400).json({ 
+          message: "La categoría seleccionada no existe" 
+        });
+      }
+      
+      // Obtener la subcategoría si existe
+      let subcategoriaObj = null;
+      if (subcategoria) {
+        subcategoriaObj = await storage.getResourceSubcategoryBySlug(subcategoria);
+        if (!subcategoriaObj) {
+          return res.status(400).json({ 
+            message: "La subcategoría seleccionada no existe" 
+          });
+        }
+      }
+      
+      // Convertir el nombre del recurso a slug
+      const slug = slugify(titulo);
+      
+      // Preparar los datos del recurso
+      const resourceData = {
+        userId,
+        categoryId: categoriaObj.id,
+        subcategoryId: subcategoriaObj ? subcategoriaObj.id : null,
+        title: titulo,
+        slug,
+        description: descripcion,
+        content: contenido || null,
+        thumbnailUrl: files.imagen[0].path,
+        externalUrl: enlaceExterno || null,
+        downloadUrl: files.archivo ? files.archivo[0].path : null,
+        fileSize: files.archivo ? files.archivo[0].size : null,
+        fileType: files.archivo ? files.archivo[0].mimetype : null,
+        version: version || null,
+        tags: tags ? tags.split(',').map((tag: string) => tag.trim()) : [],
+        isVerified: false, // Los recursos necesitan verificación
+        isPublic: esPublico === 'true',
+        isFeatured: false // Solo admin puede marcar como destacado
+      };
+      
+      // Guardar el recurso en la base de datos
+      const resource = await storage.createResource(resourceData);
+      
+      res.status(201).json({ 
+        message: "Recurso subido exitosamente", 
+        resource 
+      });
+    } catch (error) {
+      console.error("Error al subir recurso:", error);
+      res.status(500).json({ message: "Error al subir el recurso" });
+    }
+  });
 
   // Middleware to check if user is premium
   const requirePremium = async (

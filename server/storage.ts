@@ -84,6 +84,21 @@ export interface IStorage {
   getBlogPostCategories(postId: number): Promise<BlogCategory[]>;
   getBlogPostsByCategory(categoryId: number): Promise<BlogPost[]>;
   getBlogPostsForScheduledPublishing(currentDate: Date): Promise<BlogPost[]>;
+  
+  // Resource operations
+  getResourceCategoryBySlug(slug: string): Promise<any | undefined>;
+  getResourceSubcategoryBySlug(slug: string): Promise<any | undefined>;
+  createResource(resourceData: any): Promise<any>;
+  getResource(id: number): Promise<any | undefined>;
+  getResourceBySlug(slug: string): Promise<any | undefined>;
+  getAllResources(limit?: number, offset?: number): Promise<any[]>;
+  getPublicResources(limit?: number, offset?: number): Promise<any[]>;
+  getFeaturedResources(limit?: number): Promise<any[]>;
+  getResourcesByUser(userId: number): Promise<any[]>;
+  getResourcesByCategory(categoryId: number, limit?: number, offset?: number): Promise<any[]>;
+  getResourcesBySubcategory(subcategoryId: number, limit?: number, offset?: number): Promise<any[]>;
+  updateResource(id: number, updates: any): Promise<any>;
+  deleteResource(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -501,6 +516,117 @@ export class MemStorage implements IStorage {
       })
       .sort((a, b) => a.publishedAt.getTime() - b.publishedAt.getTime());
   }
+
+  // Resource operations
+  private resourceCategories = new Map<number, any>();
+  private resourceSubcategories = new Map<number, any>();
+  private resources = new Map<number, any>();
+  private resourceComments = new Map<number, any>();
+  private resourceCategoryIdCounter = 1;
+  private resourceSubcategoryIdCounter = 1;
+  private resourceIdCounter = 1;
+  private resourceCommentIdCounter = 1;
+
+  async getResourceCategoryBySlug(slug: string): Promise<any | undefined> {
+    return Array.from(this.resourceCategories.values()).find(
+      (category) => category.slug === slug,
+    );
+  }
+
+  async getResourceSubcategoryBySlug(slug: string): Promise<any | undefined> {
+    return Array.from(this.resourceSubcategories.values()).find(
+      (subcategory) => subcategory.slug === slug,
+    );
+  }
+
+  async createResource(resourceData: any): Promise<any> {
+    const id = this.resourceIdCounter++;
+    const now = new Date();
+    
+    const resource = {
+      id,
+      ...resourceData,
+      createdAt: now,
+      updatedAt: now,
+      viewCount: 0,
+      downloadCount: 0,
+      likesCount: 0,
+      dislikesCount: 0,
+    };
+    
+    this.resources.set(id, resource);
+    return resource;
+  }
+
+  async getResource(id: number): Promise<any | undefined> {
+    return this.resources.get(id);
+  }
+
+  async getResourceBySlug(slug: string): Promise<any | undefined> {
+    return Array.from(this.resources.values()).find(
+      (resource) => resource.slug === slug,
+    );
+  }
+
+  async getAllResources(limit = 10, offset = 0): Promise<any[]> {
+    return Array.from(this.resources.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(offset, offset + limit);
+  }
+
+  async getPublicResources(limit = 10, offset = 0): Promise<any[]> {
+    return Array.from(this.resources.values())
+      .filter((resource) => resource.isPublic)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(offset, offset + limit);
+  }
+
+  async getFeaturedResources(limit = 5): Promise<any[]> {
+    return Array.from(this.resources.values())
+      .filter((resource) => resource.isPublic && resource.isFeatured)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
+  async getResourcesByUser(userId: number): Promise<any[]> {
+    return Array.from(this.resources.values())
+      .filter((resource) => resource.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getResourcesByCategory(categoryId: number, limit = 10, offset = 0): Promise<any[]> {
+    return Array.from(this.resources.values())
+      .filter((resource) => resource.categoryId === categoryId && resource.isPublic)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(offset, offset + limit);
+  }
+
+  async getResourcesBySubcategory(subcategoryId: number, limit = 10, offset = 0): Promise<any[]> {
+    return Array.from(this.resources.values())
+      .filter((resource) => resource.subcategoryId === subcategoryId && resource.isPublic)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(offset, offset + limit);
+  }
+
+  async updateResource(id: number, updates: any): Promise<any> {
+    const resource = await this.getResource(id);
+    if (!resource) {
+      throw new Error(`Resource with id ${id} not found`);
+    }
+    
+    const updatedResource = { 
+      ...resource, 
+      ...updates,
+      updatedAt: new Date() 
+    };
+    
+    this.resources.set(id, updatedResource);
+    return updatedResource;
+  }
+
+  async deleteResource(id: number): Promise<boolean> {
+    return this.resources.delete(id);
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -508,6 +634,94 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
+  }
+  
+  // Recurso operaciones - implementación temporal, usar tablas reales en producción
+  async getResourceCategoryBySlug(slug: string): Promise<any | undefined> {
+    // Implementación temporal para categorías de recursos
+    const categories = [
+      { id: 1, name: 'IA', slug: 'ia', description: 'Herramientas de inteligencia artificial' },
+      { id: 2, name: 'Plugins', slug: 'plugins', description: 'Plugins para diferentes plataformas' },
+      { id: 3, name: 'Software', slug: 'software', description: 'Software para creadores' },
+      { id: 4, name: 'Extensiones', slug: 'extensiones', description: 'Extensiones para navegadores' }
+    ];
+    return categories.find(c => c.slug === slug);
+  }
+
+  async getResourceSubcategoryBySlug(slug: string): Promise<any | undefined> {
+    // Implementación temporal para subcategorías
+    const subcategories = [
+      { id: 1, categoryId: 1, name: 'Generación de texto', slug: 'generacion-texto' },
+      { id: 2, categoryId: 1, name: 'Generación de imágenes', slug: 'generacion-imagenes' },
+      { id: 3, categoryId: 2, name: 'Plugins para Premiere', slug: 'plugins-premiere' },
+      { id: 4, categoryId: 2, name: 'Plugins para After Effects', slug: 'plugins-after-effects' },
+      { id: 5, categoryId: 3, name: 'Editores de video', slug: 'editores-video' },
+      { id: 6, categoryId: 3, name: 'Teleprompters', slug: 'teleprompters' },
+      { id: 7, categoryId: 4, name: 'Extensiones para Chrome', slug: 'extensiones-chrome' },
+      { id: 8, categoryId: 4, name: 'Extensiones para Firefox', slug: 'extensiones-firefox' }
+    ];
+    return subcategories.find(s => s.slug === slug);
+  }
+
+  async createResource(resourceData: any): Promise<any> {
+    // Implementación temporal, debe usar tablas reales en producción
+    const resourceWithId = {
+      ...resourceData,
+      id: Date.now(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    return resourceWithId;
+  }
+
+  async getResource(id: number): Promise<any | undefined> {
+    // Implementación temporal
+    return undefined;
+  }
+
+  async getResourceBySlug(slug: string): Promise<any | undefined> {
+    // Implementación temporal
+    return undefined;
+  }
+
+  async getAllResources(limit?: number, offset?: number): Promise<any[]> {
+    // Implementación temporal
+    return [];
+  }
+
+  async getPublicResources(limit?: number, offset?: number): Promise<any[]> {
+    // Implementación temporal
+    return [];
+  }
+
+  async getFeaturedResources(limit?: number): Promise<any[]> {
+    // Implementación temporal
+    return [];
+  }
+
+  async getResourcesByUser(userId: number): Promise<any[]> {
+    // Implementación temporal
+    return [];
+  }
+
+  async getResourcesByCategory(categoryId: number, limit?: number, offset?: number): Promise<any[]> {
+    // Implementación temporal
+    return [];
+  }
+
+  async getResourcesBySubcategory(subcategoryId: number, limit?: number, offset?: number): Promise<any[]> {
+    // Implementación temporal
+    return [];
+  }
+
+  async updateResource(id: number, updates: any): Promise<any> {
+    // Implementación temporal
+    return { id, ...updates };
+  }
+
+  async deleteResource(id: number): Promise<boolean> {
+    // Implementación temporal
+    return true;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
