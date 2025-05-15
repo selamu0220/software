@@ -1820,11 +1820,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (onlyPublished) {
         posts = await storage.getPublishedBlogPosts(limit, offset);
       } else {
-        posts = await storage.getAllBlogPosts(limit, offset);
+        // Verificamos si el usuario está autenticado para mostrar sus borradores
+        if (req.session.userId) {
+          // Si está autenticado, mostrar todos los artículos (incluyendo sus borradores)
+          posts = await storage.getAllBlogPosts(limit, offset);
+        } else {
+          // Si no está autenticado, mostrar solo los publicados
+          posts = await storage.getPublishedBlogPosts(limit, offset);
+        }
       }
       
+      // Verificar artículos programados con fecha pasada y marcarlos como publicados
+      const now = new Date();
+      const updatedPosts = await Promise.all(posts.map(async (post) => {
+        if (!post.published && post.publishedAt && new Date(post.publishedAt) <= now) {
+          // Actualizar el post para marcarlo como publicado
+          await storage.updateBlogPost(post.id, {
+            published: true
+          });
+          post.published = true;
+        }
+        return post;
+      }));
+      
       // Enriquecer los posts con sus categorías
-      const enrichedPosts = await Promise.all(posts.map(async (post) => {
+      const enrichedPosts = await Promise.all(updatedPosts.map(async (post) => {
         const categories = await storage.getBlogPostCategories(post.id);
         return {
           ...post,
@@ -1861,9 +1881,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Artículo no encontrado" });
       }
       
-      // Si el post no está publicado, solo el autor o admin puede verlo
-      if (!post.published && (!req.session.userId || post.userId !== req.session.userId)) {
+      // Si hay una fecha de publicación programada y ya pasó esa fecha, considerar el artículo como publicado
+      const isScheduledAndPastDate = post.publishedAt && new Date(post.publishedAt) <= new Date();
+      
+      // Si el post no está publicado y no tiene fecha de publicación pasada, solo el autor puede verlo
+      if (!post.published && !isScheduledAndPastDate && (!req.session.userId || post.userId !== req.session.userId)) {
         return res.status(403).json({ message: "No tienes permiso para ver este artículo" });
+      }
+      
+      // Si el post tiene fecha de publicación programada que ya pasó, actualizarlo como publicado
+      if (!post.published && isScheduledAndPastDate) {
+        await storage.updateBlogPost(post.id, { published: true });
+        post.published = true;
       }
       
       // Obtener categorías del post
@@ -1888,9 +1917,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Artículo no encontrado" });
       }
       
-      // Si el post no está publicado, solo el autor o admin puede verlo
-      if (!post.published && (!req.session.userId || post.userId !== req.session.userId)) {
+      // Si hay una fecha de publicación programada y ya pasó esa fecha, considerar el artículo como publicado
+      const isScheduledAndPastDate = post.publishedAt && new Date(post.publishedAt) <= new Date();
+      
+      // Si el post no está publicado y no tiene fecha de publicación pasada, solo el autor puede verlo
+      if (!post.published && !isScheduledAndPastDate && (!req.session.userId || post.userId !== req.session.userId)) {
         return res.status(403).json({ message: "No tienes permiso para ver este artículo" });
+      }
+      
+      // Si el post tiene fecha de publicación programada que ya pasó, actualizarlo como publicado
+      if (!post.published && isScheduledAndPastDate) {
+        await storage.updateBlogPost(post.id, { published: true });
+        post.published = true;
       }
       
       // Obtener categorías del post
