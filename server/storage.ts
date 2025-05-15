@@ -44,7 +44,7 @@ import {
   type InsertResourceSubcategory
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, SQL, sql, desc, asc, isNotNull, lte, gt, gte } from "drizzle-orm";
+import { eq, and, SQL, sql, desc, asc, isNotNull, lte, gt, gte, count } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
