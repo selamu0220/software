@@ -72,18 +72,12 @@ const categorias = [
   { id: 6, name: "Herramientas", slug: "herramientas" },
 ];
 
-// Esquema de validación simplificado para el formulario
+// Esquema de validación ultra simplificado
 const formSchema = z.object({
-  titulo: z.string().min(3, {
-    message: "El título debe tener al menos 3 caracteres",
-  }).max(100, {
-    message: "El título no puede exceder los 100 caracteres",
+  titulo: z.string().min(2, {
+    message: "El título debe tener al menos 2 caracteres",
   }),
-  descripcion: z.string().min(10, {
-    message: "La descripción debe tener al menos 10 caracteres",
-  }).max(500, {
-    message: "La descripción no puede exceder los 500 caracteres",
-  }).optional(),
+  descripcion: z.string().optional(),
   categoria: z.string({
     required_error: "Por favor selecciona una categoría",
   }),

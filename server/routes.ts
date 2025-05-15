@@ -198,19 +198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       
-      // Verificar si se proporcionó un archivo o un enlace externo
-      if (!files?.archivo && !enlaceExterno) {
-        return res.status(400).json({ 
-          message: "Debes proporcionar un archivo o un enlace externo" 
-        });
-      }
-      
-      // Verificar si se proporcionó una imagen
-      if (!files?.imagen) {
-        return res.status(400).json({ 
-          message: "Debes proporcionar una imagen de vista previa" 
-        });
-      }
+      // No requerimos obligatoriamente un archivo o un enlace externo
       
       // Obtener la categoría de la base de datos
       const categoriaObj = await storage.getResourceCategoryBySlug(categoria);
@@ -220,16 +208,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Obtener la subcategoría si existe
+      // No necesitamos subcategorías
       let subcategoriaObj = null;
-      if (subcategoria) {
-        subcategoriaObj = await storage.getResourceSubcategoryBySlug(subcategoria);
-        if (!subcategoriaObj) {
-          return res.status(400).json({ 
-            message: "La subcategoría seleccionada no existe" 
-          });
-        }
-      }
       
       // Convertir el nombre del recurso a slug
       const slug = slugify(titulo);
@@ -238,17 +218,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const resourceData = {
         userId,
         categoryId: categoriaObj.id,
-        subcategoryId: subcategoriaObj ? subcategoriaObj.id : null,
+        subcategoryId: null,
         title: titulo,
         slug,
-        description: descripcion,
-        content: contenido || null,
-        thumbnailUrl: files.imagen[0].path,
+        description: descripcion || "Sin descripción",
+        content: null,
+        thumbnailUrl: files.imagen ? files.imagen[0].path : null,
         externalUrl: enlaceExterno || null,
         downloadUrl: files.archivo ? files.archivo[0].path : null,
         fileSize: files.archivo ? files.archivo[0].size : null,
         fileType: files.archivo ? files.archivo[0].mimetype : null,
-        version: version || null,
+        version: null,
         tags: tags ? tags.split(',').map((tag: string) => tag.trim()) : [],
         isVerified: true, // Los recursos se publican sin necesidad de verificación
         isPublic: true, // Todos los recursos son públicos por defecto
