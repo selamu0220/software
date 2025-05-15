@@ -25,6 +25,7 @@ import BlogEditorPage from "@/pages/blog-editor";
 import MisGuiones from "@/pages/mis-guiones";
 import ScriptEditor from "@/pages/script-editor";
 import Testimonios from "@/pages/testimonios";
+import IdeaPublica from "@/pages/idea-publica";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AssistantSidebar } from "@/components/ui/assistant-sidebar";
@@ -123,6 +124,9 @@ function App() {
             
             {/* Página de testimonios y opiniones */}
             <Route path="/testimonios" component={() => <Testimonios />} />
+            
+            {/* Ruta para ideas de video públicas con URLs amigables para SEO */}
+            <Route path="/ideas/:slug" component={IdeaPublica} />
             
             <Route component={NotFound} />
           </Switch>

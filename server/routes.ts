@@ -808,6 +808,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(idea);
     } catch (error) {
       console.error("Error al obtener idea pública:", error);
+      res.status(500).json({ message: "Error al obtener idea de video" });
+    }
+  });
+  
+  // Endpoint para cambiar la visibilidad de una idea (público/privado)
+  app.patch("/api/video-ideas/:id/visibility", requireAuth, async (req, res) => {
+    try {
+      const ideaId = parseInt(req.params.id);
+      const { isPublic } = req.body;
+      
+      if (typeof isPublic !== 'boolean') {
+        return res.status(400).json({ message: "El parámetro isPublic debe ser un booleano" });
+      }
+      
+      // Verificar que la idea existe y pertenece al usuario
+      const idea = await storage.getVideoIdea(ideaId);
+      
+      if (!idea) {
+        return res.status(404).json({ message: "Idea de video no encontrada" });
+      }
+      
+      if (idea.userId !== req.session.userId) {
+        return res.status(403).json({ message: "No tienes permiso para modificar esta idea" });
+      }
+      
+      // Cambiar la visibilidad
+      const updatedIdea = await storage.toggleVideoIdeaVisibility(ideaId, isPublic);
+      
+      res.json({
+        message: isPublic ? "Idea compartida públicamente" : "Idea configurada como privada",
+        videoIdea: updatedIdea
+      });
+    } catch (error) {
+      console.error("Error al cambiar visibilidad:", error);
       res.status(500).json({ message: "Error fetching public video idea" });
     }
   });
