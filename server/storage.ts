@@ -1209,6 +1209,270 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
   }
+
+  // Métodos para gestionar colecciones de recursos
+  async createResourceCollection(collection: InsertUserResourceCollection): Promise<UserResourceCollection> {
+    try {
+      const [result] = await db.insert(userResourceCollections).values(collection).returning();
+      return result;
+    } catch (error) {
+      console.error("Error creando colección de recursos:", error);
+      throw error;
+    }
+  }
+  
+  async getResourceCollectionsByUser(userId: number): Promise<UserResourceCollection[]> {
+    try {
+      return await db.select()
+        .from(userResourceCollections)
+        .where(eq(userResourceCollections.userId, userId))
+        .orderBy(asc(userResourceCollections.name));
+    } catch (error) {
+      console.error("Error obteniendo colecciones de recursos:", error);
+      return [];
+    }
+  }
+  
+  async getResourceCollection(id: number): Promise<UserResourceCollection | undefined> {
+    try {
+      const [result] = await db.select()
+        .from(userResourceCollections)
+        .where(eq(userResourceCollections.id, id));
+      return result;
+    } catch (error) {
+      console.error("Error obteniendo colección de recursos:", error);
+      return undefined;
+    }
+  }
+  
+  async updateResourceCollection(
+    id: number, 
+    data: Partial<InsertUserResourceCollection>
+  ): Promise<UserResourceCollection> {
+    try {
+      const [result] = await db.update(userResourceCollections)
+        .set(data)
+        .where(eq(userResourceCollections.id, id))
+        .returning();
+      return result;
+    } catch (error) {
+      console.error("Error actualizando colección de recursos:", error);
+      throw error;
+    }
+  }
+  
+  async deleteResourceCollection(id: number): Promise<boolean> {
+    try {
+      // Primero eliminamos todos los items de la colección
+      await db.delete(userResourceItems)
+        .where(eq(userResourceItems.collectionId, id));
+      
+      // Luego eliminamos la colección
+      const result = await db.delete(userResourceCollections)
+        .where(eq(userResourceCollections.id, id));
+      
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error("Error eliminando colección de recursos:", error);
+      return false;
+    }
+  }
+  
+  // Métodos para gestionar elementos de colecciones de recursos
+  async addResourceToCollection(item: InsertUserResourceItem): Promise<UserResourceItem> {
+    try {
+      const [result] = await db.insert(userResourceItems).values(item).returning();
+      return result;
+    } catch (error) {
+      console.error("Error añadiendo recurso a colección:", error);
+      throw error;
+    }
+  }
+  
+  async getResourceItemsByCollection(collectionId: number): Promise<(UserResourceItem & { resource: Resource })[]> {
+    try {
+      return await db.select({
+        ...userResourceItems,
+        resource: resources
+      })
+      .from(userResourceItems)
+      .innerJoin(resources, eq(userResourceItems.resourceId, resources.id))
+      .where(eq(userResourceItems.collectionId, collectionId))
+      .orderBy(asc(resources.title));
+    } catch (error) {
+      console.error("Error obteniendo recursos de colección:", error);
+      return [];
+    }
+  }
+  
+  async getResourceItem(id: number): Promise<UserResourceItem | undefined> {
+    try {
+      const [result] = await db.select()
+        .from(userResourceItems)
+        .where(eq(userResourceItems.id, id));
+      return result;
+    } catch (error) {
+      console.error("Error obteniendo item de colección:", error);
+      return undefined;
+    }
+  }
+  
+  async updateResourceItem(
+    id: number, 
+    data: Partial<InsertUserResourceItem>
+  ): Promise<UserResourceItem> {
+    try {
+      const [result] = await db.update(userResourceItems)
+        .set(data)
+        .where(eq(userResourceItems.id, id))
+        .returning();
+      return result;
+    } catch (error) {
+      console.error("Error actualizando item de colección:", error);
+      throw error;
+    }
+  }
+  
+  async removeResourceFromCollection(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(userResourceItems)
+        .where(eq(userResourceItems.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error("Error eliminando recurso de colección:", error);
+      return false;
+    }
+  }
+  
+  // Métodos para gestionar colecciones de guiones
+  async createScriptCollection(collection: InsertUserScriptCollection): Promise<UserScriptCollection> {
+    try {
+      const [result] = await db.insert(userScriptCollections).values(collection).returning();
+      return result;
+    } catch (error) {
+      console.error("Error creando colección de guiones:", error);
+      throw error;
+    }
+  }
+  
+  async getScriptCollectionsByUser(userId: number): Promise<UserScriptCollection[]> {
+    try {
+      return await db.select()
+        .from(userScriptCollections)
+        .where(eq(userScriptCollections.userId, userId))
+        .orderBy(asc(userScriptCollections.name));
+    } catch (error) {
+      console.error("Error obteniendo colecciones de guiones:", error);
+      return [];
+    }
+  }
+  
+  async getScriptCollection(id: number): Promise<UserScriptCollection | undefined> {
+    try {
+      const [result] = await db.select()
+        .from(userScriptCollections)
+        .where(eq(userScriptCollections.id, id));
+      return result;
+    } catch (error) {
+      console.error("Error obteniendo colección de guiones:", error);
+      return undefined;
+    }
+  }
+  
+  async updateScriptCollection(
+    id: number, 
+    data: Partial<InsertUserScriptCollection>
+  ): Promise<UserScriptCollection> {
+    try {
+      const [result] = await db.update(userScriptCollections)
+        .set(data)
+        .where(eq(userScriptCollections.id, id))
+        .returning();
+      return result;
+    } catch (error) {
+      console.error("Error actualizando colección de guiones:", error);
+      throw error;
+    }
+  }
+  
+  async deleteScriptCollection(id: number): Promise<boolean> {
+    try {
+      // Primero eliminamos todos los guiones de la colección
+      await db.delete(userScripts)
+        .where(eq(userScripts.collectionId, id));
+      
+      // Luego eliminamos la colección
+      const result = await db.delete(userScriptCollections)
+        .where(eq(userScriptCollections.id, id));
+      
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error("Error eliminando colección de guiones:", error);
+      return false;
+    }
+  }
+  
+  // Métodos para gestionar guiones en colecciones
+  async addScriptToCollection(script: InsertUserScript): Promise<UserScript> {
+    try {
+      const [result] = await db.insert(userScripts).values(script).returning();
+      return result;
+    } catch (error) {
+      console.error("Error añadiendo guión a colección:", error);
+      throw error;
+    }
+  }
+  
+  async getScriptsByCollection(collectionId: number): Promise<UserScript[]> {
+    try {
+      return await db.select()
+        .from(userScripts)
+        .where(eq(userScripts.collectionId, collectionId))
+        .orderBy(asc(userScripts.title));
+    } catch (error) {
+      console.error("Error obteniendo guiones de colección:", error);
+      return [];
+    }
+  }
+  
+  async getScript(id: number): Promise<UserScript | undefined> {
+    try {
+      const [result] = await db.select()
+        .from(userScripts)
+        .where(eq(userScripts.id, id));
+      return result;
+    } catch (error) {
+      console.error("Error obteniendo guión:", error);
+      return undefined;
+    }
+  }
+  
+  async updateScript(
+    id: number, 
+    data: Partial<InsertUserScript>
+  ): Promise<UserScript> {
+    try {
+      const [result] = await db.update(userScripts)
+        .set(data)
+        .where(eq(userScripts.id, id))
+        .returning();
+      return result;
+    } catch (error) {
+      console.error("Error actualizando guión:", error);
+      throw error;
+    }
+  }
+  
+  async deleteScript(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(userScripts)
+        .where(eq(userScripts.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error("Error eliminando guión:", error);
+      return false;
+    }
+  }
 }
 
 // Use DatabaseStorage instead of MemStorage

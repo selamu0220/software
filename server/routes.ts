@@ -17,10 +17,19 @@ import {
   insertBlogPostSchema,
   insertBlogCategorySchema,
   insertBlogPostCategorySchema,
+  insertUserResourceCollectionSchema,
+  insertUserResourceItemSchema,
+  insertUserScriptCollectionSchema,
+  insertUserScriptSchema,
   UserVideo,
   VideoIdea,
   BlogPost,
   BlogCategory,
+  UserResourceCollection,
+  UserResourceItem,
+  UserScriptCollection,
+  UserScript,
+  Resource
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import session from "express-session";
@@ -2488,6 +2497,460 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error al publicar artículos programados:", error);
     }
   }
+
+  // =================================================
+  // RUTAS PARA BIBLIOTECAS PERSONALES DE RECURSOS
+  // =================================================
+  
+  // Ruta para crear una colección de recursos
+  app.post("/api/resource-collections", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const collection = insertUserResourceCollectionSchema.parse({
+        ...req.body,
+        userId
+      });
+      
+      const newCollection = await storage.createResourceCollection(collection);
+      res.status(201).json(newCollection);
+    } catch (error: any) {
+      console.error("Error creando colección de recursos:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Obtener todas las colecciones de un usuario
+  app.get("/api/resource-collections", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const collections = await storage.getResourceCollectionsByUser(userId);
+      res.json(collections);
+    } catch (error: any) {
+      console.error("Error obteniendo colecciones de recursos:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Obtener una colección específica
+  app.get("/api/resource-collections/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const collectionId = parseInt(req.params.id);
+      
+      const collection = await storage.getResourceCollection(collectionId);
+      
+      if (!collection) {
+        return res.status(404).json({ message: "Colección no encontrada" });
+      }
+      
+      // Verificar que la colección pertenece al usuario
+      if (collection.userId !== userId) {
+        return res.status(403).json({ message: "No tienes permiso para acceder a esta colección" });
+      }
+      
+      // Obtener los recursos de la colección
+      const resourceItems = await storage.getResourceItemsByCollection(collectionId);
+      
+      res.json({
+        collection,
+        items: resourceItems
+      });
+    } catch (error: any) {
+      console.error("Error obteniendo colección de recursos:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Actualizar una colección
+  app.put("/api/resource-collections/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const collectionId = parseInt(req.params.id);
+      
+      // Verificar que la colección existe y pertenece al usuario
+      const collection = await storage.getResourceCollection(collectionId);
+      
+      if (!collection) {
+        return res.status(404).json({ message: "Colección no encontrada" });
+      }
+      
+      if (collection.userId !== userId) {
+        return res.status(403).json({ message: "No tienes permiso para modificar esta colección" });
+      }
+      
+      // Actualizar la colección
+      const updatedCollection = await storage.updateResourceCollection(
+        collectionId, 
+        req.body
+      );
+      
+      res.json(updatedCollection);
+    } catch (error: any) {
+      console.error("Error actualizando colección de recursos:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Eliminar una colección
+  app.delete("/api/resource-collections/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const collectionId = parseInt(req.params.id);
+      
+      // Verificar que la colección existe y pertenece al usuario
+      const collection = await storage.getResourceCollection(collectionId);
+      
+      if (!collection) {
+        return res.status(404).json({ message: "Colección no encontrada" });
+      }
+      
+      if (collection.userId !== userId) {
+        return res.status(403).json({ message: "No tienes permiso para eliminar esta colección" });
+      }
+      
+      // Eliminar la colección
+      await storage.deleteResourceCollection(collectionId);
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error eliminando colección de recursos:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Añadir un recurso a una colección
+  app.post("/api/resource-collections/:id/items", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const collectionId = parseInt(req.params.id);
+      
+      // Verificar que la colección existe y pertenece al usuario
+      const collection = await storage.getResourceCollection(collectionId);
+      
+      if (!collection) {
+        return res.status(404).json({ message: "Colección no encontrada" });
+      }
+      
+      if (collection.userId !== userId) {
+        return res.status(403).json({ message: "No tienes permiso para modificar esta colección" });
+      }
+      
+      // Validar y crear el ítem
+      const item = insertUserResourceItemSchema.parse({
+        ...req.body,
+        collectionId
+      });
+      
+      const newItem = await storage.addResourceToCollection(item);
+      res.status(201).json(newItem);
+    } catch (error: any) {
+      console.error("Error añadiendo recurso a colección:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Actualizar un ítem de colección
+  app.put("/api/resource-items/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const itemId = parseInt(req.params.id);
+      
+      // Obtener el ítem
+      const item = await storage.getResourceItem(itemId);
+      
+      if (!item) {
+        return res.status(404).json({ message: "Ítem no encontrado" });
+      }
+      
+      // Verificar que la colección pertenece al usuario
+      const collection = await storage.getResourceCollection(item.collectionId);
+      
+      if (!collection || collection.userId !== userId) {
+        return res.status(403).json({ message: "No tienes permiso para modificar este ítem" });
+      }
+      
+      // Actualizar el ítem
+      const updatedItem = await storage.updateResourceItem(
+        itemId, 
+        req.body
+      );
+      
+      res.json(updatedItem);
+    } catch (error: any) {
+      console.error("Error actualizando ítem de colección:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Eliminar un ítem de colección
+  app.delete("/api/resource-items/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const itemId = parseInt(req.params.id);
+      
+      // Obtener el ítem
+      const item = await storage.getResourceItem(itemId);
+      
+      if (!item) {
+        return res.status(404).json({ message: "Ítem no encontrado" });
+      }
+      
+      // Verificar que la colección pertenece al usuario
+      const collection = await storage.getResourceCollection(item.collectionId);
+      
+      if (!collection || collection.userId !== userId) {
+        return res.status(403).json({ message: "No tienes permiso para eliminar este ítem" });
+      }
+      
+      // Eliminar el ítem
+      await storage.removeResourceFromCollection(itemId);
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error eliminando ítem de colección:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // =================================================
+  // RUTAS PARA BIBLIOTECAS PERSONALES DE GUIONES
+  // =================================================
+  
+  // Ruta para crear una colección de guiones
+  app.post("/api/script-collections", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const collection = insertUserScriptCollectionSchema.parse({
+        ...req.body,
+        userId
+      });
+      
+      const newCollection = await storage.createScriptCollection(collection);
+      res.status(201).json(newCollection);
+    } catch (error: any) {
+      console.error("Error creando colección de guiones:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Obtener todas las colecciones de guiones de un usuario
+  app.get("/api/script-collections", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const collections = await storage.getScriptCollectionsByUser(userId);
+      res.json(collections);
+    } catch (error: any) {
+      console.error("Error obteniendo colecciones de guiones:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Obtener una colección de guiones específica
+  app.get("/api/script-collections/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const collectionId = parseInt(req.params.id);
+      
+      const collection = await storage.getScriptCollection(collectionId);
+      
+      if (!collection) {
+        return res.status(404).json({ message: "Colección no encontrada" });
+      }
+      
+      // Verificar que la colección pertenece al usuario
+      if (collection.userId !== userId) {
+        return res.status(403).json({ message: "No tienes permiso para acceder a esta colección" });
+      }
+      
+      // Obtener los guiones de la colección
+      const scripts = await storage.getScriptsByCollection(collectionId);
+      
+      res.json({
+        collection,
+        scripts
+      });
+    } catch (error: any) {
+      console.error("Error obteniendo colección de guiones:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Actualizar una colección de guiones
+  app.put("/api/script-collections/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const collectionId = parseInt(req.params.id);
+      
+      // Verificar que la colección existe y pertenece al usuario
+      const collection = await storage.getScriptCollection(collectionId);
+      
+      if (!collection) {
+        return res.status(404).json({ message: "Colección no encontrada" });
+      }
+      
+      if (collection.userId !== userId) {
+        return res.status(403).json({ message: "No tienes permiso para modificar esta colección" });
+      }
+      
+      // Actualizar la colección
+      const updatedCollection = await storage.updateScriptCollection(
+        collectionId, 
+        req.body
+      );
+      
+      res.json(updatedCollection);
+    } catch (error: any) {
+      console.error("Error actualizando colección de guiones:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Eliminar una colección de guiones
+  app.delete("/api/script-collections/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const collectionId = parseInt(req.params.id);
+      
+      // Verificar que la colección existe y pertenece al usuario
+      const collection = await storage.getScriptCollection(collectionId);
+      
+      if (!collection) {
+        return res.status(404).json({ message: "Colección no encontrada" });
+      }
+      
+      if (collection.userId !== userId) {
+        return res.status(403).json({ message: "No tienes permiso para eliminar esta colección" });
+      }
+      
+      // Eliminar la colección
+      await storage.deleteScriptCollection(collectionId);
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error eliminando colección de guiones:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Añadir un guión a una colección
+  app.post("/api/script-collections/:id/scripts", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const collectionId = parseInt(req.params.id);
+      
+      // Verificar que la colección existe y pertenece al usuario
+      const collection = await storage.getScriptCollection(collectionId);
+      
+      if (!collection) {
+        return res.status(404).json({ message: "Colección no encontrada" });
+      }
+      
+      if (collection.userId !== userId) {
+        return res.status(403).json({ message: "No tienes permiso para modificar esta colección" });
+      }
+      
+      // Validar y crear el guión
+      const script = insertUserScriptSchema.parse({
+        ...req.body,
+        collectionId
+      });
+      
+      const newScript = await storage.addScriptToCollection(script);
+      res.status(201).json(newScript);
+    } catch (error: any) {
+      console.error("Error añadiendo guión a colección:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Obtener un guión específico
+  app.get("/api/scripts/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const scriptId = parseInt(req.params.id);
+      
+      const script = await storage.getScript(scriptId);
+      
+      if (!script) {
+        return res.status(404).json({ message: "Guión no encontrado" });
+      }
+      
+      // Verificar que el guión pertenece a una colección del usuario
+      const collection = await storage.getScriptCollection(script.collectionId);
+      
+      if (!collection || collection.userId !== userId) {
+        return res.status(403).json({ message: "No tienes permiso para acceder a este guión" });
+      }
+      
+      res.json(script);
+    } catch (error: any) {
+      console.error("Error obteniendo guión:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Actualizar un guión
+  app.put("/api/scripts/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const scriptId = parseInt(req.params.id);
+      
+      // Obtener el guión
+      const script = await storage.getScript(scriptId);
+      
+      if (!script) {
+        return res.status(404).json({ message: "Guión no encontrado" });
+      }
+      
+      // Verificar que la colección pertenece al usuario
+      const collection = await storage.getScriptCollection(script.collectionId);
+      
+      if (!collection || collection.userId !== userId) {
+        return res.status(403).json({ message: "No tienes permiso para modificar este guión" });
+      }
+      
+      // Actualizar el guión
+      const updatedScript = await storage.updateScript(
+        scriptId, 
+        req.body
+      );
+      
+      res.json(updatedScript);
+    } catch (error: any) {
+      console.error("Error actualizando guión:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Eliminar un guión
+  app.delete("/api/scripts/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const scriptId = parseInt(req.params.id);
+      
+      // Obtener el guión
+      const script = await storage.getScript(scriptId);
+      
+      if (!script) {
+        return res.status(404).json({ message: "Guión no encontrado" });
+      }
+      
+      // Verificar que la colección pertenece al usuario
+      const collection = await storage.getScriptCollection(script.collectionId);
+      
+      if (!collection || collection.userId !== userId) {
+        return res.status(403).json({ message: "No tienes permiso para eliminar este guión" });
+      }
+      
+      // Eliminar el guión
+      await storage.deleteScript(scriptId);
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error eliminando guión:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
 
   // Iniciar el programador de publicación automática
   scheduleAutomaticPublishing();
