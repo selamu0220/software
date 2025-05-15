@@ -6,6 +6,11 @@ import {
   blogPosts,
   blogCategories,
   blogPostCategories,
+  userResourceCollections,
+  userResourceItems,
+  userScriptCollections,
+  userScripts,
+  resources,
   type User, 
   type InsertUser, 
   type VideoIdea, 
@@ -20,7 +25,16 @@ import {
   type BlogCategory,
   type InsertBlogCategory,
   type BlogPostCategory,
-  type InsertBlogPostCategory
+  type InsertBlogPostCategory,
+  type UserResourceCollection,
+  type InsertUserResourceCollection,
+  type UserResourceItem,
+  type InsertUserResourceItem,
+  type UserScriptCollection,
+  type InsertUserScriptCollection,
+  type UserScript,
+  type InsertUserScript,
+  type Resource
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, SQL, sql, desc, asc, isNotNull, lte, gt, gte } from "drizzle-orm";
@@ -48,6 +62,34 @@ export interface IStorage {
   createCalendarEntry(entry: InsertCalendarEntry): Promise<CalendarEntry>;
   getCalendarEntry(id: number): Promise<CalendarEntry | undefined>;
   getCalendarEntriesByUser(userId: number): Promise<CalendarEntry[]>;
+  
+  // Biblioteca personal de recursos - Operaciones
+  createResourceCollection(collection: InsertUserResourceCollection): Promise<UserResourceCollection>;
+  getResourceCollectionsByUser(userId: number): Promise<UserResourceCollection[]>;
+  getResourceCollection(id: number): Promise<UserResourceCollection | undefined>;
+  updateResourceCollection(id: number, data: Partial<InsertUserResourceCollection>): Promise<UserResourceCollection>;
+  deleteResourceCollection(id: number): Promise<boolean>;
+  
+  // Operaciones para elementos de colecciones de recursos
+  addResourceToCollection(item: InsertUserResourceItem): Promise<UserResourceItem>;
+  getResourceItemsByCollection(collectionId: number): Promise<(UserResourceItem & { resource: Resource })[]>;
+  getResourceItem(id: number): Promise<UserResourceItem | undefined>;
+  updateResourceItem(id: number, data: Partial<InsertUserResourceItem>): Promise<UserResourceItem>;
+  removeResourceFromCollection(id: number): Promise<boolean>;
+  
+  // Biblioteca personal de guiones - Operaciones
+  createScriptCollection(collection: InsertUserScriptCollection): Promise<UserScriptCollection>;
+  getScriptCollectionsByUser(userId: number): Promise<UserScriptCollection[]>;
+  getScriptCollection(id: number): Promise<UserScriptCollection | undefined>;
+  updateScriptCollection(id: number, data: Partial<InsertUserScriptCollection>): Promise<UserScriptCollection>;
+  deleteScriptCollection(id: number): Promise<boolean>;
+  
+  // Operaciones para guiones en colecciones
+  addScriptToCollection(script: InsertUserScript): Promise<UserScript>;
+  getScriptsByCollection(collectionId: number): Promise<UserScript[]>;
+  getScript(id: number): Promise<UserScript | undefined>;
+  updateScript(id: number, data: Partial<InsertUserScript>): Promise<UserScript>;
+  deleteScript(id: number): Promise<boolean>;
   getCalendarEntriesByMonth(userId: number, year: number, month: number): Promise<CalendarEntry[]>;
   updateCalendarEntry(id: number, updates: Partial<CalendarEntry>): Promise<CalendarEntry>;
   deleteCalendarEntry(id: number): Promise<boolean>;
