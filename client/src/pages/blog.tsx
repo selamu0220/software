@@ -310,7 +310,7 @@ export default function BlogPage() {
                 </div>
                 
                 <CardTitle className="line-clamp-2 text-lg">
-                  <Link href={`/blog/${post.slug}`} className="hover:underline">
+                  <Link href={`/blog/${post.slug}`} className="hover:underline text-white">
                     {post.title}
                   </Link>
                 </CardTitle>
@@ -327,7 +327,7 @@ export default function BlogPage() {
               </CardHeader>
               
               <CardContent className="pb-4 flex-grow">
-                <p className="line-clamp-3 text-muted-foreground text-sm">
+                <p className="line-clamp-3 text-white text-sm">
                   {post.excerpt || (post.content && post.content.substring(0, 120) + '...')}
                 </p>
               </CardContent>

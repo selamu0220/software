@@ -120,14 +120,18 @@ export default function BlogPostPage() {
       <div className="container py-8 max-w-3xl mx-auto">
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
+          <AlertTitle className="text-white font-bold">Error</AlertTitle>
+          <AlertDescription className="text-white">
             No se pudo cargar el artículo. Por favor, inténtalo de nuevo más tarde.
           </AlertDescription>
         </Alert>
         
         <div className="mt-4">
-          <Button variant="outline" onClick={() => navigate("/blog")}>
+          <Button 
+            variant="default" 
+            onClick={() => navigate("/blog")}
+            className="text-white"
+          >
             <ArrowLeft className="mr-2 h-4 w-4" /> Volver al blog
           </Button>
         </div>
