@@ -523,6 +523,14 @@ export const insertUserScriptSchema = createInsertSchema(userScripts).pick({
   favorite: true,
 });
 
+// Update types
+export type UpdateVideoIdea = {
+  title?: string;
+  content?: any;
+  slug?: string;
+  isPublic?: boolean;
+}
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
