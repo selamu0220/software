@@ -77,9 +77,6 @@ const recursoDestacados = [
     categoria: "Edición de Video",
     autor: "Red Creativa",
     autorVerificado: true,
-    vistas: 1285,
-    descargas: 458,
-    likes: 127,
     imagen: "https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=500&h=300"
   },
   {
@@ -89,9 +86,6 @@ const recursoDestacados = [
     categoria: "Diseño 3D",
     autor: "BlenderMaster",
     autorVerificado: false,
-    vistas: 842,
-    descargas: 315,
-    likes: 98,
     imagen: "https://images.unsplash.com/photo-1538307602205-80b5c2ff26ec?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=500&h=300"
   },
   {
@@ -101,9 +95,6 @@ const recursoDestacados = [
     categoria: "Efectos de Sonido",
     autor: "SoundDesigner",
     autorVerificado: true,
-    vistas: 965,
-    descargas: 289,
-    likes: 112,
     imagen: "https://images.unsplash.com/photo-1558383817-1b2a4a5b49e3?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=500&h=300"
   },
   {
@@ -113,9 +104,6 @@ const recursoDestacados = [
     categoria: "Plugins y Extensiones",
     autor: "ColorGrading Pro",
     autorVerificado: false,
-    vistas: 754,
-    descargas: 218,
-    likes: 89,
     imagen: "https://images.unsplash.com/photo-1542765826-5a42ff50f1df?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=500&h=300"
   },
 ];
@@ -129,9 +117,6 @@ const recursosMasPopulares = [
     categoria: "Diseño Gráfico",
     autor: "ThumbnailPro",
     autorVerificado: true,
-    vistas: 2345,
-    descargas: 876,
-    likes: 321,
     imagen: "https://images.unsplash.com/photo-1516414447565-b14be0adf13e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=500&h=300"
   },
   {
@@ -141,9 +126,6 @@ const recursosMasPopulares = [
     categoria: "Edición de Video",
     autor: "CineColor",
     autorVerificado: false,
-    vistas: 1876,
-    descargas: 654,
-    likes: 243,
     imagen: "https://images.unsplash.com/photo-1502401478532-60a602a45ead?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=500&h=300"
   },
   {
@@ -153,9 +135,6 @@ const recursosMasPopulares = [
     categoria: "Diseño Gráfico",
     autor: "IconMaster",
     autorVerificado: true,
-    vistas: 1567,
-    descargas: 432,
-    likes: 198,
     imagen: "https://images.unsplash.com/photo-1572044162444-ad60f128bdea?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=500&h=300"
   },
   {
@@ -165,9 +144,6 @@ const recursosMasPopulares = [
     categoria: "Canales de YouTube",
     autor: "Red Creativa",
     autorVerificado: true,
-    vistas: 3245,
-    descargas: 0,
-    likes: 287,
     imagen: "https://images.unsplash.com/photo-1550399105-c4db5fb85c18?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=500&h=300"
   },
 ];
@@ -200,14 +176,7 @@ function RecursoCard({ recurso }: { recurso: any }) {
       <CardContent className="p-4 pt-2">
         <CardDescription className="line-clamp-2 text-sm">{recurso.descripcion}</CardDescription>
       </CardContent>
-      <CardFooter className="p-4 pt-0 flex justify-between items-center text-sm">
-        <div className="flex items-center space-x-3">
-          <span className="flex items-center text-muted-foreground"><Eye className="w-4 h-4 mr-1" /> {recurso.vistas}</span>
-          {recurso.descargas > 0 && (
-            <span className="flex items-center text-muted-foreground"><Download className="w-4 h-4 mr-1" /> {recurso.descargas}</span>
-          )}
-          <span className="flex items-center text-muted-foreground"><ThumbsUp className="w-4 h-4 mr-1" /> {recurso.likes}</span>
-        </div>
+      <CardFooter className="p-4 pt-0 flex justify-end items-center text-sm">
         <Link href={`/recursos/${recurso.id}`}>
           <Button variant="outline" size="sm">Ver Detalles</Button>
         </Link>
