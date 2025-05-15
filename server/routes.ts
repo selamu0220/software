@@ -694,13 +694,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generar y guardar la idea
       const generatedIdea = await generateVideoIdea(params);
 
+      // Crear un slug para la URL amigable a SEO
+      const ideaSlug = slugify(generatedIdea.title);
+
       await storage.createVideoIdea({
         userId: req.session.userId,
         title: generatedIdea.title,
+        slug: ideaSlug,
         category: params.category,
         subcategory: params.subcategory,
         videoLength: params.videoLength,
         content: generatedIdea,
+        isPublic: false, // Por defecto, las ideas no son públicas
       });
 
       res.json(generatedIdea);

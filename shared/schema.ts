@@ -352,10 +352,7 @@ export const userScriptsRelations = relations(userScripts, ({ one }) => ({
 
 
 // Update schemas
-export type UpdateVideoIdea = {
-  title?: string;
-  content?: any;
-}
+// Ver definición completa en la parte superior
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -523,12 +520,15 @@ export const insertUserScriptSchema = createInsertSchema(userScripts).pick({
   favorite: true,
 });
 
-// Update types
+// Definición única de tipo para actualizar ideas de video
 export type UpdateVideoIdea = {
   title?: string;
   content?: any;
   slug?: string;
   isPublic?: boolean;
+  category?: string;
+  subcategory?: string;
+  videoLength?: string;
 }
 
 // Types
