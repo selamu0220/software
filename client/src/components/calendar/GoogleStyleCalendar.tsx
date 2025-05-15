@@ -338,23 +338,43 @@ export default function GoogleStyleCalendar({ user }: GoogleStyleCalendarProps) 
       
       const generatedIdea: VideoIdeaContent = await response.json();
       
-      // Crear una entrada en el calendario con la idea generada
+      // Guardar primero la idea generada
+      const saveIdeaResponse = await apiRequest(
+        "POST", 
+        "/api/video-ideas", 
+        {
+          title: generatedIdea.title,
+          category: generatedIdea.category || "general",
+          subcategory: generatedIdea.subcategory || "",
+          videoLength: generatedIdea.videoLength || "5-10",
+          content: generatedIdea
+        }
+      );
+      
+      if (!saveIdeaResponse.ok) {
+        throw new Error("Error al guardar la idea generada");
+      }
+      
+      const savedIdea = await saveIdeaResponse.json();
+      
+      // Crear una entrada en el calendario con la idea guardada
       const calendarResponse = await apiRequest(
         "POST", 
         "/api/calendar", 
         {
-          userId: user.id,
           title: generatedIdea.title,
-          date: selectedDate.toISOString(),
+          date: selectedDate,
+          videoIdeaId: savedIdea.id,
           completed: false,
-          notes: generatedIdea.outline.join("\n"),
+          notes: Array.isArray(generatedIdea.outline) ? generatedIdea.outline.join("\n") : "",
           color: "#10b981", // Verde para ideas generadas
-          videoIdeaContent: generatedIdea
         }
       );
       
       if (!calendarResponse.ok) {
-        throw new Error("Error al añadir la idea al calendario");
+        const errorData = await calendarResponse.json().catch(() => ({}));
+        console.error("Error datos:", errorData);
+        throw new Error(errorData.message || "Error al añadir la idea al calendario");
       }
       
       const createdEntry = await calendarResponse.json();

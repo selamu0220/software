@@ -865,6 +865,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
               content: generatedIdea,
             });
   
+            // Crear automáticamente una entrada en el calendario para esta idea
+            try {
+              const calendarDate = new Date(today);
+              calendarDate.setDate(today.getDate() + i);
+              
+              await storage.createCalendarEntry({
+                userId,
+                videoIdeaId: videoIdea.id,
+                title: generatedIdea.title,
+                date: calendarDate,
+                completed: false,
+                notes: Array.isArray(generatedIdea.outline) ? generatedIdea.outline.join("\n") : "",
+                color: "#10b981", // Verde para ideas generadas
+              });
+              
+              console.log(`Entrada de calendario creada para el día ${i + 1}`);
+            } catch (calendarError) {
+              console.error(`Error al crear entrada de calendario para el día ${i + 1}:`, calendarError);
+              // Continuamos aunque falle la creación de la entrada de calendario
+            }
+  
             storedIdeas.push(videoIdea);
             ideas.push(generatedIdea);
             success = true;
@@ -1035,6 +1056,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
               videoLength: params.videoLength,
               content: generatedIdea,
             });
+            
+            // Crear automáticamente una entrada en el calendario para esta idea
+            try {
+              // Crear fecha para el día correspondiente
+              const calendarDate = new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                i + 1,
+              );
+              
+              await storage.createCalendarEntry({
+                userId,
+                videoIdeaId: videoIdea.id,
+                title: generatedIdea.title,
+                date: calendarDate,
+                completed: false,
+                notes: Array.isArray(generatedIdea.outline) ? generatedIdea.outline.join("\n") : "",
+                color: "#8b5cf6", // Púrpura para ideas mensuales (para diferenciarlas)
+              });
+              
+              console.log(`Entrada de calendario creada para el día ${i + 1} de ${daysInMonth}`);
+            } catch (calendarError) {
+              console.error(`Error al crear entrada de calendario para el día ${i + 1}:`, calendarError);
+              // Continuamos aunque falle la creación de la entrada de calendario
+            }
   
             storedIdeas.push(videoIdea);
             ideas.push(generatedIdea);

@@ -129,14 +129,15 @@ export default function CalendarPreview({ isLoggedIn, isPremium }: CalendarPrevi
       // Añadir al calendario
       const calendarResponse = await apiRequest("POST", "/api/calendar", {
         title: savedIdea.title,
-        date: formattedDate,
+        date: new Date(formattedDate), // Asegurarnos de que se envía como objeto Date
         videoIdeaId: savedIdea.id,
-        status: "planned",
-        color: "blue",
+        color: "#3b82f6", // Azul para ideas programadas
       });
       
       if (!calendarResponse.ok) {
-        throw new Error("Error al agregar al calendario");
+        const errorData = await calendarResponse.json().catch(() => ({}));
+        console.error("Error al agregar al calendario:", errorData);
+        throw new Error(errorData.message || "Error al agregar al calendario");
       }
       
       // Recargar entradas
