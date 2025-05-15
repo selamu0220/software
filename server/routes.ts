@@ -1202,6 +1202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.session.userId,
         videoIdeaId: videoIdeaId || null,
         date: dateValue, // Usar la fecha ya convertida
+        timeOfDay: restData.timeOfDay || "12:00", // Hora por defecto al mediodía
         completed: restData.completed !== undefined ? restData.completed : false,
         notes: restData.notes || null,
         color: restData.color || "#3b82f6",
@@ -1249,6 +1250,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         videoIdeaId: videoIdeaId || null,
         title: req.body.title,
         date: dateValue,
+        timeOfDay: req.body.timeOfDay || "12:00", // Hora para grabación
         completed: req.body.completed !== undefined ? req.body.completed : false,
         notes: req.body.description || req.body.notes || null,
         color: req.body.color || "#3b82f6",

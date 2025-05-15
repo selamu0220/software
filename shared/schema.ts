@@ -36,6 +36,7 @@ export const calendarEntries = pgTable("calendar_entries", {
   videoIdeaId: integer("video_idea_id").references(() => videoIdeas.id),
   title: text("title").notNull(),
   date: timestamp("date").notNull(),
+  timeOfDay: text("time_of_day").default("12:00"), // Hora para la grabación
   completed: boolean("completed").default(false).notNull(),
   notes: text("notes"),
   color: text("color").default("#3b82f6"),
@@ -369,6 +370,7 @@ export const insertCalendarEntrySchema = createInsertSchema(calendarEntries).pic
   videoIdeaId: true,
   title: true,
   date: true,
+  timeOfDay: true,
   completed: true,
   notes: true,
   color: true,
