@@ -348,36 +348,68 @@ export default function RecursoDetallePage() {
     cargarRecurso();
   }, [idRecurso, toast]);
   
-  const handleEnviarComentario = () => {
+  const handleEnviarComentario = async () => {
     if (!comentario.trim()) return;
+    
+    if (!usuario) {
+      toast({
+        title: "Inicia sesión para comentar",
+        description: "Necesitas iniciar sesión para dejar un comentario",
+        variant: "default"
+      });
+      return;
+    }
     
     setEnviando(true);
     
-    // Simular envío
-    setTimeout(() => {
-      // En una implementación real, harías un POST a la API
-      const nuevoComentario = {
-        id: recurso.comentarios.length + 1,
-        usuario: {
-          id: 999,
-          nombre: "Usuario",
-          avatar: "https://api.dicebear.com/7.x/initials/svg?seed=US",
-          verificado: false
+    try {
+      // Enviar comentario a la API
+      const response = await fetch(`/api/recursos/${idRecurso}/comentarios`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        contenido: comentario,
-        fecha: new Date().toISOString().split('T')[0],
-        valoracion: valoracion
-      };
+        body: JSON.stringify({
+          contenido: comentario,
+          valoracion: valoracion || null
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Error al enviar el comentario");
+      }
+      
+      const nuevoComentario = await response.json();
+      
+      // Actualizar el estado local con el nuevo comentario
+      const comentariosActualizados = recurso.comentarios 
+        ? [nuevoComentario, ...recurso.comentarios]
+        : [nuevoComentario];
       
       setRecurso({
         ...recurso,
-        comentarios: [nuevoComentario, ...recurso.comentarios]
+        comentarios: comentariosActualizados
       });
       
+      // Limpiar el formulario
       setComentario("");
       setValoracion(0);
+      
+      toast({
+        title: "Comentario enviado",
+        description: "Tu reseña se ha publicado correctamente",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error("Error al enviar comentario:", error);
+      toast({
+        title: "Error al enviar comentario",
+        description: "No se pudo enviar tu reseña, inténtalo de nuevo",
+        variant: "destructive"
+      });
+    } finally {
       setEnviando(false);
-    }, 1000);
+    }
   };
   
   if (cargando) {

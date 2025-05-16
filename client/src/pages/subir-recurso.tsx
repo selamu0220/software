@@ -160,8 +160,44 @@ export default function SubirRecursoPage() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Aquí podrías agregar validación de tamaño o tipo de archivo
+      // Validar tamaño (máximo 100MB)
+      const maxSize = 100 * 1024 * 1024; // 100MB en bytes
+      if (file.size > maxSize) {
+        toast({
+          title: "Archivo demasiado grande",
+          description: "El archivo no debe superar los 100MB",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Actualizar el estado con la información del archivo
       setArchivoSubido(file);
+      
+      // Detectar automáticamente el tipo de recurso basado en la extensión
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      let tipoRecurso = "";
+      
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension || '')) {
+        tipoRecurso = "Imagen";
+      } else if (['mp4', 'mov', 'avi', 'webm'].includes(extension || '')) {
+        tipoRecurso = "Video";
+      } else if (['mp3', 'wav', 'ogg'].includes(extension || '')) {
+        tipoRecurso = "Audio";
+      } else if (['pdf', 'doc', 'docx', 'txt', 'rtf'].includes(extension || '')) {
+        tipoRecurso = "Documento";
+      } else if (['zip', 'rar', '7z'].includes(extension || '')) {
+        tipoRecurso = "Archivo comprimido";
+      } else if (['psd', 'ai', 'eps', 'cdr'].includes(extension || '')) {
+        tipoRecurso = "Diseño gráfico";
+      } else if (['json', 'xml', 'csv'].includes(extension || '')) {
+        tipoRecurso = "Datos";
+      }
+      
+      // Si se determinó un tipo de recurso, actualizarlo en el formulario
+      if (tipoRecurso) {
+        form.setValue("tipoRecurso", tipoRecurso);
+      }
     }
   };
   
