@@ -46,6 +46,7 @@ import {
   FileCheck,
   Flag,
   Link as LinkIcon,
+  Lock,
   Share2,
   Star,
   StarHalf,
@@ -559,8 +560,19 @@ export default function RecursoDetallePage() {
                     rel="noopener noreferrer"
                     className="inline-block w-full"
                   >
-                    <Button className="w-full gap-2">
-                      <Download className="w-4 h-4" /> Descargar ahora
+                    <Button 
+                      className="w-full gap-2"
+                      disabled={recurso.isPremium && !usuario?.isPremium}
+                    >
+                      {recurso.isPremium && !usuario?.isPremium ? (
+                        <>
+                          <Lock className="w-4 h-4" /> Solo para Premium
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4" /> Descargar ahora
+                        </>
+                      )}
                     </Button>
                   </a>
                   
