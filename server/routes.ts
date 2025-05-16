@@ -377,10 +377,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Votar por un recurso (me gusta o no me gusta)
-  app.post("/api/recursos/:id/votar", requireAuth, async (req, res) => {
+  app.post("/api/recursos/:id/votar", requireAuth, async (req: Request, res: Response) => {
     try {
       const resourceId = parseInt(req.params.id);
-      const userId = req.user!.id;
+      // Acceder al usuario de la sesión usando req.session.userId
+      const session = req.session as any;
+      const userId = session.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Usuario no autenticado" });
+      }
+      
       const { score } = req.body;
       
       if (score !== 0 && score !== 1) {
@@ -434,6 +441,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error al votar por recurso:", error);
       res.status(500).json({ message: "Error al procesar el voto" });
+    }
+  });
+  
+  // Endpoint para obtener el voto del usuario sobre un recurso específico
+  app.get("/api/recursos/:id/voto-usuario", requireAuth, async (req, res) => {
+    try {
+      const resourceId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      const voto = await storage.getUserVote(userId, resourceId);
+      
+      if (!voto) {
+        return res.status(404).json({ message: "No has votado por este recurso todavía" });
+      }
+      
+      res.json(voto);
+    } catch (error) {
+      console.error("Error al obtener voto de usuario:", error);
+      res.status(500).json({ message: "Error al obtener información del voto" });
     }
   });
   

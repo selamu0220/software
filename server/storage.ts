@@ -58,6 +58,11 @@ export interface IStorage {
   updateStripeCustomerId(id: number, customerId: string): Promise<User>;
   updateUserStripeInfo(id: number, info: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User>;
   
+  // Sistema de votación para recursos
+  getUserVote(userId: number, resourceId: number): Promise<any>;
+  createResourceVote(vote: { userId: number; resourceId: number; score: number }): Promise<any>;
+  updateResourceVote(id: number, voteData: Partial<any>): Promise<any>;
+  
   // Video idea operations
   createVideoIdea(idea: InsertVideoIdea): Promise<VideoIdea>;
   getVideoIdea(id: number): Promise<VideoIdea | undefined>;
