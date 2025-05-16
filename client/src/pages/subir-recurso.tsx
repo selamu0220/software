@@ -56,6 +56,23 @@ const categorias = [
   { id: 6, name: "Herramientas", slug: "herramientas" },
 ];
 
+// Tipos de recursos
+const tiposRecurso = [
+  { id: "file", name: "Archivo", description: "Sube un archivo descargable como recurso" },
+  { id: "link", name: "Enlace", description: "Comparte un enlace a un recurso externo" },
+  { id: "tool", name: "Herramienta", description: "Una herramienta o aplicación para creadores" },
+  { id: "aiTool", name: "IA", description: "Una herramienta de inteligencia artificial" },
+];
+
+// Subcategorías para herramientas de IA
+const categoriasIA = [
+  { id: "textAI", name: "IA de Texto", description: "Generación de texto, escritura, guiones" },
+  { id: "imageAI", name: "IA de Imágenes", description: "Generación o edición de imágenes" },
+  { id: "videoAI", name: "IA de Video", description: "Edición o generación de video" },
+  { id: "audioAI", name: "IA de Audio", description: "Transcripción, generación de voz, música" },
+  { id: "multimodalAI", name: "IA Multimodal", description: "Combina varios tipos de contenido" },
+];
+
 // Esquema de validación ultra simplificado
 const formSchema = z.object({
   titulo: z.string().min(2, {
@@ -70,8 +87,13 @@ const formSchema = z.object({
     message: "Por favor ingresa una URL válida",
   }).optional().or(z.literal("")),
   esPublico: z.boolean().default(true),
+  esPremium: z.boolean().default(false),
+  precio: z.coerce.number().min(0).default(0),
+  tipoRecurso: z.enum(["file", "link", "tool", "aiTool"]).default("file"),
+  categoriaIA: z.string().optional(),
   tags: z.array(z.string()).optional(),
   version: z.string().optional(),
+  comisionCreador: z.number().min(0).max(100).default(50),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -96,8 +118,13 @@ export default function SubirRecursoPage() {
       categoria: "",
       enlaceExterno: "",
       esPublico: true,
+      esPremium: false,
+      precio: 0,
+      tipoRecurso: "file",
+      categoriaIA: "",
       tags: [],
       version: "",
+      comisionCreador: 50,
     },
   });
   
@@ -173,8 +200,24 @@ export default function SubirRecursoPage() {
       if (values.descripcion) formData.append('descripcion', values.descripcion);
       formData.append('categoria', categoriaSeleccionada.slug); // Usar el slug en lugar del nombre
       
+      // Información sobre tipo de recurso
+      formData.append('tipoRecurso', values.tipoRecurso);
+      if (values.tipoRecurso === "aiTool" && values.categoriaIA) {
+        formData.append('categoriaIA', values.categoriaIA);
+      }
+      
+      // Información de enlaces
       if (values.enlaceExterno) formData.append('enlaceExterno', values.enlaceExterno);
+      
+      // Opciones de visibilidad
       formData.append('esPublico', values.esPublico.toString());
+      
+      // Opciones premium
+      formData.append('esPremium', values.esPremium.toString());
+      if (values.esPremium) {
+        formData.append('precio', values.precio.toString());
+        formData.append('comisionCreador', values.comisionCreador.toString());
+      }
       
       // Agregar tags como string separado por comas
       if (values.tags && values.tags.length > 0) {
@@ -349,6 +392,199 @@ export default function SubirRecursoPage() {
                     </FormItem>
                   )}
                 />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Tipo de Recurso</CardTitle>
+                <CardDescription>
+                  Selecciona el tipo de recurso que estás compartiendo
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="tipoRecurso"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Recurso</FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          // Si es una herramienta de IA, mostramos las opciones específicas
+                          if (value === "aiTool") {
+                            form.setValue("categoriaIA", "textAI");
+                          } else {
+                            form.setValue("categoriaIA", "");
+                          }
+                        }}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona el tipo de recurso" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {tiposRecurso.map((tipo) => (
+                            <SelectItem key={tipo.id} value={tipo.id}>
+                              <div className="flex items-center">
+                                <span>{tipo.name}</span>
+                                <span className="ml-2 text-xs text-muted-foreground">- {tipo.description}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Esto ayudará a categorizar y filtrar mejor tu recurso
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {form.watch("tipoRecurso") === "aiTool" && (
+                  <FormField
+                    control={form.control}
+                    name="categoriaIA"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de IA</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona el tipo de IA" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categoriasIA.map((categoria) => (
+                              <SelectItem key={categoria.id} value={categoria.id}>
+                                <div className="flex items-center">
+                                  <span>{categoria.name}</span>
+                                  <span className="ml-2 text-xs text-muted-foreground">- {categoria.description}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Especifica qué tipo de contenido procesa esta IA
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Configuración Premium</CardTitle>
+                <CardDescription>
+                  Establece si tu recurso es gratuito o premium
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="esPremium"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">Recurso Premium</FormLabel>
+                        <FormDescription>
+                          Activa esta opción si quieres que tu recurso sea de acceso premium
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                {form.watch("esPremium") && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="precio"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Precio (€)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="Ej: 4.99"
+                              {...field}
+                              onChange={(e) => {
+                                const value = parseFloat(e.target.value);
+                                field.onChange(isNaN(value) ? 0 : value);
+                              }}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Establece el precio de tu recurso en euros
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="comisionCreador"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tu comisión (%)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              placeholder="Porcentaje de comisión"
+                              {...field}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value);
+                                field.onChange(isNaN(value) ? 50 : Math.min(100, Math.max(0, value)));
+                              }}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Recibirás este porcentaje de cada venta (por defecto 50%)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="rounded-md bg-muted p-4">
+                      <div className="text-sm font-medium">Resumen de ingresos</div>
+                      <div className="mt-2 flex items-center justify-between text-sm">
+                        <span>Precio de venta:</span>
+                        <span className="font-medium">{form.watch("precio")}€</span>
+                      </div>
+                      <div className="mt-1 flex items-center justify-between text-sm">
+                        <span>Tu comisión ({form.watch("comisionCreador")}%):</span>
+                        <span className="font-medium">{(form.watch("precio") * form.watch("comisionCreador") / 100).toFixed(2)}€</span>
+                      </div>
+                      <div className="mt-1 flex items-center justify-between text-sm">
+                        <span>Comisión plataforma ({100 - form.watch("comisionCreador")}%):</span>
+                        <span className="font-medium">{(form.watch("precio") * (100 - form.watch("comisionCreador")) / 100).toFixed(2)}€</span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
             
