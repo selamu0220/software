@@ -534,9 +534,34 @@ export default function RecursoDetallePage() {
                 <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: recurso.contenido }} />
                 
                 <div className="mt-8">
+                  <h3 className="text-lg font-semibold mb-3">¿Te ha resultado útil este recurso?</h3>
+                  <div className="flex items-center gap-3 mb-6">
+                    <Button
+                      variant={votoUsuario === 1 ? "default" : "outline"}
+                      className={`gap-2 ${votoUsuario === 1 ? "bg-green-600 hover:bg-green-700" : ""}`}
+                      onClick={() => handleVotar(1)}
+                      disabled={votando}
+                    >
+                      <ThumbsUp className="h-4 w-4" />
+                      Me gusta {recurso.voteScore && recurso.voteScore > 0 ? `(${recurso.voteScore})` : ""}
+                    </Button>
+                    
+                    <Button
+                      variant={votoUsuario === 0 ? "default" : "outline"}
+                      className={`gap-2 ${votoUsuario === 0 ? "bg-red-600 hover:bg-red-700" : ""}`}
+                      onClick={() => handleVotar(0)}
+                      disabled={votando}
+                    >
+                      <ThumbsDown className="h-4 w-4" />
+                      No me gusta
+                    </Button>
+                    
+                    {votando && <span className="text-muted-foreground text-sm italic">Enviando valoración...</span>}
+                  </div>
+                  
                   <h3 className="text-lg font-semibold mb-3">Etiquetas</h3>
                   <div className="flex flex-wrap gap-2">
-                    {recurso.tags.map((tag: string, index: number) => (
+                    {recurso.tags && recurso.tags.map((tag: string, index: number) => (
                       <Badge key={index} variant="secondary" className="flex items-center gap-1">
                         <Tag className="w-3 h-3" /> {tag}
                       </Badge>

@@ -168,7 +168,7 @@ export const resourceVotes = pgTable("resource_votes", {
   id: serial("id").primaryKey(),
   resourceId: integer("resource_id").references(() => resources.id).notNull(),
   userId: integer("user_id").references(() => users.id).notNull(),
-  score: integer("score").notNull(), // Puntuación de 1 a 5
+  score: integer("score").notNull(), // 0 = No me gusta, 1 = Me gusta
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
