@@ -228,6 +228,24 @@ export default function RecursosPage() {
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [recursosReales, setRecursosReales] = useState<any[]>([]);
   const [cargandoRecursos, setCargandoRecursos] = useState(false);
+  
+  // Función para corregir las rutas de imágenes y archivos
+  const corregirRutaRecurso = (ruta: string | null): string => {
+    if (!ruta) return '/placeholder-image.jpg';
+    
+    // Si la ruta incluye /uploads/ pero comienza con /home/runner/workspace/
+    if (ruta.includes('/uploads/') && ruta.startsWith('/home/runner/workspace/')) {
+      return '/uploads/' + ruta.split('/uploads/')[1];
+    }
+    
+    // Si es una URL externa, la dejamos igual
+    if (ruta.startsWith('http')) {
+      return ruta;
+    }
+    
+    // Para cualquier otro caso
+    return ruta;
+  };
   const { toast } = useToast();
   
   // Obtener información del usuario actual

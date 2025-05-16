@@ -364,6 +364,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Ruta para eliminar un recurso específico (solo el propietario o admin)
+  app.delete("/api/recursos/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId as number;
+      const resourceId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+      
+      // Obtener el recurso para verificar permisos
+      const recurso = await storage.getResource(resourceId);
+      
+      if (!recurso) {
+        return res.status(404).json({ message: "Recurso no encontrado" });
+      }
+      
+      // Verificar si el usuario es propietario o tiene permisos de admin
+      if (recurso.userId !== userId && user?.username !== 'sela_gr' && user?.username !== 'redcreativa') {
+        return res.status(403).json({ message: "No tienes permiso para eliminar este recurso" });
+      }
+      
+      // Eliminar el recurso
+      await storage.deleteResource(resourceId);
+      
+      res.json({ message: "Recurso eliminado exitosamente" });
+    } catch (error) {
+      console.error("Error al eliminar recurso:", error);
+      res.status(500).json({ message: "Error al eliminar el recurso" });
+    }
+  });
+  
   // Ruta para eliminar todos los recursos preestablecidos (solo usuarios autorizados)
   app.delete("/api/recursos/preestablecidos", requireAuth, async (req, res) => {
     try {
