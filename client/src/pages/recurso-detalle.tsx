@@ -233,7 +233,7 @@ export default function RecursoDetallePage() {
     setVotando(true);
     
     try {
-      const response = await fetch(`/api/recursos/${recursoId}/votar`, {
+      const response = await fetch(`/api/recursos/${idRecurso}/votar`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -294,17 +294,17 @@ export default function RecursoDetallePage() {
     obtenerUsuario();
   }, []);
   
-  // Cargar el recurso real según el ID
-  const recursoId = match ? parseInt(params.id) : 1;
+  // Usamos el identificador que ya hemos definido arriba
+  // idRecurso ya está definido
   
   // Cargar el recurso desde la API
   useEffect(() => {
     const cargarRecurso = async () => {
-      if (!recursoId) return;
+      if (!idRecurso) return;
       
       setCargando(true);
       try {
-        const response = await fetch(`/api/recursos/${recursoId}`);
+        const response = await fetch(`/api/recursos/${idRecurso}`);
         
         if (response.ok) {
           const data = await response.json();
@@ -346,7 +346,7 @@ export default function RecursoDetallePage() {
     };
     
     cargarRecurso();
-  }, [recursoId, toast]);
+  }, [idRecurso, toast]);
   
   const handleEnviarComentario = () => {
     if (!comentario.trim()) return;
@@ -402,7 +402,7 @@ export default function RecursoDetallePage() {
             "image": corregirRutaRecurso(recurso.imagen),
             "description": recurso.descripcion,
             "category": recurso.categoria,
-            "sku": `recurso-${recursoId}`,
+            "sku": `recurso-${idRecurso}`,
             "brand": {
               "@type": "Brand",
               "name": recurso.autor.nombre
