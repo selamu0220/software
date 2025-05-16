@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useRoute } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Card, 
   CardContent, 
@@ -205,10 +206,63 @@ export default function RecursoDetallePage() {
   const [comentario, setComentario] = useState("");
   const [valoracion, setValoracion] = useState(0);
   const [enviando, setEnviando] = useState(false);
+  const [cargando, setCargando] = useState(true);
   const [recurso, setRecurso] = useState<any>(recursoEjemplo);
+  const { toast } = useToast();
   
-  // Simular carga de recurso según ID (en una implementación real, esto sería una llamada a API)
+  // Cargar el recurso real según el ID
   const recursoId = match ? parseInt(params.id) : 1;
+  
+  // Cargar el recurso desde la API
+  useEffect(() => {
+    const cargarRecurso = async () => {
+      if (!recursoId) return;
+      
+      setCargando(true);
+      try {
+        const response = await fetch(`/api/recursos/${recursoId}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          setRecurso({
+            ...recursoEjemplo, // Mantener estructura base para campos que puedan faltar
+            ...data,
+            // Asegurar que tenemos los campos necesarios para la visualización
+            id: data.id,
+            titulo: data.title,
+            descripcion: data.description,
+            categoria: data.categoryId ? `Categoría ${data.categoryId}` : "General",
+            imagen: data.thumbnailUrl || recursoEjemplo.imagen,
+            autor: {
+              ...recursoEjemplo.autor,
+              id: data.userId,
+              nombre: data.userId ? `Usuario ${data.userId}` : "Anónimo"
+            },
+            fechaPublicacion: data.createdAt ? new Date(data.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            contenido: data.content || recursoEjemplo.contenido,
+            enlaceDescarga: data.fileUrl || data.downloadUrl || recursoEjemplo.enlaceDescarga
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "No se pudo cargar el recurso",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Error al cargar recurso:", error);
+        toast({
+          title: "Error",
+          description: "No se pudo cargar el recurso",
+          variant: "destructive"
+        });
+      } finally {
+        setCargando(false);
+      }
+    };
+    
+    cargarRecurso();
+  }, [recursoId, toast]);
   
   const handleEnviarComentario = () => {
     if (!comentario.trim()) return;
@@ -241,6 +295,15 @@ export default function RecursoDetallePage() {
       setEnviando(false);
     }, 1000);
   };
+  
+  if (cargando) {
+    return (
+      <div className="container mx-auto py-20 px-4 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mr-3"></div>
+        <span className="text-lg">Cargando recurso...</span>
+      </div>
+    );
+  }
   
   return (
     <div className="container mx-auto py-10 px-4 sm:px-6">
