@@ -104,10 +104,17 @@ export const resources = pgTable("resources", {
   isVerified: boolean("is_verified").default(false).notNull(),
   isPublic: boolean("is_public").default(true).notNull(),
   isFeatured: boolean("is_featured").default(false).notNull(),
+  isPremium: boolean("is_premium").default(false).notNull(), // Indica si es un recurso de pago
+  price: integer("price").default(0).notNull(), // Precio en céntimos (para evitar problemas con decimales)
+  resourceType: text("resource_type").default("file").notNull(), // Tipo: "file", "link", "tool", "aiTool"
+  aiCategory: text("ai_category"), // Categoría específica de IA: "chat", "image", "video", "audio", "text"
+  voteCount: integer("vote_count").default(0).notNull(), // Número total de votos recibidos
+  voteScore: integer("vote_score").default(0).notNull(), // Puntuación acumulada (la media se calcula dividiendo por voteCount)
   viewCount: integer("view_count").default(0).notNull(),
   downloadCount: integer("download_count").default(0).notNull(),
   likesCount: integer("likes_count").default(0).notNull(),
   dislikesCount: integer("dislikes_count").default(0).notNull(),
+  commissionPercent: integer("commission_percent").default(50).notNull(), // Porcentaje de comisión para el creador
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -152,6 +159,16 @@ export const resourceComments = pgTable("resource_comments", {
   userId: integer("user_id").references(() => users.id).notNull(),
   content: text("content").notNull(),
   rating: integer("rating"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Votos para recursos
+export const resourceVotes = pgTable("resource_votes", {
+  id: serial("id").primaryKey(),
+  resourceId: integer("resource_id").references(() => resources.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  score: integer("score").notNull(), // Puntuación de 1 a 5
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -446,6 +463,11 @@ export const insertResourceSchema = createInsertSchema(resources).pick({
   isVerified: true,
   isPublic: true,
   isFeatured: true,
+  isPremium: true,
+  price: true,
+  resourceType: true,
+  aiCategory: true,
+  commissionPercent: true,
 });
 
 export const insertResourceCommentSchema = createInsertSchema(resourceComments).pick({
