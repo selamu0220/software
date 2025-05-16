@@ -63,6 +63,10 @@ export interface IStorage {
   createResourceVote(vote: { userId: number; resourceId: number; score: number }): Promise<any>;
   updateResourceVote(id: number, voteData: Partial<any>): Promise<any>;
   
+  // Sistema de comentarios para recursos
+  getResourceComments(resourceId: number): Promise<any[]>;
+  createResourceComment(comment: { resourceId: number; userId: number; content: string; rating: number | null }): Promise<any>;
+  
   // Video idea operations
   createVideoIdea(idea: InsertVideoIdea): Promise<VideoIdea>;
   getVideoIdea(id: number): Promise<VideoIdea | undefined>;

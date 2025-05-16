@@ -448,7 +448,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/recursos/:id/voto-usuario", requireAuth, async (req, res) => {
     try {
       const resourceId = parseInt(req.params.id);
-      const userId = req.user!.id;
+      const session = req.session as any;
+      const userId = session.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Usuario no autenticado" });
+      }
       
       const voto = await storage.getUserVote(userId, resourceId);
       
@@ -460,6 +465,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error al obtener voto de usuario:", error);
       res.status(500).json({ message: "Error al obtener información del voto" });
+    }
+  });
+  
+  // Endpoint para añadir un comentario a un recurso
+  app.post("/api/recursos/:id/comentarios", requireAuth, async (req, res) => {
+    try {
+      const resourceId = parseInt(req.params.id);
+      const session = req.session as any;
+      const userId = session.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Usuario no autenticado" });
+      }
+      
+      const { contenido, valoracion } = req.body;
+      
+      if (!contenido) {
+        return res.status(400).json({ message: "El contenido del comentario es obligatorio" });
+      }
+      
+      const recurso = await storage.getResource(resourceId);
+      if (!recurso) {
+        return res.status(404).json({ message: "Recurso no encontrado" });
+      }
+      
+      const comentario = await storage.createResourceComment({
+        resourceId,
+        userId,
+        content: contenido,
+        rating: valoracion || null
+      });
+      
+      // Obtener información adicional del usuario para la respuesta
+      const usuario = await storage.getUser(userId);
+      
+      res.status(201).json({
+        ...comentario,
+        usuario: {
+          id: usuario?.id,
+          nombre: usuario?.username,
+          avatar: usuario?.avatarUrl || "https://api.dicebear.com/7.x/initials/svg?seed=" + usuario?.username.substring(0, 2).toUpperCase()
+        }
+      });
+    } catch (error) {
+      console.error("Error al crear comentario:", error);
+      res.status(500).json({ message: "Error al procesar el comentario" });
+    }
+  });
+  
+  // Endpoint para obtener los comentarios de un recurso
+  app.get("/api/recursos/:id/comentarios", async (req, res) => {
+    try {
+      const resourceId = parseInt(req.params.id);
+      
+      const comentarios = await storage.getResourceComments(resourceId);
+      
+      res.json(comentarios);
+    } catch (error) {
+      console.error("Error al obtener comentarios:", error);
+      res.status(500).json({ message: "Error al obtener los comentarios del recurso" });
     }
   });
   
