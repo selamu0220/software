@@ -2,6 +2,9 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateVideoIdea, aiAssistant, aiAssistRequestSchema, VideoIdeaContent, generateBlogPosts, blogPostGenerationSchema } from "./gemini";
+import { db } from "./db";
+import { desc, eq, and } from "drizzle-orm";
+import { resources, resourceComments, resourceVotes, users } from "@shared/schema";
 import { generateSlug } from "./utils/slugify";
 
 /**
@@ -490,22 +493,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Recurso no encontrado" });
       }
       
-      const comentario = await storage.createResourceComment({
-        resourceId,
-        userId,
-        content: contenido,
-        rating: valoracion || null
-      });
+      // Añadir directamente a la base de datos con DrizzleORM
+      const [nuevoComentario] = await db
+        .insert(resourceComments)
+        .values({
+          resourceId,
+          userId,
+          content: contenido,
+          rating: valoracion || null
+        })
+        .returning();
       
       // Obtener información adicional del usuario para la respuesta
       const usuario = await storage.getUser(userId);
       
       res.status(201).json({
-        ...comentario,
+        ...nuevoComentario,
         usuario: {
           id: usuario?.id,
           nombre: usuario?.username,
-          avatar: usuario?.avatarUrl || "https://api.dicebear.com/7.x/initials/svg?seed=" + usuario?.username.substring(0, 2).toUpperCase()
+          avatar: "https://api.dicebear.com/7.x/initials/svg?seed=" + usuario?.username.substring(0, 2).toUpperCase()
         }
       });
     } catch (error) {
@@ -519,9 +526,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const resourceId = parseInt(req.params.id);
       
-      const comentarios = await storage.getResourceComments(resourceId);
+      // Obtener comentarios directamente con DrizzleORM
+      const comentarios = await db
+        .select({
+          comentario: resourceComments,
+          usuario: {
+            id: users.id,
+            username: users.username,
+          }
+        })
+        .from(resourceComments)
+        .innerJoin(users, eq(resourceComments.userId, users.id))
+        .where(eq(resourceComments.resourceId, resourceId))
+        .orderBy(desc(resourceComments.createdAt));
       
-      res.json(comentarios);
+      // Transformar los datos para tener un formato amigable para el cliente
+      const comentariosFormateados = comentarios.map(item => ({
+        id: item.comentario.id,
+        resourceId: item.comentario.resourceId,
+        content: item.comentario.content,
+        rating: item.comentario.rating,
+        createdAt: item.comentario.createdAt,
+        fecha: new Date(item.comentario.createdAt).toLocaleDateString(),
+        usuario: {
+          id: item.usuario.id,
+          nombre: item.usuario.username,
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${item.usuario.username.substring(0, 2).toUpperCase()}`
+        }
+      }));
+      
+      res.json(comentariosFormateados);
     } catch (error) {
       console.error("Error al obtener comentarios:", error);
       res.status(500).json({ message: "Error al obtener los comentarios del recurso" });
