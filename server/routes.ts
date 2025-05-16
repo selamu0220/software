@@ -493,7 +493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Recurso no encontrado" });
       }
       
-      // Añadir directamente a la base de datos con DrizzleORM
+      // Insertar comentario en la base de datos
       const [nuevoComentario] = await db
         .insert(resourceComments)
         .values({
@@ -504,15 +504,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .returning();
       
-      // Obtener información adicional del usuario para la respuesta
-      const usuario = await storage.getUser(userId);
+      // Obtener información del usuario para la respuesta
+      const [usuario] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId));
       
+      // Formatear respuesta para el cliente
       res.status(201).json({
-        ...nuevoComentario,
+        id: nuevoComentario.id,
+        resourceId: nuevoComentario.resourceId,
+        content: nuevoComentario.content,
+        rating: nuevoComentario.rating,
+        createdAt: nuevoComentario.createdAt,
+        fecha: new Date(nuevoComentario.createdAt).toLocaleDateString('es-ES'),
         usuario: {
-          id: usuario?.id,
-          nombre: usuario?.username,
-          avatar: "https://api.dicebear.com/7.x/initials/svg?seed=" + usuario?.username.substring(0, 2).toUpperCase()
+          id: usuario.id,
+          nombre: usuario.username,
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${usuario.username.substring(0, 2).toUpperCase()}`
         }
       });
     } catch (error) {
@@ -526,32 +535,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const resourceId = parseInt(req.params.id);
       
-      // Obtener comentarios directamente con DrizzleORM
-      const comentarios = await db
-        .select({
-          comentario: resourceComments,
-          usuario: {
-            id: users.id,
-            username: users.username,
+      // Consulta simple a la base de datos para obtener los comentarios 
+      const result = await db.query.resourceComments.findMany({
+        where: eq(resourceComments.resourceId, resourceId),
+        with: {
+          user: {
+            columns: {
+              id: true,
+              username: true
+            }
           }
-        })
-        .from(resourceComments)
-        .innerJoin(users, eq(resourceComments.userId, users.id))
-        .where(eq(resourceComments.resourceId, resourceId))
-        .orderBy(desc(resourceComments.createdAt));
+        },
+        orderBy: [desc(resourceComments.createdAt)]
+      });
       
       // Transformar los datos para tener un formato amigable para el cliente
-      const comentariosFormateados = comentarios.map(item => ({
-        id: item.comentario.id,
-        resourceId: item.comentario.resourceId,
-        content: item.comentario.content,
-        rating: item.comentario.rating,
-        createdAt: item.comentario.createdAt,
-        fecha: new Date(item.comentario.createdAt).toLocaleDateString(),
+      const comentariosFormateados = result.map(item => ({
+        id: item.id,
+        resourceId: item.resourceId,
+        content: item.content,
+        rating: item.rating,
+        createdAt: item.createdAt,
+        fecha: new Date(item.createdAt).toLocaleDateString('es-ES'),
         usuario: {
-          id: item.usuario.id,
-          nombre: item.usuario.username,
-          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${item.usuario.username.substring(0, 2).toUpperCase()}`
+          id: item.user.id,
+          nombre: item.user.username,
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${item.user.username.substring(0, 2).toUpperCase()}`
         }
       }));
       
