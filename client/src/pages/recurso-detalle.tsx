@@ -211,12 +211,24 @@ export default function RecursoDetallePage() {
   const [recurso, setRecurso] = useState<any>(recursoEjemplo);
   const [usuario, setUsuario] = useState<any>(null);
   const [votando, setVotando] = useState(false);
-  const [votoUsuario, setVotoUsuario] = useState(0);
+  const [votoUsuario, setVotoUsuario] = useState<number>(-1); // -1 significa no votó aún
   const { toast } = useToast();
   
-  // Función para votar por un recurso
+  // Obtenemos el ID del recurso como número
+  const idRecurso = params?.id ? parseInt(params.id) : undefined;
+  
+  // Función para votar (me gusta / no me gusta)
   const handleVotar = async (valor: number) => {
-    if (!usuario || votando) return;
+    if (!usuario) {
+      toast({
+        title: "Inicia sesión para votar",
+        description: "Necesitas iniciar sesión para dar tu valoración",
+        variant: "default"
+      });
+      return;
+    }
+    
+    if (votando) return;
     
     setVotando(true);
     
