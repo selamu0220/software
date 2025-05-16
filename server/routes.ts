@@ -73,6 +73,26 @@ import {
   startOfMonth,
   endOfMonth,
 } from "date-fns";
+
+// Función para detectar la categoría de IA basada en la descripción y categoría
+function detectAICategory(description: string, category: string): string | null {
+  const lowerDesc = description.toLowerCase();
+  const lowerCat = category.toLowerCase();
+  
+  if (lowerDesc.includes("chat") || lowerDesc.includes("conversación") || lowerCat.includes("chat")) {
+    return "chat";
+  } else if (lowerDesc.includes("imagen") || lowerDesc.includes("dibujo") || lowerDesc.includes("arte") || lowerCat.includes("imagen")) {
+    return "image";
+  } else if (lowerDesc.includes("video") || lowerDesc.includes("película") || lowerCat.includes("video")) {
+    return "video";
+  } else if (lowerDesc.includes("audio") || lowerDesc.includes("música") || lowerDesc.includes("sonido") || lowerCat.includes("audio")) {
+    return "audio";
+  } else if (lowerDesc.includes("texto") || lowerDesc.includes("escribir") || lowerDesc.includes("redacción") || lowerCat.includes("texto")) {
+    return "text";
+  }
+  
+  return null;
+}
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -137,11 +157,54 @@ const videoUpload = multer({
   },
 });
 
-// Configuración para subida de recursos
+// Configuración mejorada para subida de recursos con múltiples formatos
 const recursoUpload = multer({
   storage: fileStorage,
   limits: {
-    fileSize: 200 * 1024 * 1024, // 200MB limit para recursos (aumentado de 50MB)
+    fileSize: 100 * 1024 * 1024, // 100MB limit para recursos
+  },
+  fileFilter: (req, file, cb) => {
+    // Detectar tipo de archivo basado en mimetype
+    const mimeType = file.mimetype.toLowerCase();
+    
+    // Archivos de documento
+    const documentTypes = /pdf|msword|vnd.openxmlformats-officedocument|vnd.ms-excel|vnd.ms-powerpoint|text\/plain|rtf/;
+    // Archivos de imagen
+    const imageTypes = /jpeg|jpg|png|gif|webp|svg/;
+    // Archivos de audio
+    const audioTypes = /audio\//;
+    // Archivos de video
+    const videoTypes = /video\//;
+    // Archivos comprimidos
+    const compressedTypes = /zip|rar|7z|tar|gz/;
+    // Archivos de diseño
+    const designTypes = /psd|ai|xd|sketch|figma/;
+    
+    // Comprobar si el tipo MIME corresponde a alguno de los tipos permitidos
+    if (
+      documentTypes.test(mimeType) || 
+      imageTypes.test(mimeType) || 
+      audioTypes.test(mimeType) || 
+      videoTypes.test(mimeType) || 
+      compressedTypes.test(mimeType) ||
+      designTypes.test(mimeType)
+    ) {
+      // Verificar tamaño específico según tipo de archivo
+      const fileSize = parseInt(req.headers['content-length'] || '0');
+      
+      // Límites específicos por tipo
+      if (videoTypes.test(mimeType) && fileSize > 100 * 1024 * 1024) { // 100MB para videos
+        return cb(new Error("Los archivos de video no pueden superar los 100MB"));
+      } else if (audioTypes.test(mimeType) && fileSize > 50 * 1024 * 1024) { // 50MB para audio
+        return cb(new Error("Los archivos de audio no pueden superar los 50MB"));
+      } else if (compressedTypes.test(mimeType) && fileSize > 100 * 1024 * 1024) { // 100MB para archivos comprimidos
+        return cb(new Error("Los archivos comprimidos no pueden superar los 100MB"));
+      }
+      
+      return cb(null, true);
+    }
+    
+    cb(new Error("Formato de archivo no soportado. Formatos permitidos: documentos, imágenes, audio, video, archivos comprimidos y archivos de diseño."));
   }
 });
 
@@ -242,7 +305,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Convertir el nombre del recurso a slug
       const slug = generateSlug(titulo);
       
-      // Preparar los datos del recurso
+      // Determinar tipo de recurso basado en la entrada
+      let resourceType = "link"; // Por defecto es un enlace
+      
+      // Si hay un archivo, determinamos el tipo basado en el mime type
+      if (files.archivo && files.archivo.length > 0) {
+        resourceType = "file"; // Cambiamos a tipo archivo
+        
+        // Determinar si es una herramienta de IA basada en el contenido y categoría
+        const mimeType = files.archivo[0].mimetype.toLowerCase();
+        const esIA = categoria.toLowerCase().includes('ia') || 
+                   (descripcion && descripcion.toLowerCase().includes('inteligencia artificial'));
+        
+        if (esIA) {
+          resourceType = "aiTool";
+        }
+      }
+      
+      // Preparar los datos del recurso con detección automática de tipo
       const resourceData = {
         userId,
         categoryId: categoriaObj.id,
@@ -250,17 +330,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: titulo,
         slug,
         description: descripcion || "Sin descripción",
-        content: null,
-        thumbnailUrl: files.imagen ? files.imagen[0].path : null,
+        content: contenido || null,
+        thumbnailUrl: files.imagen ? files.imagen[0].path.replace(/^uploads\//, '') : null,
         externalUrl: enlaceExterno || null,
-        downloadUrl: files.archivo ? files.archivo[0].path : null,
+        downloadUrl: files.archivo ? files.archivo[0].path.replace(/^uploads\//, '') : null,
         fileSize: files.archivo ? files.archivo[0].size : null,
         fileType: files.archivo ? files.archivo[0].mimetype : null,
-        version: null,
+        version: version || "1.0",
         tags: tags ? tags.split(',').map((tag: string) => tag.trim()) : [],
         isVerified: true, // Los recursos se publican sin necesidad de verificación
         isPublic: true, // Todos los recursos son públicos por defecto
-        isFeatured: false // Solo admin puede marcar como destacado
+        isFeatured: false, // Solo admin puede marcar como destacado
+        resourceType, // Asignamos el tipo detectado automáticamente
+        aiCategory: resourceType === "aiTool" ? detectAICategory(descripcion || "", categoria) : null
       };
       
       // Guardar el recurso en la base de datos
