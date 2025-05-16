@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Helmet } from "react-helmet";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { corregirRutaRecurso } from "@/lib/utils/resource-utils";
 import { 
   Tabs, 
   TabsContent, 
@@ -168,7 +169,7 @@ function RecursoCard({ recurso }: { recurso: any }) {
     <Card className="overflow-hidden transition-all hover:shadow-md">
       <div className="aspect-video relative overflow-hidden bg-muted">
         <img 
-          src={recurso.imagen} 
+          src={corregirRutaRecurso(recurso.imagen)} 
           alt={recurso.titulo} 
           className="object-cover w-full h-full"
         />
