@@ -402,44 +402,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Recurso no encontrado" });
       }
       
-      // Verificar si el usuario ya ha votado por este recurso
-      const votoExistente = await storage.getUserVote(userId, resourceId);
+      // Verificar si el usuario ya ha votado por este recurso usando DrizzleORM
+      const [votoExistente] = await db
+        .select()
+        .from(resourceVotes)
+        .where(and(
+          eq(resourceVotes.userId, userId),
+          eq(resourceVotes.resourceId, resourceId)
+        ));
       
       let voteCount = recurso.voteCount || 0;
       let voteScore = recurso.voteScore || 0;
+      let likesCount = recurso.likesCount || 0;
+      let dislikesCount = recurso.dislikesCount || 0;
       
       if (votoExistente) {
         // Actualizar voto existente
-        await storage.updateResourceVote(votoExistente.id, { score });
+        await db
+          .update(resourceVotes)
+          .set({ 
+            score,
+            updatedAt: new Date()
+          })
+          .where(eq(resourceVotes.id, votoExistente.id));
         
         // Si cambió el voto, actualizar puntuación
         if (votoExistente.score !== score) {
+          // Actualizar contadores
+          if (score === 1) {
+            // Cambió de no me gusta a me gusta
+            likesCount++;
+            dislikesCount--;
+          } else {
+            // Cambió de me gusta a no me gusta
+            likesCount--;
+            dislikesCount++;
+          }
+          
           // Restar puntuación anterior y sumar nueva
           voteScore = voteScore - votoExistente.score + score;
         }
       } else {
         // Crear nuevo voto
-        await storage.createResourceVote({
-          userId,
-          resourceId,
-          score
-        });
+        await db
+          .insert(resourceVotes)
+          .values({
+            userId,
+            resourceId,
+            score
+          });
         
         // Incrementar contador y puntuación
         voteCount++;
         voteScore += score;
+        
+        // Actualizar contadores de me gusta/no me gusta
+        if (score === 1) {
+          likesCount++;
+        } else {
+          dislikesCount++;
+        }
       }
       
       // Actualizar recurso con nuevos contadores
-      await storage.updateResource(resourceId, {
-        voteCount,
-        voteScore
-      });
+      await db
+        .update(resources)
+        .set({
+          voteCount,
+          voteScore,
+          likesCount,
+          dislikesCount,
+          updatedAt: new Date()
+        })
+        .where(eq(resources.id, resourceId));
       
       res.json({ 
         message: "Voto registrado correctamente",
         voteCount,
-        voteScore
+        voteScore,
+        likesCount,
+        dislikesCount
       });
     } catch (error) {
       console.error("Error al votar por recurso:", error);
@@ -458,7 +500,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Usuario no autenticado" });
       }
       
-      const voto = await storage.getUserVote(userId, resourceId);
+      // Usar DrizzleORM para obtener el voto del usuario
+      const [voto] = await db
+        .select()
+        .from(resourceVotes)
+        .where(and(
+          eq(resourceVotes.userId, userId),
+          eq(resourceVotes.resourceId, resourceId)
+        ));
       
       if (!voto) {
         return res.status(404).json({ message: "No has votado por este recurso todavía" });
