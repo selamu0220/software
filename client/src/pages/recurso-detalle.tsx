@@ -7,6 +7,7 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
+import { corregirRutaRecurso } from "@/lib/utils/resource-utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -251,7 +252,7 @@ export default function RecursoDetallePage() {
             "@context": "https://schema.org",
             "@type": "Product",
             "name": recurso.titulo,
-            "image": recurso.imagen,
+            "image": corregirRutaRecurso(recurso.imagen),
             "description": recurso.descripcion,
             "category": recurso.categoria,
             "sku": `recurso-${recursoId}`,
@@ -308,7 +309,7 @@ export default function RecursoDetallePage() {
             
             <div className="relative aspect-video overflow-hidden rounded-lg mb-6">
               <img 
-                src={recurso.imagen} 
+                src={corregirRutaRecurso(recurso.imagen)} 
                 alt={recurso.titulo} 
                 className="object-cover w-full h-full"
               />

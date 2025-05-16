@@ -311,7 +311,7 @@ export default function IdeaManual() {
       const data = await response.json();
       
       // Actualizar caché si es necesario
-      queryClient.invalidateQueries(['/api/video-ideas']);
+      queryClient.invalidateQueries({ queryKey: ['/api/video-ideas'] });
       
       toast({
         title: "Éxito",

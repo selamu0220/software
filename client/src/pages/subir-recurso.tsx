@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { corregirRutaRecurso } from "@/lib/utils/resource-utils";
 import { 
   Form,
   FormControl,
@@ -369,7 +370,7 @@ export default function SubirRecursoPage() {
                       {imagenPreview ? (
                         <div className="relative w-full">
                           <img 
-                            src={imagenPreview} 
+                            src={corregirRutaRecurso(imagenPreview)} 
                             alt="Vista previa" 
                             className="mx-auto max-h-40 object-contain mb-2" 
                           />
