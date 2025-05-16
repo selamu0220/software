@@ -209,7 +209,78 @@ export default function RecursoDetallePage() {
   const [enviando, setEnviando] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [recurso, setRecurso] = useState<any>(recursoEjemplo);
+  const [usuario, setUsuario] = useState<any>(null);
+  const [votando, setVotando] = useState(false);
+  const [votoUsuario, setVotoUsuario] = useState(0);
   const { toast } = useToast();
+  
+  // Función para votar por un recurso
+  const handleVotar = async (valor: number) => {
+    if (!usuario || votando) return;
+    
+    setVotando(true);
+    
+    try {
+      const response = await fetch(`/api/recursos/${recursoId}/votar`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          score: valor 
+        }),
+      });
+      
+      if (response.ok) {
+        const resultado = await response.json();
+        setVotoUsuario(valor);
+        
+        // Actualizar contador de votos en el recurso
+        setRecurso({
+          ...recurso,
+          voteCount: resultado.voteCount || recurso.voteCount || 0,
+          voteScore: resultado.voteScore || recurso.voteScore || 0
+        });
+        
+        toast({
+          title: "¡Gracias por tu valoración!",
+          description: "Tu opinión ayuda a otros usuarios a encontrar buenos recursos.",
+        });
+      } else {
+        toast({
+          title: "Error al valorar",
+          description: "No se pudo registrar tu valoración, inténtalo de nuevo.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error al votar:", error);
+      toast({
+        title: "Error al valorar",
+        description: "Ocurrió un problema al procesar tu valoración.",
+        variant: "destructive"
+      });
+    } finally {
+      setVotando(false);
+    }
+  };
+  
+  // Obtener información del usuario
+  useEffect(() => {
+    const obtenerUsuario = async () => {
+      try {
+        const response = await fetch("/api/me");
+        if (response.ok) {
+          const data = await response.json();
+          setUsuario(data);
+        }
+      } catch (error) {
+        console.error("Error al obtener usuario:", error);
+      }
+    };
+    
+    obtenerUsuario();
+  }, []);
   
   // Cargar el recurso real según el ID
   const recursoId = match ? parseInt(params.id) : 1;
@@ -581,6 +652,57 @@ export default function RecursoDetallePage() {
                       <ExternalLink className="w-4 h-4" /> Ver en sitio original
                     </Button>
                   )}
+                  
+                  {/* Indicador de tipo de recurso y precio */}
+                  <div className="flex flex-col space-y-2 mb-4">
+                    <div className="flex items-center space-x-2">
+                      {recurso.isPremium ? (
+                        <div className="text-amber-500 bg-amber-100 dark:bg-amber-950 dark:text-amber-300 px-3 py-1 rounded-full text-xs font-semibold flex items-center">
+                          <span className="mr-1">⭐</span> Premium - {((recurso.price || 0) / 100).toFixed(2)}€
+                        </div>
+                      ) : (
+                        <div className="text-green-500 bg-green-100 dark:bg-green-950 dark:text-green-300 px-3 py-1 rounded-full text-xs font-semibold flex items-center">
+                          <span className="mr-1">✓</span> Gratuito
+                        </div>
+                      )}
+                      
+                      <div className="bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full text-xs font-semibold flex items-center">
+                        {recurso.resourceType === 'file' && <span>📁 Archivo</span>}
+                        {recurso.resourceType === 'link' && <span>🔗 Enlace</span>}
+                        {recurso.resourceType === 'tool' && <span>🛠️ Herramienta</span>}
+                        {recurso.resourceType === 'aiTool' && <span>🤖 IA - {recurso.aiCategory || 'General'}</span>}
+                        {!recurso.resourceType && <span>📁 Archivo</span>}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Sistema de votación */}
+                  <div className="flex justify-between items-center border border-border rounded-md p-3 mb-4">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">¿Te ha sido útil?</span>
+                      <span className="text-xs text-muted-foreground">{recurso.voteCount || 0} valoraciones</span>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleVotar(1)}
+                        disabled={!usuario || votando}
+                        className={votoUsuario === 1 ? "border-primary" : ""}
+                      >
+                        <ThumbsUp className={`h-4 w-4 ${votoUsuario === 1 ? "text-primary fill-primary" : ""}`} />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleVotar(0)}
+                        disabled={!usuario || votando}
+                        className={votoUsuario === 0 ? "border-destructive" : ""}
+                      >
+                        <ThumbsDown className={`h-4 w-4 ${votoUsuario === 0 ? "text-destructive fill-destructive" : ""}`} />
+                      </Button>
+                    </div>
+                  </div>
                   
                   <div className="flex justify-center">
                     <Button variant="outline" size="sm" className="w-full gap-1">

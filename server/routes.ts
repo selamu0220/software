@@ -376,6 +376,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Votar por un recurso (me gusta o no me gusta)
+  app.post("/api/recursos/:id/votar", requireAuth, async (req, res) => {
+    try {
+      const resourceId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      const { score } = req.body;
+      
+      if (score !== 0 && score !== 1) {
+        return res.status(400).json({ message: "La valoración debe ser 0 (no me gusta) o 1 (me gusta)" });
+      }
+      
+      const recurso = await storage.getResource(resourceId);
+      if (!recurso) {
+        return res.status(404).json({ message: "Recurso no encontrado" });
+      }
+      
+      // Verificar si el usuario ya ha votado por este recurso
+      const votoExistente = await storage.getUserVote(userId, resourceId);
+      
+      let voteCount = recurso.voteCount || 0;
+      let voteScore = recurso.voteScore || 0;
+      
+      if (votoExistente) {
+        // Actualizar voto existente
+        await storage.updateResourceVote(votoExistente.id, { score });
+        
+        // Si cambió el voto, actualizar puntuación
+        if (votoExistente.score !== score) {
+          // Restar puntuación anterior y sumar nueva
+          voteScore = voteScore - votoExistente.score + score;
+        }
+      } else {
+        // Crear nuevo voto
+        await storage.createResourceVote({
+          userId,
+          resourceId,
+          score
+        });
+        
+        // Incrementar contador y puntuación
+        voteCount++;
+        voteScore += score;
+      }
+      
+      // Actualizar recurso con nuevos contadores
+      await storage.updateResource(resourceId, {
+        voteCount,
+        voteScore
+      });
+      
+      res.json({ 
+        message: "Voto registrado correctamente",
+        voteCount,
+        voteScore
+      });
+    } catch (error) {
+      console.error("Error al votar por recurso:", error);
+      res.status(500).json({ message: "Error al procesar el voto" });
+    }
+  });
+  
   // Ruta para eliminar un recurso específico (solo el propietario o admin)
   app.delete("/api/recursos/:id", requireAuth, async (req, res) => {
     try {
