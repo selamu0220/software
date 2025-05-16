@@ -320,28 +320,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Obtener un recurso específico por slug
-  app.get("/api/recursos/:slug", async (req, res) => {
-    try {
-      const { slug } = req.params;
-      const recurso = await storage.getResourceBySlug(slug);
-      
-      if (!recurso) {
-        return res.status(404).json({ message: "Recurso no encontrado" });
-      }
-      
-      // Incrementar contador de vistas
-      await storage.updateResource(recurso.id, {
-        viewCount: recurso.viewCount + 1
-      });
-      
-      res.json(recurso);
-    } catch (error) {
-      console.error("Error al obtener recurso:", error);
-      res.status(500).json({ message: "Error al obtener el recurso" });
-    }
-  });
-  
   // Obtener todas las categorías de recursos
   app.get("/api/recursos/categorias", async (req, res) => {
     try {
@@ -361,6 +339,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error al obtener subcategorías:", error);
       res.status(500).json({ message: "Error al obtener las subcategorías de recursos" });
+    }
+  });
+  
+  // Obtener un recurso específico por ID o slug (debe ir después de las rutas específicas)
+  app.get("/api/recursos/:identificador", async (req, res) => {
+    try {
+      const { identificador } = req.params;
+      let recurso;
+      
+      // Verificar si es un ID (numérico) o un slug (texto)
+      if (!isNaN(parseInt(identificador))) {
+        // Es un ID numérico
+        const id = parseInt(identificador);
+        recurso = await storage.getResource(id);
+      } else {
+        // Es un slug de texto
+        recurso = await storage.getResourceBySlug(identificador);
+      }
+      
+      if (!recurso) {
+        return res.status(404).json({ message: "Recurso no encontrado" });
+      }
+      
+      // Incrementar contador de vistas si existe esa funcionalidad
+      if (recurso.viewCount !== undefined) {
+        await storage.updateResource(recurso.id, {
+          viewCount: (recurso.viewCount || 0) + 1
+        });
+      }
+      
+      res.json(recurso);
+    } catch (error) {
+      console.error("Error al obtener recurso:", error);
+      res.status(500).json({ message: "Error al obtener el recurso" });
     }
   });
   
