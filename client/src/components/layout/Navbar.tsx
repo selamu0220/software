@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video, BarChart3, BookOpen, Library, FileText, Star } from "lucide-react";
+import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video, BarChart3, BookOpen, Library, FileText, Star, Pencil, PenSquare } from "lucide-react";
 
 interface NavbarProps {
   user: User | null;
@@ -80,6 +80,13 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     <p className="text-xs text-muted-foreground">Conectado como</p>
                     <p className="text-sm font-medium truncate">{user.username}</p>
                   </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/mis-guiones" className="flex items-center">
+                      <PenSquare className="mr-2 h-4 w-4" />
+                      Generador de Guiones
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href="/recursos" className="flex items-center">
@@ -225,6 +232,16 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   </div>
                 </div>
                 <div className="mt-3 space-y-0.5">
+                  <Link
+                    href="/mis-guiones"
+                    className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="flex items-center">
+                      <PenSquare className="mr-2 h-4 w-4" />
+                      <span>Generador de Guiones</span>
+                    </div>
+                  </Link>
                   <Link
                     href="/recursos"
                     className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
