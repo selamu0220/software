@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { User, VideoIdea } from "@shared/schema";
 import { VideoIdeaContent, MultiGenerationResponse } from "@/lib/openai";
+
 import Hero from "@/components/home/Hero";
 import Generator from "@/components/home/Generator";
 import ResultView from "@/components/home/ResultView";
@@ -100,6 +101,17 @@ export default function Home({ user }: HomeProps) {
   return (
     <div>
       <Hero user={user} />
+      
+      {/* Botón para Acceso Directo al Generador de Guiones */}
+      {user && (
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 mb-6">
+          <div className="flex justify-center">
+            <a href="/mis-guiones" className="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-md font-medium text-white bg-primary hover:bg-primary/90 transition-colors">
+              ✏️ Acceder al Generador de Guiones
+            </a>
+          </div>
+        </div>
+      )}
       
       <Generator 
         onIdeaGenerated={handleIdeaGenerated} 
