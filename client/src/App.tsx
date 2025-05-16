@@ -29,6 +29,8 @@ import IdeaPublica from "@/pages/idea-publica";
 import MisIdeas from "@/pages/mis-ideas";
 // Editor manual de ideas tipo Google Docs
 import IdeaManual from "@/pages/idea-manual";
+// Editor simple de guiones (sin dependencia de base de datos)
+import SimpleScript from "@/pages/simple-script";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AssistantSidebar } from "@/components/ui/assistant-sidebar";
@@ -124,6 +126,7 @@ function App() {
             {/* Rutas para la biblioteca de guiones */}
             <ProtectedRoute path="/mis-guiones" component={() => <MisGuiones />} />
             <ProtectedRoute path="/script-editor/:id?" component={ScriptEditor} />
+            <Route path="/guiones" component={() => <SimpleScript />} />
             
             {/* Página de testimonios y opiniones */}
             <Route path="/testimonios" component={() => <Testimonios />} />

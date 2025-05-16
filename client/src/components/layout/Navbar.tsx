@@ -23,7 +23,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
   const navLinks = [
     { name: "Recursos", href: "/recursos" },
     { name: "Generador", href: "/" },
-    { name: "Guiones", href: "/mis-guiones" },
+    { name: "Guiones", href: "/guiones" },
     { name: "Blog", href: "/blog" },
     { name: "Calendario", href: "/calendar" },
     { name: "Teleprompter", href: "/teleprompter" },
