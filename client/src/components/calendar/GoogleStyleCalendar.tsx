@@ -67,6 +67,7 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
+import IdeaGeneratorDialog from "./IdeaGeneratorDialog";
 
 interface GoogleStyleCalendarProps {
   user: User | null;
@@ -752,14 +753,28 @@ export default function GoogleStyleCalendar({ user }: GoogleStyleCalendarProps) 
           <div className="md:col-span-1">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">
-                  {format(selectedDate, "d 'de' MMMM, yyyy", { locale: es })}
-                </CardTitle>
-                <CardDescription>
-                  {getEntriesForDay(selectedDate).length 
-                    ? `${getEntriesForDay(selectedDate).length} entradas programadas` 
-                    : "No hay entradas para este día"}
-                </CardDescription>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">
+                      {format(selectedDate, "d 'de' MMMM, yyyy", { locale: es })}
+                    </CardTitle>
+                    <CardDescription>
+                      {getEntriesForDay(selectedDate).length 
+                        ? `${getEntriesForDay(selectedDate).length} entradas programadas` 
+                        : "No hay entradas para este día"}
+                    </CardDescription>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="ml-2"
+                    onClick={() => setShowGenerateIdeaDialog(true)}
+                    disabled={!user}
+                  >
+                    <Video className="h-4 w-4 mr-2" />
+                    Generar Idea
+                  </Button>
+                </div>
               </CardHeader>
               
               <CardContent>
