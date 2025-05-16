@@ -917,6 +917,13 @@ export default function GoogleStyleCalendar({ user }: GoogleStyleCalendarProps) 
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Diálogo de generación de ideas */}
+      <IdeaGeneratorDialog
+        isOpen={showGenerateIdeaDialog}
+        onClose={() => setShowGenerateIdeaDialog(false)}
+        selectedDate={selectedDate}
+      />
     </div>
   );
 }

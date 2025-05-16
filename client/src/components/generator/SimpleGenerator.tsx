@@ -19,7 +19,7 @@ import {
 import { Loader2, Video, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { VideoIdeaContent } from "@/lib/openai";
+import { VideoIdeaContent, generateVideoIdea } from "@/lib/openai";
 import { format } from "date-fns";
 
 interface SimpleGeneratorProps {
@@ -62,21 +62,20 @@ export default function SimpleGenerator({
     setIsGenerating(true);
     
     try {
-      const response = await apiRequest("POST", "/api/generate-idea", {
+      // Utilizamos la función importada para mejor tipado y manejo de errores
+      const params = {
         category: category,
+        subcategory: "",
         videoLength: videoLength,
         keywords: "",
         tone: "informativo",
         includeOutro: true,
         includeMidRoll: true,
         outroType: "suscripción",
-      });
+        geminiApiKey: "",
+      };
       
-      if (!response.ok) {
-        throw new Error("Error al generar la idea");
-      }
-      
-      const data = await response.json();
+      const data = await generateVideoIdea(params);
       setGeneratedIdea(data);
       
       if (onIdeaGenerated) {
@@ -89,11 +88,21 @@ export default function SimpleGenerator({
       });
     } catch (error) {
       console.error("Error generating idea:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo generar la idea. Por favor verifica la configuración de la API.",
-        variant: "destructive",
-      });
+      
+      // Manejo específico para cuando se alcanza el límite diario gratuito
+      if (error instanceof Error && error.message === "DAILY_LIMIT_REACHED") {
+        toast({
+          title: "Límite diario alcanzado",
+          description: "Has alcanzado el límite diario de ideas gratuitas. Actualiza a premium para generar más ideas.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo generar la idea. Por favor verifica la configuración de la API.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsGenerating(false);
     }
