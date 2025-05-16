@@ -489,9 +489,17 @@ export default function RecursoDetallePage() {
               </CardContent>
               <CardContent className="pt-0">
                 <div className="flex flex-col gap-3">
-                  <Button className="w-full gap-2">
-                    <Download className="w-4 h-4" /> Descargar ahora
-                  </Button>
+                  <a 
+                    href={corregirRutaRecurso(recurso.enlaceDescarga)} 
+                    download 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-block w-full"
+                  >
+                    <Button className="w-full gap-2">
+                      <Download className="w-4 h-4" /> Descargar ahora
+                    </Button>
+                  </a>
                   
                   {recurso.enlaceExterno && (
                     <Button variant="outline" className="w-full gap-2">
