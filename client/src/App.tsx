@@ -99,7 +99,7 @@ function App() {
               </div>
             )}
             <Switch>
-              <Route path="/" component={() => <Home user={user} />} />
+              <Route path="/" component={() => <Recursos />} />
               <Route path="/login" component={() => <Login onLogin={login} />} />
               <Route path="/register" component={() => <Register onRegister={login} />} />
             <Route path="/dashboard" component={() => <Dashboard user={user} />} />
