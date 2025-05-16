@@ -27,6 +27,8 @@ import ScriptEditor from "@/pages/script-editor";
 import Testimonios from "@/pages/testimonios";
 import IdeaPublica from "@/pages/idea-publica";
 import MisIdeas from "@/pages/mis-ideas";
+// Editor manual de ideas tipo Google Docs
+import IdeaManual from "@/pages/idea-manual";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AssistantSidebar } from "@/components/ui/assistant-sidebar";
@@ -131,6 +133,9 @@ function App() {
             
             {/* Ruta para gestionar todas las ideas del usuario */}
             <ProtectedRoute path="/mis-ideas" component={() => <MisIdeas />} />
+            
+            {/* Ruta para crear o editar ideas de forma manual (tipo Google Docs) */}
+            <ProtectedRoute path="/idea-manual/:id?" component={() => <IdeaManual />} />
             
             <Route component={NotFound} />
           </Switch>
