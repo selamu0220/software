@@ -1123,6 +1123,24 @@ export class DatabaseStorage implements IStorage {
     return result[0].count || 0;
   }
   
+  async countVideoIdeasByUserSince(userId: number, date: Date): Promise<number> {
+    try {
+      const result = await db.select({ count: count() })
+        .from(videoIdeas)
+        .where(
+          and(
+            eq(videoIdeas.userId, userId),
+            gte(videoIdeas.createdAt, date)
+          )
+        );
+      
+      return result[0].count || 0;
+    } catch (error) {
+      console.error("Error contando ideas de video desde fecha:", error);
+      return 0;
+    }
+  }
+  
   async deleteVideoIdea(id: number): Promise<boolean> {
     const result = await db.delete(videoIdeas)
       .where(eq(videoIdeas.id, id))

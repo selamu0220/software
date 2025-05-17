@@ -3055,6 +3055,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   /**
+   * Endpoint para generación por lotes según estrategia de contenido
+   */
+  app.post("/api/generate-idea-batch", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const { date, contentPillar } = req.body;
+      
+      // Importar controlador de generación por lotes
+      const { handleBatchGeneration } = await import("./routes/batch-generation");
+      
+      // Enviar la solicitud al controlador específico
+      return handleBatchGeneration(req, res);
+    } catch (error) {
+      console.error("Error en generación por lotes:", error);
+      res.status(500).json({ 
+        message: "Error al generar idea por lotes", 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  /**
    * Rutas para la estrategia de contenido basada en Personal Brand Thesis
    */
   app.get("/api/content-strategy", requireAuth, async (req, res) => {
