@@ -21,6 +21,8 @@ import SubirRecurso from "@/pages/subir-recurso";
 import BlogPage from "@/pages/blog";
 import BlogPostPage from "@/pages/blog-post";
 import BlogEditorPage from "@/pages/blog-editor";
+// Visor de páginas web con iframe
+import WebViewer from "@/pages/web-viewer";
 // Páginas de guiones de vídeo
 import MisGuiones from "@/pages/mis-guiones";
 import ScriptEditor from "@/pages/script-editor";
@@ -116,6 +118,7 @@ function App() {
             <Route path="/recursos" component={() => <Recursos />} />
             <Route path="/recursos/subir" component={() => <SubirRecurso />} />
             <Route path="/recursos/:id" component={RecursoDetalle} />
+            <Route path="/web-viewer/:id" component={WebViewer} />
             
             {/* Nuevas rutas para el blog (mejora SEO) */}
             <Route path="/blog" component={() => <BlogPage />} />
