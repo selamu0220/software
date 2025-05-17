@@ -746,6 +746,37 @@ export class MemStorage implements IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Operaciones para estrategia de contenido
+  async getContentStrategy(userId: number): Promise<ContentStrategy | undefined> {
+    const [strategy] = await db
+      .select()
+      .from(contentStrategies)
+      .where(eq(contentStrategies.userId, userId));
+    
+    return strategy;
+  }
+
+  async createContentStrategy(strategy: ContentStrategyInsert): Promise<ContentStrategy> {
+    const [newStrategy] = await db
+      .insert(contentStrategies)
+      .values(strategy)
+      .returning();
+    
+    return newStrategy;
+  }
+
+  async updateContentStrategy(id: number, strategy: Partial<ContentStrategy>): Promise<ContentStrategy | undefined> {
+    const [updatedStrategy] = await db
+      .update(contentStrategies)
+      .set({
+        ...strategy,
+        updatedAt: new Date()
+      })
+      .where(eq(contentStrategies.id, id))
+      .returning();
+    
+    return updatedStrategy;
+  }
   // User operations
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));

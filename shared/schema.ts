@@ -463,6 +463,99 @@ export const generationRequestSchema = z.object({
 
 // Eliminado debido a la duplicación
 
+// Tabla para estrategias de contenido (Personal Brand Thesis)
+export const contentStrategies2 = pgTable("content_strategies", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  
+  // Sección 1: Fundamentos
+  adviceTopics: text("advice_topics"),
+  naturalSkills: text("natural_skills"),
+  introduction: text("introduction"),
+  uniqueValue: text("unique_value"),
+  uniqueExperiences: text("unique_experiences"),
+  problemsSolved: text("problems_solved"),
+  passionTopics: text("passion_topics"),
+  coreValues: text("core_values"),
+  guidingPrinciples: text("guiding_principles"),
+  unconventionalBelief: text("unconventional_belief"),
+  targetAudience: text("target_audience"),
+  audienceProblem: text("audience_problem"),
+  audienceBenefit: text("audience_benefit"),
+  valueStatement: text("value_statement"),
+  
+  // Sección 2: Micro Personal Brand
+  audiencePlatforms: text("audience_platforms"),
+  selectedPlatform: text("selected_platform"),
+  platformReason: text("platform_reason"),
+  idealCustomerAge: text("ideal_customer_age"),
+  idealCustomerIncome: text("ideal_customer_income"),
+  idealCustomerJob: text("ideal_customer_job"),
+  idealCustomerProblems: text("ideal_customer_problems"),
+  idealCustomerGoals: text("ideal_customer_goals"),
+  idealCustomerSearches: text("ideal_customer_searches"),
+  contentStrategies: text("content_strategies"),
+  
+  // Sección 3: Estrategia de Contenido
+  audienceProblems: text("audience_problems"),
+  contentTopics: text("content_topics"),
+  
+  // Pilares de contenido
+  pillarActionContent: text("pillar_action_content"),
+  pillarAwarenessContent: text("pillar_awareness_content"),
+  pillarNarrativeContent: text("pillar_narrative_content"),
+  pillarAttractorContent: text("pillar_attractor_content"),
+  pillarNurtureContent: text("pillar_nurture_content"),
+  
+  // Problem Farming
+  problemOriented1: text("problem_oriented_1"),
+  solutionOriented1: text("solution_oriented_1"),
+  problemOriented2: text("problem_oriented_2"),
+  solutionOriented2: text("solution_oriented_2"),
+  problemOriented3: text("problem_oriented_3"),
+  solutionOriented3: text("solution_oriented_3"),
+  
+  // Model & Dream Lists
+  modelList: text("model_list"),
+  dreamList: text("dream_list"),
+  
+  // Calendario de contenido
+  contentCalendar: text("content_calendar"),
+  firstContentOutline: text("first_content_outline"),
+  
+  // Sección 4: Monetización
+  monetizationReadiness: text("monetization_readiness"),
+  monetizationObstacles: text("monetization_obstacles"),
+  monetizationExpertise: text("monetization_expertise"),
+  problemToSolve: text("problem_to_solve"),
+  solutionDifferentiation: text("solution_differentiation"),
+  transformation: text("transformation"),
+  
+  // Sección 5: Automatización y Escalabilidad
+  systemWork: text("system_work"),
+  coachingPhases: text("coaching_phases"),
+  phaseDetails: text("phase_details"),
+  leadMagnets: text("lead_magnets"),
+  callToAction: text("call_to_action"),
+  qualifyingQuestion: text("qualifying_question"),
+  communityType: text("community_type"),
+  communityValue: text("community_value"),
+  communityRules: text("community_rules"),
+  communityEngagement: text("community_engagement"),
+  
+  // Plan de acción
+  shortTermPriorities: text("short_term_priorities"),
+  monthlyPriorities: text("monthly_priorities"),
+  quarterlyGoals: text("quarterly_goals")
+});
+
+export type ContentStrategy = typeof contentStrategies.$inferSelect;
+export type InsertContentStrategy = typeof contentStrategies.$inferInsert;
+
+export const insertContentStrategySchema = createInsertSchema(contentStrategies);
+
 // Esquemas de inserción para recursos
 export const insertResourceCategorySchema = createInsertSchema(resourceCategories).pick({
   name: true,
