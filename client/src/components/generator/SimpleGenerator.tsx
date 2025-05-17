@@ -70,10 +70,9 @@ export default function SimpleGenerator({
         videoLength: videoLength,
         templateStyle: "educativo",
         contentTone: "informativo",
-        contentType: "idea",
+        contentType: "idea" as const, // Usar tipo literal para cumplir con la interfaz
         timingDetail: false,
-        useSubcategory: false,
-        geminiApiKey: "",
+        useSubcategory: false
       };
       
       const data = await generateVideoIdea(params);
@@ -100,7 +99,7 @@ export default function SimpleGenerator({
       } else {
         toast({
           title: "Error",
-          description: "No se pudo generar la idea. Por favor verifica la configuración de la API.",
+          description: "No se pudo generar la idea. Intenta nuevamente más tarde.",
           variant: "destructive",
         });
       }

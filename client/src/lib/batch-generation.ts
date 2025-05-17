@@ -14,7 +14,7 @@ export interface BatchGenerationParams {
   contentType: 'idea' | 'keypoints' | 'fullScript';
   strategy: GenerationStrategyType;
   contentPillar?: ContentPillarType;
-  geminiApiKey?: string;
+  // La clave API de Gemini ahora se maneja automáticamente desde el servidor
 }
 
 // Estructura para seguimiento del progreso
@@ -152,8 +152,7 @@ export async function generateBatch(
         contentTone: pillar ? getToneForPillar(pillar) : "profesional",
         contentType: params.contentType,
         timingDetail: params.contentType === 'fullScript',
-        useSubcategory: !!pillar,
-        geminiApiKey: params.geminiApiKey || ""
+        useSubcategory: !!pillar
       };
       
       // Hacer la solicitud a la API

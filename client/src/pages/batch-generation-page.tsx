@@ -30,7 +30,6 @@ export default function BatchGenerationPage() {
     startDate: new Date(),
     contentType: 'idea',
     strategy: 'thesis',
-    geminiApiKey: '',
   });
   const [progress, setProgress] = useState<BatchProgress>({
     current: 0,
@@ -247,24 +246,22 @@ export default function BatchGenerationPage() {
               
               <Card className="md:col-span-2">
                 <CardHeader>
-                  <CardTitle>Configuración de IA</CardTitle>
+                  <CardTitle>Generación de Contenido</CardTitle>
                   <CardDescription>
-                    Configura las APIs de IA para la generación de contenido
+                    Genera contenido para las fechas seleccionadas
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-4">
-                    <div className="space-y-2">
-                      <Label>Clave API de Gemini (opcional)</Label>
-                      <Input 
-                        type="password" 
-                        placeholder="Introduce tu clave API de Gemini" 
-                        value={params.geminiApiKey || ''} 
-                        onChange={(e) => setParams({...params, geminiApiKey: e.target.value})}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Si no introduces una clave, se usará la API del servidor.
-                      </p>
+                    <p className="text-sm">
+                      La generación por lotes utilizará la API de Google Gemini para crear contenido
+                      para todas las fechas seleccionadas según los parámetros configurados.
+                    </p>
+                    <div className="bg-muted p-3 rounded-md">
+                      <ul className="text-sm space-y-1 list-disc pl-4">
+                        <li>Usuarios gratuitos: 1 idea por día</li>
+                        <li>Usuarios premium: Generación ilimitada</li>
+                      </ul>
                     </div>
                   </div>
                 </CardContent>
