@@ -283,17 +283,6 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     </div>
                   </Link>
                   <Link
-                    href="/recording"
-                    className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <div className="flex items-center">
-                      <Video className="mr-2 h-4 w-4" />
-                      <span>Grabación</span>
-                    </div>
-                  </Link>
-
-                  <Link
                     href="/blog"
                     className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20"
                     onClick={() => setMobileMenuOpen(false)}
