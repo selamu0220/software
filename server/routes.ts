@@ -1534,6 +1534,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             subcategory: baseParams.subcategory,
             videoLength: baseParams.videoLength,
             content: generatedIdea,
+            isPublic: false, // Las ideas generadas por defecto no son públicas
           });
           
           storedIdeas.push(videoIdea);
