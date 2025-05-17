@@ -66,12 +66,13 @@ export default function SimpleGenerator({
       const params = {
         category: category,
         subcategory: "",
+        videoFocus: `Ideas para video de ${category}`,
         videoLength: videoLength,
-        keywords: "",
-        tone: "informativo",
-        includeOutro: true,
-        includeMidRoll: true,
-        outroType: "suscripción",
+        templateStyle: "educativo",
+        contentTone: "informativo",
+        contentType: "idea",
+        timingDetail: false,
+        useSubcategory: false,
         geminiApiKey: "",
       };
       
