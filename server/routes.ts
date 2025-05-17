@@ -269,9 +269,18 @@ declare module "express-session" {
 
 // Middleware para verificar autenticación
 const requireAuth = (req: Request, res: Response, next: Function) => {
+  console.log("Verificando autenticación:", { 
+    sessionID: req.sessionID,
+    session: req.session,
+    hasUserId: !!req.session.userId
+  });
+  
   if (!req.session.userId) {
+    console.error("Autenticación fallida - No hay userId en la sesión");
     return res.status(401).json({ message: "Authentication required" });
   }
+  
+  console.log("Usuario autenticado:", { userId: req.session.userId });
   next();
 };
 
@@ -291,8 +300,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createTableIfMissing: true // Crea la tabla si no existe
       }),
       cookie: {
-        secure: process.env.NODE_ENV === "production",
+        secure: false, // Cambiado para desarrollo
+        httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 1 semana
+        sameSite: 'lax'
       },
     }),
   );
@@ -335,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let subcategoriaObj = null;
       
       // Convertir el nombre del recurso a slug
-      const slug = generateSlug(titulo);
+      const slug = slugify(titulo);
       
       // Determinar tipo de recurso basado en la entrada
       let resourceType = "link"; // Por defecto es un enlace
@@ -1014,7 +1025,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Set session
       req.session.userId = user.id;
-      console.log("Session set:", { userId: user.id });
+      // Guardar la sesión de forma síncrona antes de responder
+      await new Promise<void>((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) {
+            console.error("Error al guardar la sesión:", err);
+            reject(err);
+          } else {
+            console.log("Sesión guardada correctamente");
+            resolve();
+          }
+        });
+      });
+      
+      console.log("Session set:", { 
+        userId: user.id, 
+        sessionID: req.sessionID,
+        session: req.session
+      });
 
       // Return user without password
       const { password: _, ...userWithoutPassword } = user;
