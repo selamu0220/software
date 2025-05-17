@@ -33,11 +33,21 @@ export default function WebViewer() {
         }
         
         const data = await response.json();
-        if (!data.externalUrl && data.resourceType !== "webpage") {
+        if (!data.enlaceExterno && data.resourceType !== "webpage") {
           throw new Error("Este recurso no es una página web visualizable");
         }
         
-        setRecurso(data);
+        // Asegurarnos de que hay una URL externa para mostrar
+        if (!data.enlaceExterno) {
+          throw new Error("Este recurso no tiene un enlace web para visualizar");
+        }
+        
+        // Utilizar enlaceExterno como la URL externa
+        setRecurso({
+          ...data,
+          externalUrl: data.enlaceExterno,
+          title: data.titulo || data.title || "Visualizador Web"
+        });
       } catch (error) {
         console.error("Error al cargar recurso:", error);
         setError(error instanceof Error ? error.message : "Error al cargar el recurso");

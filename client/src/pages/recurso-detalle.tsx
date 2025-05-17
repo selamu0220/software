@@ -38,6 +38,7 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
+  Maximize,
   Download,
   ExternalLink,
   Eye,
@@ -717,9 +718,23 @@ export default function RecursoDetallePage() {
                   </a>
                   
                   {recurso.enlaceExterno && (
-                    <Button variant="outline" className="w-full gap-2">
-                      <ExternalLink className="w-4 h-4" /> Ver en sitio original
-                    </Button>
+                    <>
+                      <a 
+                        href={recurso.enlaceExterno} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-block w-full"
+                      >
+                        <Button variant="outline" className="w-full gap-2">
+                          <ExternalLink className="w-4 h-4" /> Ver en sitio original
+                        </Button>
+                      </a>
+                      <Link href={`/web-viewer/${idRecurso}`} className="inline-block w-full mt-2">
+                        <Button variant="default" className="w-full gap-2">
+                          <Maximize className="w-4 h-4" /> Ver dentro de la plataforma
+                        </Button>
+                      </Link>
+                    </>
                   )}
                   
                   {/* Indicador de tipo de recurso y precio */}
