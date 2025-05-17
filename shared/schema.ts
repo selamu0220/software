@@ -600,3 +600,34 @@ export const updateUserSchema = z.object({
 });
 
 export type UpdateUser = z.infer<typeof updateUserSchema>;
+
+// Esquema para estrategias de contenido
+export const contentStrategies = pgTable("content_strategies", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  audienceDescription: text("audience_description"),
+  uniqueValueProposition: text("unique_value_proposition"),
+  coreValues: text("core_values").array().default([]),
+  targetDescription: text("target_description"),
+  platforms: text("platforms").array().default([]),
+  pillars: json("pillars").default([]),
+  contentIdeas: json("content_ideas").default([]),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const contentStrategiesRelations = relations(contentStrategies, ({ one }) => ({
+  user: one(users, {
+    fields: [contentStrategies.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertContentStrategySchema = createInsertSchema(contentStrategies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ContentStrategyInsert = z.infer<typeof insertContentStrategySchema>;
+export type ContentStrategy = typeof contentStrategies.$inferSelect;

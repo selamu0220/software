@@ -13,6 +13,7 @@ import {
   resources,
   resourceCategories,
   resourceSubcategories,
+  contentStrategies,
   type User, 
   type InsertUser, 
   type VideoIdea, 
@@ -41,7 +42,9 @@ import {
   type ResourceCategory,
   type InsertResourceCategory,
   type ResourceSubcategory,
-  type InsertResourceSubcategory
+  type InsertResourceSubcategory,
+  type ContentStrategy,
+  type ContentStrategyInsert
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, SQL, sql, desc, asc, isNotNull, lte, gt, gte, count } from "drizzle-orm";
@@ -57,6 +60,11 @@ export interface IStorage {
   updateUserPremiumStatus(id: number, isPremium: boolean, lifetimeAccess?: boolean): Promise<User>;
   updateStripeCustomerId(id: number, customerId: string): Promise<User>;
   updateUserStripeInfo(id: number, info: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User>;
+  
+  // Estrategias de contenido
+  getContentStrategy(userId: number): Promise<ContentStrategy | undefined>;
+  createContentStrategy(strategy: ContentStrategyInsert): Promise<ContentStrategy>;
+  updateContentStrategy(id: number, strategy: Partial<ContentStrategy>): Promise<ContentStrategy | undefined>;
   
   // Sistema de votación para recursos
   getUserVote(userId: number, resourceId: number): Promise<any>;
