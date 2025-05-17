@@ -3,7 +3,6 @@ import { storage } from "../storage";
 import { generateVideoIdea as generateIdea, VideoIdeaContent } from "../gemini";
 import { slugify, generateSlug } from "../utils/slugify";
 import { InsertVideoIdea } from "@shared/schema";
-import { Json } from "@shared/utils";
 
 // Estructura simplificada para keypoints y script completo
 type KeypointsResponse = {
@@ -48,7 +47,7 @@ export async function handleBatchGeneration(req: Request, res: Response) {
     }
     
     // Verificar límites (1 idea por día para usuarios gratuitos)
-    if (user.plan !== "premium" && ideasToday >= 1) {
+    if (!user.isPremium && !user.lifetimeAccess && ideasToday >= 1) {
       return res.status(403).json({ 
         message: "Has alcanzado el límite diario de generación para usuarios gratuitos. Actualiza a premium para generar ideas ilimitadas.",
         limitReached: true
@@ -104,7 +103,7 @@ export async function handleBatchGeneration(req: Request, res: Response) {
     }
     
     // Si es un usuario gratuito, limitamos a una sola idea independientemente del timeframe
-    if (user.plan !== "premium") {
+    if (!user.isPremium && !user.lifetimeAccess) {
       numberOfIdeas = 1;
       dateRange = [startDateObj];
     }
@@ -135,16 +134,16 @@ export async function handleBatchGeneration(req: Request, res: Response) {
           titleTemplate
         });
         
-        if (ideaResponse.error) {
-          console.error(`Error generando idea #${i+1}:`, ideaResponse.error);
+        if (!ideaResponse || !ideaResponse.title) {
+          console.error(`Error generando idea #${i+1}: No se obtuvo una respuesta válida`);
           continue;
         }
-        
+      
         // Extraer título de la respuesta
         const title = ideaResponse.title || `Idea para ${contentPillar} - ${new Date().toISOString().split('T')[0]}`;
         
         // Generar slug único
-        const baseSlug = createSlug(title);
+        const baseSlug = generateSlug(title);
         const slug = await createUniqueSlug(baseSlug);
         
         // Simular generación de puntos clave usando el outline de la idea
@@ -165,10 +164,14 @@ export async function handleBatchGeneration(req: Request, res: Response) {
         // Crear estructura de contenido completa
         const videoIdeaContent = {
           title,
-          description: ideaResponse.description || "",
+          outline: ideaResponse.outline || [],
+          midVideoMention: ideaResponse.midVideoMention || "Recuerda suscribirte y activar notificaciones",
+          endVideoMention: ideaResponse.endVideoMention || "Gracias por ver este video",
+          thumbnailIdea: ideaResponse.thumbnailIdea || `Imagen de ${title}`,
+          interactionQuestion: ideaResponse.interactionQuestion || "¿Qué opinas sobre este tema?",
           keypoints: keypointsResponse.keypoints || [],
           fullScript: fullScriptResponse.script || { introduction: "", mainContent: [], conclusion: "" },
-          timingMarkers: timingDetail ? fullScriptResponse.timingMarkers || [] : []
+          timings: timingDetail ? fullScriptResponse.timingMarkers || [] : []
         };
         
         // Guardar la idea en la base de datos
@@ -219,6 +222,18 @@ export async function handleBatchGeneration(req: Request, res: Response) {
       error: error instanceof Error ? error.message : String(error)
     });
   }
+}
+
+// Función para generar slug a partir de un título
+function generateSlug(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')        // Reemplaza espacios con guiones
+    .replace(/[^\w\-]+/g, '')    // Elimina caracteres no alfanuméricos
+    .replace(/\-\-+/g, '-')      // Reemplaza múltiples guiones con uno solo
+    .substring(0, 100);          // Limita la longitud del slug
 }
 
 // Función para generar un rango de fechas consecutivas
