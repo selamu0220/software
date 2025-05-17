@@ -481,6 +481,61 @@ Este es un archivo de ejemplo generado automáticamente porque el archivo origin
     }
   });
   
+  // Ruta especial para descargar transiciones de DaVinci Resolve
+  app.get("/api/transiciones-davinci", (req, res) => {
+    const filePath = '/tmp/pack-transiciones-davinci.txt';
+    
+    // Asegurarse de que el archivo exista
+    if (!fs.existsSync(filePath)) {
+      const contenidoPack = `# Pack de Transiciones para DaVinci Resolve
+
+## Contenido
+Este pack incluye 50 transiciones profesionales diseñadas específicamente para DaVinci Resolve, perfectas para proyectos de todo tipo:
+
+- 10 transiciones de desvanecimiento avanzadas
+- 15 transiciones de movimiento dinámico
+- 8 transiciones con efectos glitch y distorsión
+- 7 transiciones basadas en formas geométricas
+- 10 transiciones de estilo cinematográfico
+
+Todas las transiciones son fáciles de usar: simplemente arrastra y suelta en tu línea de tiempo y ajusta la duración según tus necesidades.
+
+## Compatibilidad
+DaVinci Resolve 17 o superior
+
+## Instrucciones de instalación
+1. Descarga y descomprime el archivo
+2. Copia la carpeta "Transiciones" en la ubicación: [Documentos/BlackmagicDesign/DaVinci Resolve/Effects]
+3. Reinicia DaVinci Resolve
+4. Las transiciones aparecerán en el panel de efectos
+`;
+      try {
+        fs.writeFileSync(filePath, contenidoPack);
+      } catch(err) {
+        console.error("Error creando archivo de transiciones:", err);
+      }
+    }
+    
+    // Configurar headers para la descarga
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="Pack-Transiciones-DaVinci-Resolve.txt"');
+    
+    // Evitar cache
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
+    try {
+      // Leer el archivo como buffer para enviarlo en una sola pieza
+      const fileBuffer = fs.readFileSync(filePath);
+      console.log("Enviando archivo de transiciones DaVinci:", fileBuffer.length, "bytes");
+      res.end(fileBuffer);
+    } catch (error) {
+      console.error("Error enviando archivo de transiciones:", error);
+      res.status(500).send("Error al descargar el archivo de transiciones");
+    }
+  });
+  
   // Rutas para subida de recursos (requiere autenticación)
   app.post("/api/recursos/upload", requireAuth, recursoUpload.fields([
     { name: 'archivo', maxCount: 1 },

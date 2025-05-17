@@ -968,9 +968,14 @@ export default function RecursoDetallePage() {
               <CardContent className="pt-0">
                 <div className="flex flex-col gap-3">
                   <a 
-                    href={recurso.downloadUrl ? 
-                      `/api/descargar/${recurso.downloadUrl.split('/').pop()}` : 
-                      (recurso.enlaceDescarga ? `/api/descargar/${recurso.enlaceDescarga.split('/').pop()}` : '#')
+                    href={
+                      (recurso.title && recurso.title.toLowerCase().includes("davinci") || 
+                       recurso.description && recurso.description.toLowerCase().includes("davinci")) ? 
+                        "/api/transiciones-davinci" : 
+                        (recurso.downloadUrl ? 
+                          `/api/descargar/${recurso.downloadUrl.split('/').pop()}` : 
+                          (recurso.enlaceDescarga ? `/api/descargar/${recurso.enlaceDescarga.split('/').pop()}` : '#')
+                        )
                     } 
                     download 
                     target="_blank" 
