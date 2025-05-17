@@ -288,25 +288,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create session store
   const PgSession = connectPgSimple(session);
 
-  // Setup session middleware
+  // Setup session middleware con configuración optimizada para desarrollo
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || "keyboard-cat",
-      resave: false,
-      saveUninitialized: false,
+      secret: process.env.SESSION_SECRET || "red-creativa-session-secret",
+      resave: true, // Forzar guardado de sesión en cada petición
+      saveUninitialized: true, // Guardar sesiones sin inicializar
       store: new PgSession({
         pool: pool,
-        tableName: 'session', // Nombre de la tabla para las sesiones
-        createTableIfMissing: true // Crea la tabla si no existe
+        tableName: 'session', // Nombre de la tabla original para evitar conflictos
+        createTableIfMissing: true, // Crea la tabla si no existe
       }),
       cookie: {
-        secure: false, // Cambiado para desarrollo
+        secure: false, // Requerido para desarrollo en HTTP
         httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 1 semana
-        sameSite: 'lax'
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días para desarrollo
+        sameSite: 'lax',
+        path: '/',
       },
     }),
   );
+  
+  // Middleware para debug de sesiones en cada petición
+  app.use((req, res, next) => {
+    console.log("Session state:", { 
+      hasSession: !!req.session, 
+      userId: req.session.userId,
+      sessionID: req.sessionID
+    });
+    next();
+  });
 
   // Middleware to check if user is authenticated (declarado globalmente)
   
@@ -2933,7 +2944,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       for (let i = 0; i < blogPosts.length; i++) {
         const post = blogPosts[i];
-        const slug = generateSlug(post.title);
+        const slug = slugify(post.title);
         
         // Verificar si el slug ya existe
         const existingPost = await storage.getBlogPostBySlug(slug);
