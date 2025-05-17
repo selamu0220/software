@@ -119,33 +119,7 @@ export const resources = pgTable("resources", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Estrategia de contenido basada en Personal Brand Thesis
-export const contentStrategies = pgTable("content_strategies", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull().unique(), // Un usuario solo puede tener una estrategia
-  // Información de la marca personal
-  audiencePrimary: text("audience_primary").notNull(), // Audiencia primaria
-  audienceSecondary: text("audience_secondary"), // Audiencia secundaria (opcional)
-  thesis: text("thesis").notNull(), // Tesis principal (big idea)
-  
-  // Pilares de contenido
-  pillarActionable: text("pillar_actionable").notNull(), // Pilar: Ways of Action
-  pillarMindset: text("pillar_mindset").notNull(), // Pilar: Awareness Expansion
-  pillarNarrative: text("pillar_narrative").notNull(), // Pilar: Narrative
-  pillarAttract: text("pillar_attract").notNull(), // Pilar: Attractor
-  pillarNurture: text("pillar_nurture").notNull(), // Pilar: Nurture
-  
-  // Elementos adicionales
-  valueProposition: text("value_proposition"), // Propuesta de valor única
-  contentMission: text("content_mission"), // Misión del contenido
-  brandVoice: text("brand_voice"), // Voz y tono de la marca
-  contentGoals: text("content_goals"), // Objetivos del contenido
-  monetizationStrategy: text("monetization_strategy"), // Estrategia de monetización
-  
-  // Metadatos
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+// Eliminamos completamente esta definición
 
 // Comentarios en recursos
 export const blogPosts = pgTable("blog_posts", {
@@ -261,9 +235,9 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   resourceComments: many(resourceComments),
   resourceCollections: many(userResourceCollections),
   scriptCollections: many(userScriptCollections),
-  contentStrategy: one(contentStrategies, {
+  contentStrategyWorkbook: one(contentStrategiesWorkbook, {
     fields: [users.id],
-    references: [contentStrategies.userId],
+    references: [contentStrategiesWorkbook.userId],
   }),
 }));
 
@@ -463,8 +437,9 @@ export const generationRequestSchema = z.object({
 
 // Eliminado debido a la duplicación
 
-// Tabla para estrategias de contenido (Personal Brand Thesis)
-export const contentStrategies2 = pgTable("content_strategies", {
+// Esta definición reemplaza la anterior de contentStrategies
+// para implementar el esquema del Personal Brand Thesis Workbook
+export const contentStrategiesWorkbook = pgTable("content_strategies_workbook", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
@@ -551,10 +526,8 @@ export const contentStrategies2 = pgTable("content_strategies", {
   quarterlyGoals: text("quarterly_goals")
 });
 
-export type ContentStrategy = typeof contentStrategies.$inferSelect;
-export type InsertContentStrategy = typeof contentStrategies.$inferInsert;
-
-export const insertContentStrategySchema = createInsertSchema(contentStrategies);
+// Quitamos estas definiciones para evitar conflictos
+// estas serán reemplazadas por las definiciones basadas en contentStrategiesWorkbook
 
 // Esquemas de inserción para recursos
 export const insertResourceCategorySchema = createInsertSchema(resourceCategories).pick({
@@ -729,13 +702,14 @@ export const updateUserSchema = z.object({
 export type UpdateUser = z.infer<typeof updateUserSchema>;
 
 // Relaciones para la estrategia de contenido
-export const contentStrategiesRelations = relations(contentStrategies, ({ one }) => ({
+export const contentStrategiesWorkbookRelations = relations(contentStrategiesWorkbook, ({ one }) => ({
   user: one(users, {
-    fields: [contentStrategies.userId],
+    fields: [contentStrategiesWorkbook.userId],
     references: [users.id],
   }),
 }));
 
 // Tipos para la estrategia de contenido
+export const insertContentStrategySchema = createInsertSchema(contentStrategiesWorkbook);
 export type ContentStrategyInsert = z.infer<typeof insertContentStrategySchema>;
-export type ContentStrategy = typeof contentStrategies.$inferSelect;
+export type ContentStrategy = typeof contentStrategiesWorkbook.$inferSelect;

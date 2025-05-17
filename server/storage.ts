@@ -750,15 +750,15 @@ export class DatabaseStorage implements IStorage {
   async getContentStrategy(userId: number): Promise<ContentStrategy | undefined> {
     const [strategy] = await db
       .select()
-      .from(contentStrategies)
-      .where(eq(contentStrategies.userId, userId));
+      .from(contentStrategiesWorkbook)
+      .where(eq(contentStrategiesWorkbook.userId, userId));
     
     return strategy;
   }
 
   async createContentStrategy(strategy: ContentStrategyInsert): Promise<ContentStrategy> {
     const [newStrategy] = await db
-      .insert(contentStrategies)
+      .insert(contentStrategiesWorkbook)
       .values(strategy)
       .returning();
     
@@ -767,12 +767,12 @@ export class DatabaseStorage implements IStorage {
 
   async updateContentStrategy(id: number, strategy: Partial<ContentStrategy>): Promise<ContentStrategy | undefined> {
     const [updatedStrategy] = await db
-      .update(contentStrategies)
+      .update(contentStrategiesWorkbook)
       .set({
         ...strategy,
         updatedAt: new Date()
       })
-      .where(eq(contentStrategies.id, id))
+      .where(eq(contentStrategiesWorkbook.id, id))
       .returning();
     
     return updatedStrategy;
