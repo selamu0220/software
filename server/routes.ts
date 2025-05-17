@@ -5,7 +5,36 @@ import { generateVideoIdea, aiAssistant, aiAssistRequestSchema, VideoIdeaContent
 import { db } from "./db";
 import { desc, eq, and } from "drizzle-orm";
 import { resources, resourceComments, resourceVotes, users } from "@shared/schema";
-import { generateSlug } from "./utils/slugify";
+import { slugify } from "./utils/slugify";
+
+/**
+ * Genera un slug basado en el título
+ */
+// Esta función ahora se importa desde utils/slugify.ts
+
+/**
+ * Crea un slug único para una idea de video
+ */
+async function createUniqueSlug(baseSlug: string): Promise<string> {
+  let slug = baseSlug;
+  let counter = 1;
+  let existingIdea = await storage.getVideoIdeaBySlug(slug);
+  
+  // Si ya existe un slug con ese nombre, añadimos un sufijo numérico
+  while (existingIdea) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+    existingIdea = await storage.getVideoIdeaBySlug(slug);
+    
+    // Si después de muchos intentos no encontramos un slug único, añadimos timestamp
+    if (counter > 20) {
+      slug = `${baseSlug}-${Date.now()}`;
+      break;
+    }
+  }
+  
+  return slug;
+}
 
 /**
  * Función auxiliar para crear una idea de video con slug y campos adicionales
@@ -20,7 +49,10 @@ async function createVideoIdeaWithSlug(params: {
   isPublic?: boolean
 }) {
   // Generar un slug a partir del título
-  const ideaSlug = generateSlug(params.title);
+  const baseSlug = slugify(params.title);
+  
+  // Crear un slug único
+  const ideaSlug = await createUniqueSlug(baseSlug);
   
   // Crear la idea con el slug generado
   return await storage.createVideoIdea({
