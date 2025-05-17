@@ -2154,8 +2154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await aiAssistant({
         prompt: req.body.prompt,
         content: req.body.content,
-        entireScript: req.body.entireScript || false,
-        geminiApiKey: req.body.geminiApiKey
+        entireScript: req.body.entireScript || false
       });
 
       res.json(result);
