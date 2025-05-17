@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Helmet } from "react-helmet";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { corregirRutaRecurso } from "@/lib/utils/resource-utils";
+import SEOMeta from "@/components/seo/SEOMeta";
 import { 
   Tabs, 
   TabsContent, 
@@ -387,15 +387,15 @@ export default function RecursosPage() {
 
   return (
     <div className="container mx-auto py-10 px-4 sm:px-6">
-      <Helmet>
-        <title>{seoInfo.title}</title>
-        <meta name="description" content={seoInfo.description} />
-        <meta name="keywords" content={seoInfo.keywords} />
-        <link rel="canonical" href="https://redcreativa.pro/recursos" />
-        <script type="application/ld+json">
-          {JSON.stringify(seoInfo.schema)}
-        </script>
-      </Helmet>
+      <SEOMeta
+        title={seoInfo.title}
+        description={seoInfo.description}
+        keywords={seoInfo.keywords}
+        canonicalUrl="https://redcreativa.pro/recursos"
+        ogUrl="https://redcreativa.pro/recursos"
+        lang="es"
+        schema={seoInfo.schema}
+      />
       
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Biblioteca de Recursos</h1>

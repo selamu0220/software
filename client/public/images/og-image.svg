@@ -1,0 +1,27 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo negro -->
+  <rect width="1200" height="630" fill="#000000"/>
+  
+  <!-- Marco decorativo -->
+  <rect x="20" y="20" width="1160" height="590" stroke="#444444" stroke-width="2" fill="none"/>
+  
+  <!-- Título principal -->
+  <text x="600" y="200" font-family="'JetBrains Mono', monospace" font-size="72" font-weight="bold" fill="white" text-anchor="middle">Red Creativa Pro</text>
+  
+  <!-- Subtítulo -->
+  <text x="600" y="300" font-family="'JetBrains Mono', monospace" font-size="36" fill="#cccccc" text-anchor="middle">Potencia tu creación de contenido</text>
+  
+  <!-- Descripción -->
+  <text x="600" y="360" font-family="'JetBrains Mono', monospace" font-size="24" fill="#999999" text-anchor="middle">Ideas, guiones y planificación para creadores</text>
+  
+  <!-- Icono decorativo - Símbolo de cámara -->
+  <path d="M550 450 L530 470 L670 470 L650 450 L550 450 Z M520 480 L520 550 L680 550 L680 480 L520 480 Z M600 500 C585 500 575 510 575 525 C575 540 585 550 600 550 C615 550 625 540 625 525 C625 510 615 500 600 500 Z" fill="#ffffff"/>
+  
+  <!-- Icono decorativo - Símbolo de edición de video -->
+  <rect x="700" y="480" width="100" height="15" fill="#ffffff"/>
+  <rect x="700" y="505" width="80" height="15" fill="#ffffff"/>
+  <rect x="700" y="530" width="60" height="15" fill="#ffffff"/>
+  
+  <!-- Icono decorativo - Símbolo de idea -->
+  <path d="M450 520 C450 490 420 470 400 470 C380 470 350 490 350 520 C350 540 360 550 375 560 L375 580 L425 580 L425 560 C440 550 450 540 450 520 Z M385 590 L415 590 L415 600 L385 600 Z" fill="#ffffff"/>
+</svg>

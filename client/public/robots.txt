@@ -1,7 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /admin/
-Disallow: /api/
-Disallow: /*?*
 
-Sitemap: https://redcreativagen.com/sitemap.xml
+Sitemap: https://redcreativapro.com/sitemap.xml

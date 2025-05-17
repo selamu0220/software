@@ -44,6 +44,8 @@ import { useEffect, useState } from "react";
 import { User } from "@shared/schema";
 import { apiRequest } from "./lib/queryClient";
 import IntroAnimation from "@/components/animations/IntroAnimation";
+// Importamos el componente de SEO para mejorar la visibilidad en buscadores
+import SEOMeta from "@/components/seo/SEOMeta";
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -100,6 +102,15 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
+          {/* SEO Metatags - Default para toda la aplicación */}
+          <SEOMeta 
+            title="Red Creativa Pro - Herramientas para creadores de contenido"
+            description="Potencia tu creación de contenido en YouTube con Red Creativa Pro. Genera ideas, guiones y planes de contenido mediante inteligencia artificial."
+            keywords="creador de contenido, YouTube, ideas para videos, generador de guiones, AI, estrategia de contenido"
+            ogImage="/images/og-image.svg"
+            ogType="website"
+            lang="es"
+          />
           {/* Animación de introducción */}
           {showIntro && <IntroAnimation onComplete={() => setShowIntro(false)} />}
           {showNavAndFooter && <Navbar user={user} onLogout={logout} />}
