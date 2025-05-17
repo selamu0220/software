@@ -54,12 +54,14 @@ const categorias = [
   { id: 4, name: "Plugins", slug: "plugins" },
   { id: 5, name: "Tutoriales", slug: "tutoriales" },
   { id: 6, name: "Herramientas", slug: "herramientas" },
+  { id: 7, name: "Páginas web", slug: "paginas-web" },
 ];
 
 // Tipos de recursos
 const tiposRecurso = [
   { id: "file", name: "Archivo", description: "Sube un archivo descargable como recurso" },
   { id: "link", name: "Enlace", description: "Comparte un enlace a un recurso externo" },
+  { id: "webpage", name: "Página web", description: "Visualiza contenido web directamente en la plataforma" },
   { id: "tool", name: "Herramienta", description: "Una herramienta o aplicación para creadores" },
   { id: "aiTool", name: "IA", description: "Una herramienta de inteligencia artificial" },
 ];
