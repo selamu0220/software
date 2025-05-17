@@ -3,7 +3,16 @@ import { useRoute, useLocation } from "wouter";
 import { Helmet } from "react-helmet";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, RefreshCw } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { 
+  ArrowLeft, 
+  ExternalLink, 
+  RefreshCw, 
+  ZoomIn, 
+  ZoomOut,
+  Maximize,
+  Minimize
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function WebViewer() {
@@ -15,6 +24,8 @@ export default function WebViewer() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshCount, setRefreshCount] = useState(0);
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Cargar información del recurso
   useEffect(() => {
@@ -78,6 +89,40 @@ export default function WebViewer() {
       
       window.open(urlToOpen, "_blank");
     }
+  };
+  
+  // Funciones para controlar el zoom
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 10, 200));
+    toast({
+      title: `Zoom: ${Math.min(zoomLevel + 10, 200)}%`,
+      description: "Aumentando el tamaño de visualización",
+    });
+  };
+  
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 10, 50));
+    toast({
+      title: `Zoom: ${Math.max(zoomLevel - 10, 50)}%`,
+      description: "Reduciendo el tamaño de visualización",
+    });
+  };
+  
+  const handleZoomReset = () => {
+    setZoomLevel(100);
+    toast({
+      title: "Zoom: 100%",
+      description: "Tamaño de visualización restaurado",
+    });
+  };
+  
+  // Función para alternar modo pantalla completa
+  const toggleFullscreen = () => {
+    setIsFullscreen(prev => !prev);
+    toast({
+      title: isFullscreen ? "Saliendo de pantalla completa" : "Modo pantalla completa",
+      description: isFullscreen ? "Volviendo a vista normal" : "Aprovecha toda la pantalla",
+    });
   };
 
   if (cargando) {
@@ -144,36 +189,82 @@ export default function WebViewer() {
             )}
           </div>
           
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={refreshIframe}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Actualizar
-            </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1 mr-2">
+              <Button variant="outline" size="sm" onClick={handleZoomOut}>
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <div className="text-sm font-medium w-14 text-center">{zoomLevel}%</div>
+              <Button variant="outline" size="sm" onClick={handleZoomIn}>
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleZoomReset} className="ml-1">
+                <span className="text-xs">100%</span>
+              </Button>
+            </div>
             
-            <Button onClick={openExternalLink}>
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Abrir en nueva ventana
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={toggleFullscreen}>
+                {isFullscreen ? <Minimize className="mr-2 h-4 w-4" /> : <Maximize className="mr-2 h-4 w-4" />}
+                {isFullscreen ? "Salir" : "Pantalla completa"}
+              </Button>
+              
+              <Button variant="outline" onClick={refreshIframe}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Actualizar
+              </Button>
+              
+              <Button onClick={openExternalLink}>
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Abrir en nueva ventana
+              </Button>
+            </div>
           </div>
         </div>
         
-        <Card className="overflow-hidden border-2 border-border">
+        <Card className={`overflow-hidden border-2 border-border ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
           <CardContent className="p-0">
             {recurso.externalUrl && (
-              <div className="w-full" style={{ height: "calc(100vh - 180px)" }}>
-                <iframe 
-                  src={recurso.externalUrl.startsWith('http') 
-                      ? recurso.externalUrl 
-                      : `https://${recurso.externalUrl}`}
-                  className="w-full h-full border-0"
-                  key={`iframe-${refreshCount}`}
-                  sandbox="allow-scripts allow-same-origin allow-forms"
-                  referrerPolicy="no-referrer"
-                  title={recurso.title}
-                />
+              <div 
+                className="w-full" 
+                style={{ 
+                  height: isFullscreen ? "100vh" : "calc(100vh - 180px)",
+                  overflow: "hidden" 
+                }}
+              >
+                <div 
+                  style={{ 
+                    width: `${zoomLevel}%`, 
+                    height: `${zoomLevel}%`,
+                    transform: `scale(${100/zoomLevel})`,
+                    transformOrigin: "top left",
+                    overflow: "hidden"
+                  }}
+                >
+                  <iframe 
+                    src={recurso.externalUrl.startsWith('http') 
+                        ? recurso.externalUrl 
+                        : `https://${recurso.externalUrl}`}
+                    className="w-full h-full border-0"
+                    key={`iframe-${refreshCount}`}
+                    sandbox="allow-scripts allow-same-origin allow-forms"
+                    referrerPolicy="no-referrer"
+                    title={recurso.title}
+                  />
+                </div>
               </div>
             )}
           </CardContent>
+          {isFullscreen && (
+            <Button 
+              className="absolute top-2 right-2 z-10" 
+              variant="outline" 
+              size="sm" 
+              onClick={toggleFullscreen}
+            >
+              <Minimize className="h-4 w-4 mr-2" /> Salir
+            </Button>
+          )}
         </Card>
       </div>
     </>
