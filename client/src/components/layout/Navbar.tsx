@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video, BarChart3, BookOpen, Library, FileText, Star, Pencil, PenSquare, FileEdit, LightbulbIcon } from "lucide-react";
+import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video, BarChart3, BookOpen, Library, FileText, Star, Pencil, PenSquare, FileEdit, LightbulbIcon, Layers } from "lucide-react";
 
 interface NavbarProps {
   user: User | null;
@@ -114,6 +114,12 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     <Link href="/estrategia-contenido" className="flex items-center">
                       <FileEdit className="mr-2 h-4 w-4" />
                       Estrategia de Contenido
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/batch-generator" className="flex items-center">
+                      <Layers className="mr-2 h-4 w-4" />
+                      Generación por Lotes
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

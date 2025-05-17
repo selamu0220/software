@@ -33,6 +33,8 @@ import MisIdeas from "@/pages/mis-ideas";
 import IdeaManual from "@/pages/idea-manual";
 // Editor simple de guiones (sin dependencia de base de datos)
 import SimpleScript from "@/pages/simple-script";
+// Generación por lotes y estrategia de contenido
+import BatchGenerationPage from "@/pages/batch-generation-page";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AssistantSidebar } from "@/components/ui/assistant-sidebar";
@@ -142,6 +144,9 @@ function App() {
             
             {/* Ruta para crear o editar ideas de forma manual (tipo Google Docs) */}
             <ProtectedRoute path="/idea-manual/:id?" component={() => <IdeaManual />} />
+            
+            {/* Ruta para generación de guiones por lotes */}
+            <ProtectedRoute path="/batch-generator" component={() => <BatchGenerationPage />} />
             
             <Route component={NotFound} />
           </Switch>
