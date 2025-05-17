@@ -1073,6 +1073,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Ruta especial para restablecer la contraseña del administrador
+  app.get("/api/reset-admin", async (req, res) => {
+    try {
+      // Buscar usuario administrador por nombre de usuario
+      const adminUser = await storage.getUserByUsername("sela_gr");
+      
+      if (!adminUser) {
+        return res.status(404).json({ message: "Usuario administrador no encontrado" });
+      }
+      
+      // Generar hash de la nueva contraseña
+      const newPassword = "redcreativa2024";
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      
+      // Actualizar la contraseña en la base de datos
+      await db.update(users)
+        .set({ password: hashedPassword })
+        .where(eq(users.id, adminUser.id));
+      
+      // Responder con éxito
+      res.json({ 
+        message: "Contraseña de administrador restablecida correctamente",
+        username: adminUser.username,
+        password: newPassword
+      });
+    } catch (error) {
+      console.error("Error al restablecer la contraseña del administrador:", error);
+      res.status(500).json({ message: "Error al restablecer la contraseña" });
+    }
+  });
+
   app.get("/api/me", async (req, res) => {
     console.log("Session state:", {
       hasSession: !!req.session,
