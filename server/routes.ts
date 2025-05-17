@@ -1110,21 +1110,37 @@ DaVinci Resolve 17 o superior
         return res.status(400).json({ message: "El contenido del comentario es obligatorio" });
       }
       
-      const recurso = await storage.getResource(resourceId);
-      if (!recurso) {
+      // Verificar que el recurso existe
+      const recurso = await db
+        .select()
+        .from(resources)
+        .where(eq(resources.id, resourceId))
+        .limit(1);
+        
+      if (!recurso || recurso.length === 0) {
         return res.status(404).json({ message: "Recurso no encontrado" });
       }
       
-      // Insertar comentario en la base de datos
-      const [nuevoComentario] = await db
-        .insert(resourceComments)
-        .values({
-          resourceId,
-          userId,
-          content: contenido,
-          rating: valoracion || null
-        })
-        .returning();
+      // Insertar comentario en la base de datos usando la estructura correcta de la tabla
+      try {
+        const [nuevoComentario] = await db
+          .insert(resourceComments)
+          .values({
+            resourceId,
+            userId,
+            content: contenido,
+            rating: valoracion || null,
+            likes: 0,
+            is_pinned: false,
+            parent_id: null,
+          })
+          .returning();
+          
+        console.log("Comentario creado correctamente:", nuevoComentario);
+      } catch (error) {
+        console.error("Error al crear comentario:", error);
+        return res.status(500).json({ message: "Error al procesar tu reseña" });
+      }
       
       // Obtener información del usuario para la respuesta
       const [usuario] = await db

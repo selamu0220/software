@@ -1,0 +1,97 @@
+import bpy
+import math
+
+# LIMPIAR ESCENA
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# PARÁMETROS
+radio = 2.0
+profundidad_cara = 0.1
+num_ticks = 12
+tick_largo = 0.3
+tick_ancho = 0.05
+tick_prof = 0.05
+
+# Crear cara del reloj (disco delgado)
+bpy.ops.mesh.primitive_cylinder_add(
+    radius=radio,
+    depth=profundidad_cara,
+    location=(0, 0, 0)
+)
+carcasa = bpy.context.object
+carcasa.name = "CarcasaReloj"
+mat_c = bpy.data.materials.new(name="BlancoCara")
+mat_c.diffuse_color = (1, 1, 1, 1)
+carcasa.data.materials.append(mat_c)
+
+# Crear bezel (aro metálico)
+bpy.ops.mesh.primitive_torus_add(
+    major_radius=radio + 0.05,
+    minor_radius=0.05,
+    location=(0, 0, 0)
+)
+bezel = bpy.context.object
+bezel.name = "Bezel"
+mat_b = bpy.data.materials.new(name="MetalBezel")
+mat_b.diffuse_color = (0.8, 0.8, 0.8, 1)
+bezel.data.materials.append(mat_b)
+bezel.parent = carcasa
+
+# Crear marcas de hora (ticks)
+for i in range(num_ticks):
+    ang = (i / num_ticks) * 2 * math.pi
+    x = math.cos(ang) * (radio - tick_largo/2)
+    y = math.sin(ang) * (radio - tick_largo/2)
+    bpy.ops.mesh.primitive_cube_add(size=1,
+        location=(x, y, profundidad_cara/2 + tick_prof/2))
+    tick = bpy.context.object
+    tick.name = f"Tick_{i+1}"
+    tick.scale = (tick_ancho, tick_largo/2, tick_prof)
+    tick.rotation_euler = (0, 0, -ang)
+    tick.parent = carcasa
+
+# Función para crear manecillas rectangulares
+def crear_manecilla(nombre, largo, grosor, z_offset):
+    bpy.ops.mesh.primitive_cube_add(size=1,
+        location=(0, largo/2 - 0.05, profundidad_cara + z_offset))
+    mano = bpy.context.object
+    mano.name = nombre
+    mano.scale = (grosor, largo, grosor)
+    # Ajustar origen al extremo inferior
+    bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+    mano.parent = carcasa
+    return mano
+
+# Crear manecillas: hora, minuto, segundo
+manecilla_hora = crear_manecilla("Hora", 0.8, 0.06, 0.02)
+manecilla_min = crear_manecilla("Minuto", 1.2, 0.04, 0.04)
+manecilla_seg = crear_manecilla("Segundo", 1.6, 0.02, 0.06)
+
+# ANIMACIÓN
+escena = bpy.context.scene
+escena.frame_start = 1
+escena.frame_end = 250
+
+# Rotación global (carcasa)
+carcasa.rotation_euler = (0, 0, 0)
+carcasa.keyframe_insert(data_path="rotation_euler", frame=1)
+carcasa.rotation_euler = (0, 0, math.radians(360))
+carcasa.keyframe_insert(data_path="rotation_euler", frame=250)
+for fc in carcasa.animation_data.action.fcurves:
+    for kp in fc.keyframe_points:
+        kp.interpolation = 'LINEAR'
+
+# Animar manecillas
+def animar_mano(mano, vueltas):
+    mano.rotation_euler = (0, 0, 0)
+    mano.keyframe_insert(data_path="rotation_euler", frame=1)
+    mano.rotation_euler = (0, 0, math.radians(-360 * vueltas))
+    mano.keyframe_insert(data_path="rotation_euler", frame=250)
+    for fc in mano.animation_data.action.fcurves:
+        for kp in fc.keyframe_points:
+            kp.interpolation = 'LINEAR'
+
+animar_mano(manecilla_hora, 1/12)
+animar_mano(manecilla_min, 1)
+animar_mano(manecilla_seg, 4)
