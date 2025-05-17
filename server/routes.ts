@@ -3055,6 +3055,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   /**
+   * Rutas para la estrategia de contenido basada en Personal Brand Thesis
+   */
+  app.get("/api/content-strategy", requireAuth, async (req, res) => {
+    try {
+      const { userId } = req.session as SessionData;
+      const strategy = await storage.getContentStrategy(userId);
+      res.json(strategy || null);
+    } catch (error) {
+      console.error("Error al obtener estrategia de contenido:", error);
+      res.status(500).json({ message: "Error al obtener estrategia de contenido" });
+    }
+  });
+  
+  app.post("/api/content-strategy", requireAuth, async (req, res) => {
+    try {
+      const { userId } = req.session as SessionData;
+      
+      // Verificar si ya existe una estrategia para este usuario
+      const existingStrategy = await storage.getContentStrategy(userId);
+      if (existingStrategy) {
+        return res.status(400).json({ 
+          message: "Ya existe una estrategia de contenido para este usuario, usa PUT para actualizarla" 
+        });
+      }
+      
+      const strategyData = {
+        ...req.body,
+        userId
+      };
+      
+      const strategy = await storage.createContentStrategy(strategyData);
+      res.status(201).json(strategy);
+    } catch (error) {
+      console.error("Error al crear estrategia de contenido:", error);
+      res.status(500).json({ message: "Error al crear estrategia de contenido" });
+    }
+  });
+  
+  app.put("/api/content-strategy/:id", requireAuth, async (req, res) => {
+    try {
+      const { userId } = req.session as SessionData;
+      const { id } = req.params;
+      
+      // Verificar que la estrategia pertenece al usuario
+      const existingStrategy = await storage.getContentStrategy(userId);
+      if (!existingStrategy || existingStrategy.id !== parseInt(id)) {
+        return res.status(403).json({ message: "No autorizado para modificar esta estrategia" });
+      }
+      
+      const strategy = await storage.updateContentStrategy(parseInt(id), req.body);
+      res.json(strategy);
+    } catch (error) {
+      console.error("Error al actualizar estrategia de contenido:", error);
+      res.status(500).json({ message: "Error al actualizar estrategia de contenido" });
+    }
+  });
+  
+  /**
    * Endpoint para publicar automáticamente los artículos programados
    * Este endpoint publica los artículos que tienen publishedAt <= hora actual
    */
