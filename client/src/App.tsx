@@ -35,6 +35,7 @@ import IdeaManual from "@/pages/idea-manual";
 import SimpleScript from "@/pages/simple-script";
 // Generación por lotes y estrategia de contenido
 import BatchGenerationPage from "@/pages/batch-generation-page";
+import EstrategiaContenido from "@/pages/estrategia-contenido";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AssistantSidebar } from "@/components/ui/assistant-sidebar";
@@ -147,6 +148,9 @@ function App() {
             
             {/* Ruta para generación de guiones por lotes */}
             <ProtectedRoute path="/batch-generator" component={() => <BatchGenerationPage />} />
+            
+            {/* Ruta para estrategia de contenido basada en personal brand thesis */}
+            <ProtectedRoute path="/estrategia" component={() => <EstrategiaContenido />} />
             
             <Route component={NotFound} />
           </Switch>
