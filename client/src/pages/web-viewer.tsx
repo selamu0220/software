@@ -71,7 +71,12 @@ export default function WebViewer() {
   // Función para abrir en una nueva ventana
   const openExternalLink = () => {
     if (recurso?.externalUrl) {
-      window.open(recurso.externalUrl, "_blank");
+      // Asegurarse de que la URL tenga el protocolo correcto
+      const urlToOpen = recurso.externalUrl.startsWith('http') 
+        ? recurso.externalUrl 
+        : `https://${recurso.externalUrl}`;
+      
+      window.open(urlToOpen, "_blank");
     }
   };
 
@@ -124,12 +129,19 @@ export default function WebViewer() {
       </Helmet>
       
       <div className="container py-4">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <Button variant="outline" onClick={() => navigate("/recursos")}>
+        <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between md:items-center mb-4">
+          <div className="flex flex-col space-y-2">
+            <Button variant="outline" onClick={() => navigate("/recursos")} className="w-fit">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Volver a recursos
             </Button>
+            
+            <h1 className="text-xl font-semibold">
+              {recurso.title || "Visualizador Web"}
+            </h1>
+            {recurso.description && (
+              <p className="text-sm text-muted-foreground max-w-2xl">{recurso.description}</p>
+            )}
           </div>
           
           <div className="flex items-center gap-2">
@@ -150,7 +162,9 @@ export default function WebViewer() {
             {recurso.externalUrl && (
               <div className="w-full" style={{ height: "calc(100vh - 180px)" }}>
                 <iframe 
-                  src={recurso.externalUrl}
+                  src={recurso.externalUrl.startsWith('http') 
+                      ? recurso.externalUrl 
+                      : `https://${recurso.externalUrl}`}
                   className="w-full h-full border-0"
                   key={`iframe-${refreshCount}`}
                   sandbox="allow-scripts allow-same-origin allow-forms"
