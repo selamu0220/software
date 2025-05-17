@@ -328,7 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const nombreArchivo = req.params.nombreArchivo;
       // Path completo al archivo en el servidor
-      const rutaArchivo = path.join(__dirname, '../uploads', nombreArchivo);
+      const rutaArchivo = path.resolve('uploads', nombreArchivo);
       
       console.log("Solicitando archivo:", nombreArchivo);
       console.log("Ruta completa:", rutaArchivo);

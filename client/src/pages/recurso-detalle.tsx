@@ -968,7 +968,7 @@ export default function RecursoDetallePage() {
               <CardContent className="pt-0">
                 <div className="flex flex-col gap-3">
                   <a 
-                    href={corregirRutaRecurso(recurso.enlaceDescarga)} 
+                    href={recurso.enlaceDescarga ? `/api/descargar/${recurso.enlaceDescarga.split('/').pop()}` : '#'} 
                     download 
                     target="_blank" 
                     rel="noopener noreferrer"
