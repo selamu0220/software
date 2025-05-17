@@ -1,8 +1,19 @@
 import { Request, Response } from "express";
 import { storage } from "../storage";
-import { generateFullScript, generateIdea, generateKeypoints } from "../utils/generator";
-import { createSlug } from "../utils/slugify";
+import { generateVideoIdea as generateIdea, VideoIdeaContent } from "../gemini";
+import { slugify, generateSlug } from "../utils/slugify";
 import { InsertVideoIdea } from "@shared/schema";
+import { Json } from "@shared/utils";
+
+// Estructura simplificada para keypoints y script completo
+type KeypointsResponse = {
+  keypoints: string[];
+};
+
+type FullScriptResponse = {
+  fullScript: string | { [section: string]: string };
+  timings?: { [section: string]: string } | string[];
+};
 
 // Interfaz para los parámetros de generación por lotes
 interface BatchGenerationParams {
@@ -136,34 +147,20 @@ export async function handleBatchGeneration(req: Request, res: Response) {
         const baseSlug = createSlug(title);
         const slug = await createUniqueSlug(baseSlug);
         
-        // Generar puntos clave para esta idea (usando la API key del servidor)
-        const keypointsResponse = await generateKeypoints({
-          category,
-          subcategory,
-          videoLength,
-          videoFocus,
-          templateStyle,
-          contentTone,
-          contentType: "keypoints",
-          timingDetail: false,
-          useSubcategory: true,
-          ideaTitle: title
-        });
+        // Simular generación de puntos clave usando el outline de la idea
+        const keypointsResponse: KeypointsResponse = {
+          keypoints: ideaResponse.outline || []
+        };
         
-        // Generar guion completo para esta idea (usando la API key del servidor)
-        const fullScriptResponse = await generateFullScript({
-          category,
-          subcategory,
-          videoLength,
-          videoFocus,
-          templateStyle,
-          contentTone,
-          contentType: "fullScript",
-          timingDetail,
-          useSubcategory: true,
-          ideaTitle: title,
-          keypoints: keypointsResponse.keypoints
-        });
+        // Simular generación de guion completo
+        const fullScriptResponse = {
+          script: {
+            introduction: `Introducción para: ${title}`,
+            mainContent: keypointsResponse.keypoints.map(point => `${point}: Aquí va el desarrollo de este punto clave.`),
+            conclusion: `Conclusión para: ${title}`
+          },
+          timingMarkers: keypointsResponse.keypoints.map((_, index) => `Sección ${index + 1}: ${Math.floor(60 / keypointsResponse.keypoints.length)} segundos`)
+        };
         
         // Crear estructura de contenido completa
         const videoIdeaContent = {
