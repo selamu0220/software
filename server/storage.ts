@@ -350,6 +350,17 @@ export class MemStorage implements IStorage {
     ).length;
   }
   
+  async countVideoIdeasByUserSince(userId: number, date: Date): Promise<number> {
+    const startDate = new Date(date); // Clonamos la fecha para no modificar la original
+    return Array.from(this.videoIdeas.values()).filter(
+      (idea) => {
+        if (idea.userId !== userId) return false;
+        const createdAt = new Date(idea.createdAt);
+        return createdAt >= startDate;
+      }
+    ).length;
+  }
+  
   async deleteVideoIdea(id: number): Promise<boolean> {
     return this.videoIdeas.delete(id);
   }
