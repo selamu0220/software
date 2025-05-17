@@ -1123,11 +1123,11 @@ DaVinci Resolve 17 o superior
       
       // Insertar comentario en la base de datos usando la estructura correcta de la tabla
       try {
-        const [nuevoComentario] = await db
+        const [comentarioCreado] = await db
           .insert(resourceComments)
           .values({
-            resourceId,
-            userId,
+            resource_id: resourceId,  // Cambiado a resource_id para coincidir con el nombre de la columna
+            user_id: userId,          // Cambiado a user_id para coincidir con el nombre de la columna
             content: contenido,
             rating: valoracion || null,
             likes: 0,
@@ -1136,7 +1136,25 @@ DaVinci Resolve 17 o superior
           })
           .returning();
           
-        console.log("Comentario creado correctamente:", nuevoComentario);
+        console.log("Comentario creado correctamente:", comentarioCreado);
+        
+        // Obtener información del usuario para la respuesta
+        const [usuario] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, userId));
+        
+        return res.status(201).json({
+          id: comentarioCreado.id,
+          content: comentarioCreado.content,
+          rating: comentarioCreado.rating,
+          resourceId: comentarioCreado.resource_id,
+          user: {
+            id: usuario.id,
+            username: usuario.username
+          },
+          createdAt: comentarioCreado.created_at
+        });
       } catch (error) {
         console.error("Error al crear comentario:", error);
         return res.status(500).json({ message: "Error al procesar tu reseña" });

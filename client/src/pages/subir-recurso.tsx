@@ -466,7 +466,7 @@ export default function SubirRecursoPage() {
                         </FormControl>
                         <SelectContent>
                           {tiposRecurso.map((tipo) => (
-                            <SelectItem key={tipo.id} value={tipo.id}>
+                            <SelectItem key={tipo.id} value={tipo.id || "default"}>
                               <div className="flex items-center">
                                 <span>{tipo.name}</span>
                                 <span className="ml-2 text-xs text-muted-foreground">- {tipo.description}</span>
@@ -501,7 +501,7 @@ export default function SubirRecursoPage() {
                           </FormControl>
                           <SelectContent>
                             {categoriasIA.map((categoria) => (
-                              <SelectItem key={categoria.id} value={categoria.id}>
+                              <SelectItem key={categoria.id} value={categoria.id || "default"}>
                                 <div className="flex items-center">
                                   <span>{categoria.name}</span>
                                   <span className="ml-2 text-xs text-muted-foreground">- {categoria.description}</span>
