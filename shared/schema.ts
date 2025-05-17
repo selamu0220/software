@@ -119,6 +119,34 @@ export const resources = pgTable("resources", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Estrategia de contenido basada en Personal Brand Thesis
+export const contentStrategies = pgTable("content_strategies", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(), // Un usuario solo puede tener una estrategia
+  // Información de la marca personal
+  audiencePrimary: text("audience_primary").notNull(), // Audiencia primaria
+  audienceSecondary: text("audience_secondary"), // Audiencia secundaria (opcional)
+  thesis: text("thesis").notNull(), // Tesis principal (big idea)
+  
+  // Pilares de contenido
+  pillarActionable: text("pillar_actionable").notNull(), // Pilar: Ways of Action
+  pillarMindset: text("pillar_mindset").notNull(), // Pilar: Awareness Expansion
+  pillarNarrative: text("pillar_narrative").notNull(), // Pilar: Narrative
+  pillarAttract: text("pillar_attract").notNull(), // Pilar: Attractor
+  pillarNurture: text("pillar_nurture").notNull(), // Pilar: Nurture
+  
+  // Elementos adicionales
+  valueProposition: text("value_proposition"), // Propuesta de valor única
+  contentMission: text("content_mission"), // Misión del contenido
+  brandVoice: text("brand_voice"), // Voz y tono de la marca
+  contentGoals: text("content_goals"), // Objetivos del contenido
+  monetizationStrategy: text("monetization_strategy"), // Estrategia de monetización
+  
+  // Metadatos
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Comentarios en recursos
 export const blogPosts = pgTable("blog_posts", {
   id: serial("id").primaryKey(),
@@ -225,7 +253,7 @@ export const userScripts = pgTable("user_scripts", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   videoIdeas: many(videoIdeas),
   calendarEntries: many(calendarEntries),
   userVideos: many(userVideos),
@@ -233,6 +261,10 @@ export const usersRelations = relations(users, ({ many }) => ({
   resourceComments: many(resourceComments),
   resourceCollections: many(userResourceCollections),
   scriptCollections: many(userScriptCollections),
+  contentStrategy: one(contentStrategies, {
+    fields: [users.id],
+    references: [contentStrategies.userId],
+  }),
 }));
 
 export const videoIdeasRelations = relations(videoIdeas, ({ one, many }) => ({
@@ -429,6 +461,8 @@ export const generationRequestSchema = z.object({
   geminiApiKey: z.string().optional(),
 });
 
+// Eliminado debido a la duplicación
+
 // Esquemas de inserción para recursos
 export const insertResourceCategorySchema = createInsertSchema(resourceCategories).pick({
   name: true,
@@ -601,21 +635,7 @@ export const updateUserSchema = z.object({
 
 export type UpdateUser = z.infer<typeof updateUserSchema>;
 
-// Esquema para estrategias de contenido
-export const contentStrategies = pgTable("content_strategies", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  audienceDescription: text("audience_description"),
-  uniqueValueProposition: text("unique_value_proposition"),
-  coreValues: text("core_values").array().default([]),
-  targetDescription: text("target_description"),
-  platforms: text("platforms").array().default([]),
-  pillars: json("pillars").default([]),
-  contentIdeas: json("content_ideas").default([]),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
+// Relaciones para la estrategia de contenido
 export const contentStrategiesRelations = relations(contentStrategies, ({ one }) => ({
   user: one(users, {
     fields: [contentStrategies.userId],
@@ -623,11 +643,6 @@ export const contentStrategiesRelations = relations(contentStrategies, ({ one })
   }),
 }));
 
-export const insertContentStrategySchema = createInsertSchema(contentStrategies).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
+// Tipos para la estrategia de contenido
 export type ContentStrategyInsert = z.infer<typeof insertContentStrategySchema>;
 export type ContentStrategy = typeof contentStrategies.$inferSelect;
