@@ -1035,6 +1035,11 @@ export class DatabaseStorage implements IStorage {
       idea = { ...idea, slug };
     }
     
+    // Asegurar que isPublic tenga un valor por defecto
+    if (idea.isPublic === undefined) {
+      idea = { ...idea, isPublic: false };
+    }
+    
     const [videoIdea] = await db.insert(videoIdeas)
       .values(idea)
       .returning();
