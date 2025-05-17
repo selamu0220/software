@@ -13,7 +13,6 @@ export const aiAssistRequestSchema = z.object({
   prompt: z.string().min(1, "Se requiere un prompt"),
   content: z.string().optional(),
   entireScript: z.boolean().default(false),
-  geminiApiKey: z.string().optional(),
 });
 
 // Inicializar el cliente de Google Generative AI con la clave por defecto
@@ -500,18 +499,16 @@ export function getMockVideoIdea(params: GenerationRequest): VideoIdeaContent {
  * Asistente de IA para generar o mejorar contenido basado en un prompt
  */
 export async function aiAssistant(params: z.infer<typeof aiAssistRequestSchema>): Promise<{ content: string }> {
-  const { prompt, content, entireScript, geminiApiKey } = params;
+  const { prompt, content, entireScript } = params;
   
-  // Usar la API key proporcionada o la del entorno
-  const apiKey = geminiApiKey || process.env.GEMINI_API_KEY;
-  
-  if (!apiKey) {
-    throw new Error("Se requiere una API key de Gemini para usar el asistente de IA");
+  // Usar exclusivamente la API key del servidor
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("No se ha configurado la API key de Gemini en el servidor");
   }
 
   try {
-    // Inicializar cliente de Gemini
-    const genAI = new GoogleGenerativeAI(apiKey);
+    // Inicializar cliente de Gemini con la clave del servidor
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
     
     // Construir el prompt contextual dependiendo del escenario

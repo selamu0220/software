@@ -1146,13 +1146,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ai-assist", async (req, res) => {
     try {
       // Validar el esquema de la solicitud
-      const { prompt, content, geminiApiKey } = aiAssistRequestSchema.parse(req.body);
+      const { prompt, content } = aiAssistRequestSchema.parse(req.body);
       
       // Llamar a la función del asistente de IA con parámetro entireScript requerido
       const result = await aiAssistant({
         prompt,
         content,
-        geminiApiKey,
         entireScript: false // por defecto, no estamos procesando un script completo
       });
       
