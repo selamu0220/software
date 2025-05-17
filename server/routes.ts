@@ -6,6 +6,8 @@ import { db } from "./db";
 import { desc, eq, and } from "drizzle-orm";
 import { resources, resourceComments, resourceVotes, users } from "@shared/schema";
 import { slugify } from "./utils/slugify";
+import fs from "fs";
+import path from "path";
 
 /**
  * Genera un slug basado en el título
@@ -320,6 +322,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Middleware to check if user is authenticated (declarado globalmente)
+  
+  // Ruta para servir archivos de recursos
+  app.get("/api/descargar/:nombreArchivo", async (req, res) => {
+    try {
+      const nombreArchivo = req.params.nombreArchivo;
+      // Path completo al archivo en el servidor
+      const rutaArchivo = path.join(__dirname, '../uploads', nombreArchivo);
+      
+      console.log("Solicitando archivo:", nombreArchivo);
+      console.log("Ruta completa:", rutaArchivo);
+      
+      // Verificar si el archivo existe
+      if (!fs.existsSync(rutaArchivo)) {
+        console.error("Archivo no encontrado:", rutaArchivo);
+        return res.status(404).send("Archivo no encontrado");
+      }
+      
+      // Obtener el tipo MIME basado en la extensión del archivo
+      const extension = path.extname(nombreArchivo).toLowerCase();
+      let contentType = 'application/octet-stream'; // Tipo por defecto
+      
+      // Asignar tipos MIME comunes
+      switch (extension) {
+        case '.pdf': contentType = 'application/pdf'; break;
+        case '.jpg': case '.jpeg': contentType = 'image/jpeg'; break;
+        case '.png': contentType = 'image/png'; break;
+        case '.gif': contentType = 'image/gif'; break;
+        case '.svg': contentType = 'image/svg+xml'; break;
+        case '.mp4': contentType = 'video/mp4'; break;
+        case '.mp3': contentType = 'audio/mpeg'; break;
+        case '.zip': contentType = 'application/zip'; break;
+        case '.doc': contentType = 'application/msword'; break;
+        case '.docx': contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'; break;
+        case '.xls': contentType = 'application/vnd.ms-excel'; break;
+        case '.xlsx': contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; break;
+        case '.ppt': contentType = 'application/vnd.ms-powerpoint'; break;
+        case '.pptx': contentType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'; break;
+      }
+      
+      // Establece los encabezados de respuesta
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombreArchivo)}"`);
+      
+      // Lee el archivo y lo envía como respuesta
+      const fileStream = fs.createReadStream(rutaArchivo);
+      fileStream.pipe(res);
+      
+      // Manejar errores en el stream
+      fileStream.on('error', (error) => {
+        console.error("Error al leer el archivo:", error);
+        if (!res.headersSent) {
+          res.status(500).send("Error al leer el archivo");
+        }
+      });
+    } catch (error) {
+      console.error("Error al descargar archivo:", error);
+      res.status(500).send("Error al procesar la descarga");
+    }
+  });
   
   // Rutas para subida de recursos (requiere autenticación)
   app.post("/api/recursos/upload", requireAuth, recursoUpload.fields([
