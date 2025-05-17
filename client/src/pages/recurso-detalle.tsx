@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useRoute } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -39,6 +39,12 @@ import {
   Calendar,
   Clock,
   Maximize,
+  ChevronLeft,
+  ChevronRight,
+  Code,
+  Copy,
+  Check,
+  FileCode,
   Download,
   ExternalLink,
   Eye,
@@ -202,6 +208,44 @@ function Comentario({ comentario }: { comentario: any }) {
   );
 }
 
+// Componente para copiar texto al portapapeles
+function CopyButton({ textToCopy }: { textToCopy: string }) {
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(textToCopy)
+      .then(() => {
+        setCopied(true);
+        toast({
+          title: "Copiado al portapapeles",
+          description: "El código se ha copiado correctamente",
+        });
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(err => {
+        toast({
+          title: "Error al copiar",
+          description: "No se pudo copiar el texto",
+          variant: "destructive",
+        });
+        console.error('Error al copiar: ', err);
+      });
+  };
+
+  return (
+    <Button 
+      variant="ghost" 
+      size="sm"
+      onClick={handleCopy}
+      className="h-8 px-2 text-gray-300 hover:text-white hover:bg-gray-800"
+    >
+      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+      <span className="ml-2 text-xs">{copied ? 'Copiado' : 'Copiar'}</span>
+    </Button>
+  );
+}
+
 // Página de detalle del recurso
 export default function RecursoDetallePage() {
   const [match, params] = useRoute<{ id: string }>("/recursos/:id");
@@ -209,8 +253,11 @@ export default function RecursoDetallePage() {
   const [valoracion, setValoracion] = useState(0);
   const [enviando, setEnviando] = useState(false);
   const [cargando, setCargando] = useState(true);
+  // Estado para recursos con tipado mejorado
   const [recurso, setRecurso] = useState<any>(recursoEjemplo);
   const [usuario, setUsuario] = useState<any>(null);
+  // Estados para la galería de imágenes
+  const [imagenActual, setImagenActual] = useState(0);
   const [votando, setVotando] = useState(false);
   const [votoUsuario, setVotoUsuario] = useState<number>(-1); // -1 significa no votó aún
   const { toast } = useToast();
@@ -487,14 +534,87 @@ export default function RecursoDetallePage() {
               </Button>
             </Link>
             
-            <div className="relative aspect-video overflow-hidden rounded-lg mb-6">
-              <img 
-                src={corregirRutaRecurso(recurso.imagen)} 
-                alt={recurso.titulo} 
-                className="object-cover w-full h-full"
-              />
-              {recurso.destacado && (
-                <Badge className="absolute top-2 right-2 bg-primary">Destacado</Badge>
+            {/* Visualizador de galería de imágenes mejorado */}
+            <div className="relative rounded-lg mb-6">
+              {recurso.resourceType === 'image' || recurso.imagenes?.length > 0 ? (
+                <div className="resource-gallery">
+                  {/* Implementación de galería con capacidad de navegación */}
+                  <div className="relative aspect-video overflow-hidden rounded-lg">
+                    <img 
+                      src={corregirRutaRecurso(recurso.imagenes ? recurso.imagenes[imagenActual] : recurso.imagen)} 
+                      alt={`${recurso.titulo} - Imagen ${imagenActual + 1}`}
+                      className="object-contain w-full h-full bg-black/5 dark:bg-white/5" 
+                    />
+                    
+                    {/* Controles de navegación si hay múltiples imágenes */}
+                    {recurso.imagenes && recurso.imagenes.length > 1 && (
+                      <>
+                        <Button 
+                          size="sm" 
+                          variant="secondary"
+                          className="absolute left-2 top-1/2 transform -translate-y-1/2 rounded-full w-8 h-8 p-0"
+                          onClick={() => {
+                            setImagenActual(prev => 
+                              prev === 0 ? recurso.imagenes.length - 1 : prev - 1
+                            );
+                          }}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="secondary"
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full w-8 h-8 p-0"
+                          onClick={() => {
+                            setImagenActual(prev => 
+                              prev === recurso.imagenes.length - 1 ? 0 : prev + 1
+                            );
+                          }}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                        <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-1">
+                          {recurso.imagenes.map((imagenUrl: string, idx: number) => (
+                            <Button 
+                              key={idx}
+                              size="sm"
+                              variant="ghost"
+                              className={`w-2 h-2 rounded-full p-0 ${idx === imagenActual ? 'bg-primary' : 'bg-muted'}`}
+                              onClick={() => setImagenActual(idx)}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    
+                    {/* Badge para recursos destacados */}
+                    {recurso.destacado && (
+                      <Badge className="absolute top-2 right-2 bg-primary">Destacado</Badge>
+                    )}
+                  </div>
+                </div>
+              ) : recurso.resourceType === 'video' ? (
+                <div className="aspect-video rounded-lg overflow-hidden bg-black">
+                  <video 
+                    controls
+                    className="w-full h-full"
+                    poster={corregirRutaRecurso(recurso.imagen)}
+                  >
+                    <source src={corregirRutaRecurso(recurso.enlaceDescarga)} type="video/mp4" />
+                    Tu navegador no soporta la reproducción de video.
+                  </video>
+                </div>
+              ) : (
+                <div className="relative aspect-video overflow-hidden rounded-lg">
+                  <img 
+                    src={corregirRutaRecurso(recurso.imagen)} 
+                    alt={recurso.titulo} 
+                    className="object-cover w-full h-full"
+                  />
+                  {recurso.destacado && (
+                    <Badge className="absolute top-2 right-2 bg-primary">Destacado</Badge>
+                  )}
+                </div>
               )}
             </div>
             
@@ -564,7 +684,80 @@ export default function RecursoDetallePage() {
               </TabsList>
               
               <TabsContent value="descripcion" className="py-4">
+                {/* Visualizador de código con sintaxis coloreada si es un recurso de código */}
+                {recurso.resourceType === 'code' && recurso.codigoFuente && (
+                  <div className="mb-6">
+                    <div className="bg-black rounded-md overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-2 bg-gray-900 text-gray-200">
+                        <div className="flex items-center">
+                          <FileCode className="w-4 h-4 mr-2" />
+                          <span className="text-sm font-medium">{recurso.lenguaje || 'Código'}</span>
+                        </div>
+                        <CopyButton textToCopy={recurso.codigoFuente} />
+                      </div>
+                      <div className="p-4 overflow-x-auto text-sm">
+                        <pre className="language-javascript">
+                          <code className="whitespace-pre text-gray-300">
+                            {recurso.codigoFuente}
+                          </code>
+                        </pre>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: recurso.contenido }} />
+                
+                {/* Sección para conectar con APIs de IA si este recurso lo permite */}
+                {recurso.allowAIIntegration && (
+                  <div className="mt-8 p-4 border border-border rounded-lg">
+                    <h3 className="text-lg font-semibold mb-3">Conectar con Inteligencia Artificial</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Este recurso permite integración con diferentes modelos de IA. Puedes usar tu propia API para interactuar con él.
+                    </p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div className="p-3 border border-border rounded-md flex flex-col">
+                        <div className="font-medium mb-2 flex items-center">
+                          <img src="/images/gemini-logo.png" alt="Gemini" className="w-5 h-5 mr-2" />
+                          Google Gemini
+                        </div>
+                        <input 
+                          type="text" 
+                          placeholder="Tu API Key de Gemini" 
+                          className="px-3 py-1 text-sm border border-input rounded-md mb-2"
+                        />
+                        <Button size="sm" variant="outline" className="mt-auto">Conectar</Button>
+                      </div>
+                      
+                      <div className="p-3 border border-border rounded-md flex flex-col">
+                        <div className="font-medium mb-2 flex items-center">
+                          <img src="/images/openai-logo.png" alt="OpenAI" className="w-5 h-5 mr-2" />
+                          OpenAI / ChatGPT
+                        </div>
+                        <input 
+                          type="text" 
+                          placeholder="Tu API Key de OpenAI" 
+                          className="px-3 py-1 text-sm border border-input rounded-md mb-2"
+                        />
+                        <Button size="sm" variant="outline" className="mt-auto">Conectar</Button>
+                      </div>
+                      
+                      <div className="p-3 border border-border rounded-md flex flex-col">
+                        <div className="font-medium mb-2 flex items-center">
+                          <img src="/images/grok-logo.png" alt="Grok" className="w-5 h-5 mr-2" />
+                          xAI Grok
+                        </div>
+                        <input 
+                          type="text" 
+                          placeholder="Tu API Key de xAI" 
+                          className="px-3 py-1 text-sm border border-input rounded-md mb-2"
+                        />
+                        <Button size="sm" variant="outline" className="mt-auto">Conectar</Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="mt-8">
                   <h3 className="text-lg font-semibold mb-3">¿Te ha resultado útil este recurso?</h3>
