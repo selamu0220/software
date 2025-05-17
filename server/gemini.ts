@@ -270,13 +270,13 @@ Dominar ${topic} requiere una combinación de estrategia, creatividad y persiste
  * Genera una idea de video de YouTube basada en parámetros del usuario
  */
 export async function generateVideoIdea(params: GenerationRequest): Promise<VideoIdeaContent> {
-  // Determinar qué API key usar (la proporcionada por el usuario o la del entorno)
-  const apiKey = params.geminiApiKey || process.env.GEMINI_API_KEY;
+  // Usar siempre la API key del servidor
+  const apiKey = process.env.GEMINI_API_KEY;
   
   // Si no hay clave API disponible, lanzar error
   if (!apiKey) {
-    console.error("No hay API key de Gemini disponible.");
-    throw new Error("API key de Gemini no configurada. Por favor, configura GEMINI_API_KEY en las variables de entorno.");
+    console.error("No hay API key de Gemini disponible en el servidor.");
+    throw new Error("API key de Gemini no configurada. Por favor, configura GEMINI_API_KEY en las variables de entorno del servidor.");
   }
 
   // Construir el prompt para la generación

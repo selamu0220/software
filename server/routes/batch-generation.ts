@@ -17,7 +17,7 @@ interface BatchGenerationParams {
   templateStyle?: string;
   contentTone?: string;
   timingDetail?: boolean;
-  geminiApiKey: string;
+  // Ahora usamos la API key configurada en el servidor
 }
 
 export async function handleBatchGeneration(req: Request, res: Response) {
@@ -56,12 +56,16 @@ export async function handleBatchGeneration(req: Request, res: Response) {
       videoFocus = "engagement",
       templateStyle = "informativo",
       contentTone = "profesional",
-      timingDetail = false,
-      geminiApiKey
+      timingDetail = false
     } = req.body as BatchGenerationParams;
     
+    // Validar que la API key del servidor está configurada
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ message: "Error de configuración: GEMINI_API_KEY no está configurada en el servidor" });
+    }
+    
     // Validar parámetros obligatorios
-    if (!timeframe || !startDate || !pillars?.length || !category || !subcategory || !videoLength || !geminiApiKey) {
+    if (!timeframe || !startDate || !pillars?.length || !category || !subcategory || !videoLength) {
       return res.status(400).json({ message: "Faltan parámetros obligatorios para la generación por lotes" });
     }
     
@@ -106,7 +110,7 @@ export async function handleBatchGeneration(req: Request, res: Response) {
       const titleTemplate = `${contentPillar}: `;
       
       try {
-        // Primero generamos solo la idea (título y descripción)
+        // Primero generamos solo la idea (título y descripción) con la API key del servidor
         const ideaResponse = await generateIdea({
           category,
           subcategory,
@@ -117,8 +121,7 @@ export async function handleBatchGeneration(req: Request, res: Response) {
           contentType: "idea",
           timingDetail: false,
           useSubcategory: true,
-          titleTemplate,
-          geminiApiKey
+          titleTemplate
         });
         
         if (ideaResponse.error) {
@@ -133,7 +136,7 @@ export async function handleBatchGeneration(req: Request, res: Response) {
         const baseSlug = createSlug(title);
         const slug = await createUniqueSlug(baseSlug);
         
-        // Generar puntos clave para esta idea
+        // Generar puntos clave para esta idea (usando la API key del servidor)
         const keypointsResponse = await generateKeypoints({
           category,
           subcategory,
@@ -144,11 +147,10 @@ export async function handleBatchGeneration(req: Request, res: Response) {
           contentType: "keypoints",
           timingDetail: false,
           useSubcategory: true,
-          ideaTitle: title,
-          geminiApiKey
+          ideaTitle: title
         });
         
-        // Generar guion completo para esta idea
+        // Generar guion completo para esta idea (usando la API key del servidor)
         const fullScriptResponse = await generateFullScript({
           category,
           subcategory,
@@ -160,8 +162,7 @@ export async function handleBatchGeneration(req: Request, res: Response) {
           timingDetail,
           useSubcategory: true,
           ideaTitle: title,
-          keypoints: keypointsResponse.keypoints,
-          geminiApiKey
+          keypoints: keypointsResponse.keypoints
         });
         
         // Crear estructura de contenido completa
