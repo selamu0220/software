@@ -328,15 +328,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const nombreArchivo = req.params.nombreArchivo;
       
-      // Usar ruta absoluta correcta en lugar de __dirname
-      const rutaArchivo = '/home/runner/workspace/uploads/' + nombreArchivo;
+      // Buscar el archivo en diferentes ubicaciones
+      let rutaArchivo = '';
+      let posiblesRutas = [
+        '/home/runner/workspace/uploads/' + nombreArchivo,
+        '/home/runner/workspace/uploads/recursos/' + nombreArchivo,
+        './uploads/' + nombreArchivo,
+        './uploads/recursos/' + nombreArchivo
+      ];
+      
+      // Verificar en todas las rutas posibles
+      for (const ruta of posiblesRutas) {
+        if (fs.existsSync(ruta)) {
+          rutaArchivo = ruta;
+          break;
+        }
+      }
       
       console.log("Solicitando archivo:", nombreArchivo);
-      console.log("Ruta completa:", rutaArchivo);
+      console.log("Ruta completa encontrada:", rutaArchivo);
       
       // Verificar si el archivo existe
-      if (!fs.existsSync(rutaArchivo)) {
-        console.error("Archivo no encontrado:", rutaArchivo);
+      if (!rutaArchivo) {
+        console.error("Archivo no encontrado en ninguna ruta");
         return res.status(404).send("Archivo no encontrado");
       }
       
@@ -366,17 +380,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Content-Type', contentType);
       res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombreArchivo)}"`);
       
-      // Lee el archivo y lo envía como respuesta
-      const fileStream = fs.createReadStream(rutaArchivo);
-      fileStream.pipe(res);
+      // Añadir más cabeceras para evitar caché y problemas comunes
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       
-      // Manejar errores en el stream
-      fileStream.on('error', (error) => {
-        console.error("Error al leer el archivo:", error);
+      // Lee el archivo como un buffer y lo envía de una vez
+      // Esto evita problemas con streams y asegura que todo el contenido se envía correctamente
+      try {
+        const fileBuffer = fs.readFileSync(rutaArchivo);
+        console.log(`Enviando archivo ${nombreArchivo} (${fileBuffer.length} bytes) como ${contentType}`);
+        return res.end(fileBuffer); // Usar end en lugar de send para terminar la respuesta inmediatamente
+      } catch (readError) {
+        console.error("Error al leer el archivo:", readError);
         if (!res.headersSent) {
           res.status(500).send("Error al leer el archivo");
         }
-      });
+      }
     } catch (error) {
       console.error("Error al descargar archivo:", error);
       res.status(500).send("Error al procesar la descarga");
