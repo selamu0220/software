@@ -86,14 +86,41 @@ export default function IdeaGeneratorDialog({
 
     setIsAddingToCalendar(true);
     try {
-      const response = await apiRequest("POST", "/api/calendar/entry", {
+      // Crear estructura de datos para enviar al servidor
+      const videoIdeaContent = {
+        ...generatedIdea,
+        category: generatedIdea.category || "general",
+        subcategory: generatedIdea.subcategory || "",
+        videoLength: generatedIdea.videoLength || "5-10"
+      };
+      
+      const response = await apiRequest("POST", "/api/calendar", {
         title: generatedIdea.title,
         date: selectedDate.toISOString(),
         notes: generatedIdea.outline.join("\n"),
-        contentType: generationMode,
-        contentPillar: generationStrategy === 'thesis' ? contentPillar : undefined,
-        fullScript: generationMode === 'fullScript' ? generatedIdea.fullScript : undefined,
+        timeOfDay: "mañana",
+        completed: false,
         color: getColorForPillar(contentPillar),
+        // Incluir el contenido completo de la idea para guardarla también como idea de video
+        videoIdeaContent: videoIdeaContent,
+        // Si es guión completo, incluir los datos del script
+        scriptData: generationMode === 'fullScript' ? {
+          title: generatedIdea.title,
+          sections: typeof generatedIdea.fullScript === 'string' 
+            ? [{ 
+                id: crypto.randomUUID(),
+                title: "Guión completo", 
+                content: generatedIdea.fullScript, 
+                type: "main" 
+              }] 
+            : Object.entries(generatedIdea.fullScript || {}).map(([title, content]) => ({
+                id: crypto.randomUUID(),
+                title,
+                content: content as string,
+                type: title.toLowerCase().includes("intro") ? "intro" : 
+                      title.toLowerCase().includes("conclu") ? "conclusion" : "main"
+              }))
+        } : undefined
       });
 
       if (!response.ok) {
@@ -108,6 +135,8 @@ export default function IdeaGeneratorDialog({
       // Invalidar consultas relacionadas
       queryClient.invalidateQueries({ queryKey: ['/api/calendar'] });
       queryClient.invalidateQueries({ queryKey: ['/api/calendar/month'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/video-ideas'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/scripts'] });
 
       // Cerrar el diálogo
       onClose();
@@ -145,25 +174,71 @@ export default function IdeaGeneratorDialog({
         const date = dates[i];
         setProgress({ current: i + 1, total: dates.length });
         
-        // Aquí realizaríamos la generación de idea y guardado para cada fecha
-        // Cada estrategia de contenido tendría parámetros diferentes
-        
+        // Determinar el pilar de contenido para esta fecha
         const pillarToUse = generationStrategy === 'thesis' 
-          ? (i % contentPillars.length === 0 ? contentPillars[0].value : 
-             contentPillars[i % contentPillars.length].value)
+          ? contentPillars[i % contentPillars.length].value
           : undefined;
         
-        const generationParams = {
-          date: date.toISOString(),
+        // Generar idea basada en la fecha y los parámetros seleccionados
+        const response = await apiRequest("POST", "/api/generate-idea", {
+          topic: generationStrategy === 'thesis' ? pillarToUse : undefined,
           contentType: generationMode,
-          contentPillar: pillarToUse,
+          generateFullScript: generationMode === 'fullScript',
+          aiModel: "gemini" // Usar solo Gemini como se solicitó
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Error al generar idea para ${format(date, "dd/MM/yyyy")}`);
+        }
+        
+        const ideaResult = await response.json();
+        
+        // Guardar la idea generada en el calendario
+        const videoIdeaContent = {
+          ...ideaResult,
+          category: ideaResult.category || "general",
+          subcategory: ideaResult.subcategory || "",
+          videoLength: ideaResult.videoLength || "5-10"
         };
         
-        // Simular pausa para evitar sobrecargar la API
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Guardar en el calendario
+        const calendarResponse = await apiRequest("POST", "/api/calendar", {
+          title: ideaResult.title,
+          date: date.toISOString(),
+          notes: ideaResult.outline.join("\n"),
+          timeOfDay: "mañana",
+          completed: false,
+          color: getColorForPillar(pillarToUse),
+          // Incluir el contenido completo de la idea para guardarla también como idea de video
+          videoIdeaContent: videoIdeaContent,
+          // Si es guión completo, incluir los datos del script
+          scriptData: generationMode === 'fullScript' ? {
+            title: ideaResult.title,
+            sections: typeof ideaResult.fullScript === 'string' 
+              ? [{ 
+                  id: crypto.randomUUID(),
+                  title: "Guión completo", 
+                  content: ideaResult.fullScript, 
+                  type: "main" 
+                }] 
+              : Object.entries(ideaResult.fullScript || {}).map(([title, content]) => ({
+                  id: crypto.randomUUID(),
+                  title,
+                  content: content as string,
+                  type: title.toLowerCase().includes("intro") ? "intro" : 
+                        title.toLowerCase().includes("conclu") ? "conclusion" : "main"
+                }))
+          } : undefined
+        });
         
-        // Aquí iría la lógica real de generación y guardado
-        // ...
+        if (!calendarResponse.ok) {
+          console.warn(`No se pudo guardar la idea para ${format(date, "dd/MM/yyyy")}`);
+        }
+        
+        // Pausa para evitar sobrecargar la API
+        if (i < dates.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
       
       toast({
@@ -174,6 +249,8 @@ export default function IdeaGeneratorDialog({
       // Invalidar consultas relacionadas
       queryClient.invalidateQueries({ queryKey: ['/api/calendar'] });
       queryClient.invalidateQueries({ queryKey: ['/api/calendar/month'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/video-ideas'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/scripts'] });
       
       // Cerrar el diálogo
       onClose();
