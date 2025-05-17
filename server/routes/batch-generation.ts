@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { storage } from "../storage";
 import { generateVideoIdea as generateIdea, VideoIdeaContent } from "../gemini";
-import { slugify, generateSlug } from "../utils/slugify";
+import { slugify } from "../utils/slugify";
 import { InsertVideoIdea } from "@shared/schema";
 
 // Estructura simplificada para keypoints y script completo
@@ -295,10 +295,17 @@ async function createUniqueSlug(baseSlug: string): Promise<string> {
   let counter = 1;
   let existingIdea = await storage.getVideoIdeaBySlug(slug);
   
+  // Si ya existe un slug con ese nombre, añadimos un sufijo numérico
   while (existingIdea) {
     slug = `${baseSlug}-${counter}`;
     counter++;
     existingIdea = await storage.getVideoIdeaBySlug(slug);
+    
+    // Si después de muchos intentos no encontramos un slug único, añadimos timestamp
+    if (counter > 100) {
+      slug = `${baseSlug}-${Date.now()}`;
+      break;
+    }
   }
   
   return slug;
