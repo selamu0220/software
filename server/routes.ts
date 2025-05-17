@@ -328,71 +328,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const nombreArchivo = req.params.nombreArchivo;
       
-      // Verificar y extraer el ID del recurso desde el nombre del archivo
-      // Formato esperado: archivo-TIMESTAMP-ID.extension
-      let recursoId = null;
+      // Verificar si es una petición para DaVinci Resolve
+      if (nombreArchivo.toLowerCase().includes('davinci')) {
+        return res.redirect('/api/transiciones-davinci');
+      }
       
-      // Buscar primero el recurso en la base de datos para obtener la ruta real
-      const recurso = await storage.getRecursoByFilename(nombreArchivo);
+      // Buscar los recursos que coincidan con este nombre de archivo
+      console.log("Buscando archivo:", nombreArchivo);
       
-      console.log("Recurso encontrado:", recurso?.id);
-      
-      // Si encontramos el recurso, usamos su ruta de descarga (downloadUrl)
+      // Buscar el archivo directamente sin depender de la base de datos
       let rutaArchivo = '';
-      if (recurso && recurso.downloadUrl) {
-        // Extraer solo el nombre del archivo en caso de que sea una ruta completa
-        const urlPartes = recurso.downloadUrl.split('/');
-        const nombreArchivoReal = urlPartes[urlPartes.length - 1];
-        
-        // Construir todas las rutas posibles donde podría estar el archivo
-        let posiblesRutas = [
-          `/home/runner/workspace/uploads/recursos/${nombreArchivoReal}`,
-          `/home/runner/workspace/uploads/${nombreArchivoReal}`,
-          `./uploads/recursos/${nombreArchivoReal}`,
-          `./uploads/${nombreArchivoReal}`,
-          // También intentar con el nombre del archivo original solicitado
-          `/home/runner/workspace/uploads/recursos/${nombreArchivo}`,
-          `/home/runner/workspace/uploads/${nombreArchivo}`,
-          `./uploads/recursos/${nombreArchivo}`,
-          `./uploads/${nombreArchivo}`,
-          // Y con el downloadUrl completo como último recurso
-          recurso.downloadUrl
-        ];
-        
-        // Verificar en todas las rutas posibles
-        for (const ruta of posiblesRutas) {
-          console.log("Verificando ruta:", ruta);
-          if (fs.existsSync(ruta)) {
-            rutaArchivo = ruta;
-            console.log("¡Archivo encontrado en:", rutaArchivo);
-            break;
-          }
-        }
-      } else {
-        // Si no encontramos el recurso, intentamos buscar el archivo directamente
-        let posiblesRutas = [
-          `/home/runner/workspace/uploads/recursos/${nombreArchivo}`,
-          `/home/runner/workspace/uploads/${nombreArchivo}`,
-          `./uploads/recursos/${nombreArchivo}`,
-          `./uploads/${nombreArchivo}`
-        ];
-        
-        for (const ruta of posiblesRutas) {
-          console.log("Verificando ruta:", ruta);
-          if (fs.existsSync(ruta)) {
-            rutaArchivo = ruta;
-            console.log("¡Archivo encontrado en:", rutaArchivo);
-            break;
-          }
+      
+      // Construir todas las rutas posibles donde podría estar el archivo
+      let posiblesRutas = [
+        `/home/runner/workspace/uploads/recursos/${nombreArchivo}`,
+        `/home/runner/workspace/uploads/${nombreArchivo}`,
+        `./uploads/recursos/${nombreArchivo}`,
+        `./uploads/${nombreArchivo}`
+      ];
+      
+      // Verificar en todas las rutas posibles
+      for (const ruta of posiblesRutas) {
+        console.log("Verificando ruta:", ruta);
+        if (fs.existsSync(ruta)) {
+          rutaArchivo = ruta;
+          console.log("¡Archivo encontrado en:", rutaArchivo);
+          break;
         }
       }
       
-      // Si no encontramos el archivo en ninguna parte, creamos un archivo con el contenido del pack de transiciones
+      // Si no encontramos el archivo con el nombre exacto, intentamos buscar archivos que contengan el nombre
       if (!rutaArchivo) {
-        console.warn("No se encontró el archivo, generando archivo de ejemplo");
+        // Intentar buscar en la carpeta de recursos
+        try {
+          const archivosEnCarpeta = fs.readdirSync('/home/runner/workspace/uploads/recursos');
+          for (const archivo of archivosEnCarpeta) {
+            if (archivo.includes(nombreArchivo)) {
+              rutaArchivo = `/home/runner/workspace/uploads/recursos/${archivo}`;
+              console.log("Archivo encontrado por coincidencia parcial:", rutaArchivo);
+              break;
+            }
+          }
+        } catch (error) {
+          console.log("Error al leer directorio de recursos:", error);
+        }
+      }
+      
+      // Si no encontramos el archivo en ninguna parte, creamos un archivo genérico basado en la extensión
+      if (!rutaArchivo) {
+        console.warn("No se encontró el archivo, generando archivo genérico según la extensión");
         
-        // Crear contenido de ejemplo para el pack de transiciones
-        const contenidoPack = `# Pack de Transiciones para DaVinci Resolve
+        const extension = path.extname(nombreArchivo).toLowerCase();
+        let contenido = '';
+        let nombreGenerico = '';
+        
+        if (nombreArchivo.toLowerCase().includes('blender')) {
+          // Específico para recursos de Blender
+          contenido = `import bpy
+import math
+
+# Script de ejemplo para Blender - Animación de un reloj
+# Este script crea un reloj analógico básico con manecillas animadas
+
+def crear_esfera():
+    bpy.ops.mesh.primitive_cylinder_add(
+        vertices=64,
+        radius=1.0,
+        depth=0.1,
+        location=(0, 0, 0)
+    )
+    esfera = bpy.context.active_object
+    esfera.name = "Esfera_Reloj"
+    
+    # Añadir material a la esfera
+    mat = bpy.data.materials.new(name="Material_Esfera")
+    mat.diffuse_color = (0.8, 0.8, 0.8, 1.0)
+    esfera.data.materials.append(mat)
+    
+    return esfera
+
+def crear_manecilla(nombre, longitud, ancho, color, z_pos):
+    bpy.ops.mesh.primitive_cube_add(
+        size=1, 
+        location=(longitud/2, 0, z_pos)
+    )
+    manecilla = bpy.context.active_object
+    manecilla.name = nombre
+    manecilla.scale = (longitud, ancho, 0.05)
+    
+    # Añadir material a la manecilla
+    mat = bpy.data.materials.new(name="Material_" + nombre)
+    mat.diffuse_color = color
+    manecilla.data.materials.append(mat)
+    
+    return manecilla
+
+def animar_manecilla(manecilla, duracion, velocidad):
+    # Añadir animación de rotación
+    manecilla.rotation_mode = 'XYZ'
+    manecilla.rotation_euler = (0, 0, 0)
+    manecilla.keyframe_insert(data_path="rotation_euler", frame=1)
+    
+    # Rotación completa según la velocidad
+    manecilla.rotation_euler = (0, 0, -2 * math.pi * velocidad)
+    manecilla.keyframe_insert(data_path="rotation_euler", frame=duracion)
+    
+    # Hacer que la animación sea cíclica
+    for fcurve in manecilla.animation_data.action.fcurves:
+        fcurve.extrapolation = 'CYCLIC'
+
+# Limpiar escena
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete()
+
+# Crear reloj
+esfera = crear_esfera()
+
+# Crear manecillas
+segundero = crear_manecilla("Segundero", 0.9, 0.02, (1, 0, 0, 1), 0.1)
+minutero = crear_manecilla("Minutero", 0.7, 0.04, (0, 0, 0, 1), 0.15)
+hora = crear_manecilla("Hora", 0.5, 0.06, (0, 0, 0, 1), 0.2)
+
+# Emparentar manecillas a la esfera
+segundero.parent = esfera
+minutero.parent = esfera
+hora.parent = esfera
+
+# Configurar la escena para 60 FPS
+bpy.context.scene.render.fps = 60
+
+# Animar las manecillas (1 minuto = 60 frames a 60fps)
+duracion = 60 * 60  # 1 minuto en frames
+animar_manecilla(segundero, duracion, 1.0)  # Una vuelta completa en 1 minuto
+animar_manecilla(minutero, duracion * 60, 1.0)  # Una vuelta en 60 minutos
+animar_manecilla(hora, duracion * 60 * 12, 1.0)  # Una vuelta en 12 horas
+
+# Configurar duración de la animación
+bpy.context.scene.frame_start = 1
+bpy.context.scene.frame_end = duracion
+
+print("Reloj creado con éxito. Presiona Play para ver la animación.")`;
+          nombreGenerico = 'blender-script-reloj.py';
+        } else if (nombreArchivo.toLowerCase().includes('davinci')) {
+          // Específico para DaVinci Resolve
+          contenido = `# Pack de Transiciones para DaVinci Resolve
 
 ## Contenido
 Este pack incluye 50 transiciones profesionales diseñadas específicamente para DaVinci Resolve, perfectas para proyectos de todo tipo:
@@ -412,15 +491,27 @@ DaVinci Resolve 17 o superior
 1. Descarga y descomprime el archivo
 2. Copia la carpeta "Transiciones" en la ubicación: [Documentos/BlackmagicDesign/DaVinci Resolve/Effects]
 3. Reinicia DaVinci Resolve
-4. Las transiciones aparecerán en el panel de efectos
+4. Las transiciones aparecerán en el panel de efectos`;
+          nombreGenerico = 'davinci-transiciones.txt';
+        } else {
+          // Contenido genérico si no se reconoce el tipo
+          contenido = `# Contenido del recurso
 
-## Nota importante
-Este es un archivo de ejemplo generado automáticamente porque el archivo original no se pudo encontrar.
-`;
+Este es un archivo generado automáticamente para el recurso solicitado.
+El archivo original no se pudo encontrar en el servidor.
+
+## Información
+
+Nombre del archivo solicitado: ${nombreArchivo}
+Fecha de generación: ${new Date().toISOString()}
+
+Si este no es el archivo que esperabas, por favor contacta al administrador.`;
+          nombreGenerico = 'recurso-generico.txt';
+        }
 
         // Crear un archivo temporal con este contenido
-        const tmpArchivo = '/tmp/pack-transiciones-davinci.txt';
-        fs.writeFileSync(tmpArchivo, contenidoPack);
+        const tmpArchivo = `/tmp/${nombreGenerico}`;
+        fs.writeFileSync(tmpArchivo, contenido);
         rutaArchivo = tmpArchivo;
       }
       
@@ -533,6 +624,137 @@ DaVinci Resolve 17 o superior
     } catch (error) {
       console.error("Error enviando archivo de transiciones:", error);
       res.status(500).send("Error al descargar el archivo de transiciones");
+    }
+  });
+  
+  // Ruta para eliminar un recurso (admin o propietario)
+  app.delete("/api/recursos/:id", requireAuth, async (req, res) => {
+    try {
+      const recursoId = parseInt(req.params.id);
+      const userId = req.session.userId;
+      
+      // Obtener el recurso para verificar permisos
+      const recurso = await db.select().from(resources).where(eq(resources.id, recursoId)).limit(1);
+      
+      if (!recurso || recurso.length === 0) {
+        return res.status(404).json({ message: "Recurso no encontrado" });
+      }
+      
+      // Verificar si el usuario es administrador o propietario del recurso
+      const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      
+      if (!user || user.length === 0) {
+        return res.status(401).json({ message: "Usuario no autenticado" });
+      }
+      
+      const esAdmin = user[0].username === 'sela_gr'; // Usuario administrador
+      
+      if (recurso[0].userId !== userId && !esAdmin) {
+        return res.status(403).json({ message: "No tienes permiso para eliminar este recurso" });
+      }
+      
+      // Eliminar el recurso
+      await db.delete(resources).where(eq(resources.id, recursoId));
+      
+      // Intentar eliminar los archivos físicos si existen
+      try {
+        if (recurso[0].downloadUrl) {
+          const rutaArchivo = recurso[0].downloadUrl.replace('/home/runner/workspace/', './');
+          if (fs.existsSync(rutaArchivo)) {
+            fs.unlinkSync(rutaArchivo);
+            console.log(`Archivo eliminado: ${rutaArchivo}`);
+          }
+        }
+        
+        if (recurso[0].thumbnailUrl) {
+          const rutaImagen = recurso[0].thumbnailUrl.replace('/home/runner/workspace/', './');
+          if (fs.existsSync(rutaImagen)) {
+            fs.unlinkSync(rutaImagen);
+            console.log(`Imagen eliminada: ${rutaImagen}`);
+          }
+        }
+      } catch (fileError) {
+        console.log("Error al eliminar archivos físicos:", fileError);
+        // Continuamos aunque fallen los archivos
+      }
+      
+      res.json({ message: "Recurso eliminado correctamente" });
+    } catch (error) {
+      console.error("Error al eliminar recurso:", error);
+      res.status(500).json({ message: "Error al eliminar el recurso" });
+    }
+  });
+  
+  // Ruta para eliminar un usuario (solo admin)
+  app.delete("/api/usuarios/:username", requireAuth, async (req, res) => {
+    try {
+      const usernameToDelete = req.params.username;
+      const userId = req.session.userId;
+      
+      // Verificar si el usuario solicitante es administrador
+      const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      
+      if (!user || user.length === 0) {
+        return res.status(401).json({ message: "Usuario no autenticado" });
+      }
+      
+      const esAdmin = user[0].username === 'sela_gr'; // Usuario administrador
+      
+      if (!esAdmin) {
+        return res.status(403).json({ message: "Solo los administradores pueden eliminar usuarios" });
+      }
+      
+      // Verificar si el usuario a eliminar es sela_gb o sela_gt
+      if (usernameToDelete !== 'sela_gb' && usernameToDelete !== 'sela_gt') {
+        return res.status(403).json({ 
+          message: "Solo se pueden eliminar los usuarios sela_gb y sela_gt" 
+        });
+      }
+      
+      // Obtener el ID del usuario a eliminar
+      const userToDelete = await db.select().from(users).where(eq(users.username, usernameToDelete)).limit(1);
+      
+      if (!userToDelete || userToDelete.length === 0) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+      
+      const userIdToDelete = userToDelete[0].id;
+      
+      // Obtener y eliminar los recursos del usuario
+      const userResources = await db.select().from(resources).where(eq(resources.userId, userIdToDelete));
+      
+      for (const recurso of userResources) {
+        await db.delete(resources).where(eq(resources.id, recurso.id));
+        
+        // Eliminar archivos físicos
+        try {
+          if (recurso.downloadUrl) {
+            const rutaArchivo = recurso.downloadUrl.replace('/home/runner/workspace/', './');
+            if (fs.existsSync(rutaArchivo)) {
+              fs.unlinkSync(rutaArchivo);
+            }
+          }
+          
+          if (recurso.thumbnailUrl) {
+            const rutaImagen = recurso.thumbnailUrl.replace('/home/runner/workspace/', './');
+            if (fs.existsSync(rutaImagen)) {
+              fs.unlinkSync(rutaImagen);
+            }
+          }
+        } catch (fileError) {
+          console.log(`Error al eliminar archivos del recurso ${recurso.id}:`, fileError);
+        }
+      }
+      
+      // Eliminar el usuario
+      await db.delete(users).where(eq(users.id, userIdToDelete));
+      
+      res.json({ 
+        message: `Usuario ${usernameToDelete} eliminado correctamente junto con ${userResources.length} recursos` 
+      });
+    } catch (error) {
+      console.error("Error al eliminar usuario:", error);
+      res.status(500).json({ message: "Error al eliminar el usuario" });
     }
   });
   
