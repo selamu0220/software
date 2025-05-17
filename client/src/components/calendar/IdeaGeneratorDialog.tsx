@@ -152,8 +152,7 @@ export default function IdeaGeneratorDialog({
     }
   };
   
-  const getColorForPillar = (pillar: string) => {
-    const pillarObj = contentPillars.find(p => p.value === pillar);
+  const getColorForPillar = (pillar: string): string => {
     switch(pillar) {
       case 'ways_of_action': return '#3b82f6';
       case 'awareness_expansion': return '#9333ea';
@@ -181,7 +180,7 @@ export default function IdeaGeneratorDialog({
         
         // Generar idea basada en la fecha y los parámetros seleccionados
         const response = await apiRequest("POST", "/api/generate-idea", {
-          topic: generationStrategy === 'thesis' ? pillarToUse : undefined,
+          topic: generationStrategy === 'thesis' ? pillarToUse || 'general' : '',
           contentType: generationMode,
           generateFullScript: generationMode === 'fullScript',
           aiModel: "gemini" // Usar solo Gemini como se solicitó
@@ -208,7 +207,7 @@ export default function IdeaGeneratorDialog({
           notes: ideaResult.outline.join("\n"),
           timeOfDay: "mañana",
           completed: false,
-          color: getColorForPillar(pillarToUse),
+          color: getColorForPillar(pillarToUse || 'general'),
           // Incluir el contenido completo de la idea para guardarla también como idea de video
           videoIdeaContent: videoIdeaContent,
           // Si es guión completo, incluir los datos del script
