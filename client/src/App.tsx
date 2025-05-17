@@ -43,10 +43,12 @@ import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { useEffect, useState } from "react";
 import { User } from "@shared/schema";
 import { apiRequest } from "./lib/queryClient";
+import IntroAnimation from "@/components/animations/IntroAnimation";
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showIntro, setShowIntro] = useState(true);
   const [location] = useLocation();
 
   // Fetch current user on app load
@@ -98,6 +100,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
+          {/* Animación de introducción */}
+          {showIntro && <IntroAnimation onComplete={() => setShowIntro(false)} />}
           {showNavAndFooter && <Navbar user={user} onLogout={logout} />}
           <main className="min-h-screen">
             {showNavAndFooter && location !== "/" && (
