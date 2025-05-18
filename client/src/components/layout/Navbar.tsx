@@ -9,7 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video, BarChart3, BookOpen, Library, FileText, Star, Pencil, PenSquare, FileEdit, LightbulbIcon, Layers } from "lucide-react";
+import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video, BarChart3, BookOpen, Library, FileText, Star, Pencil, PenSquare, FileEdit, LightbulbIcon, Layers, Volume2, VolumeX } from "lucide-react";
+import { useSoundEffects } from "@/hooks/use-sound-effects";
 
 interface NavbarProps {
   user: User | null;
@@ -19,6 +20,7 @@ interface NavbarProps {
 export default function Navbar({ user, onLogout }: NavbarProps) {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { playSound, muted, toggleMute } = useSoundEffects();
 
   const navLinks = [
     { name: "Recursos", href: "/recursos" },
@@ -65,10 +67,28 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
             </div>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="relative rounded-md h-9 w-9 p-0"
+              onClick={() => {
+                toggleMute();
+                playSound('click');
+              }}
+              aria-label={muted ? "Activar sonido" : "Silenciar"}
+            >
+              {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+            </Button>
+            
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="relative rounded-md h-9 w-9 p-0">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="relative rounded-md h-9 w-9 p-0"
+                    onClick={() => playSound('click')}
+                  >
                     <span className="sr-only">Open user menu</span>
                     <UserIcon className="h-5 w-5" />
                   </Button>
@@ -80,75 +100,135 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/mis-guiones" className="flex items-center">
+                    <Link 
+                      href="/mis-guiones" 
+                      className="flex items-center"
+                      onClick={() => playSound('click')}
+                      onMouseEnter={() => playSound('hover')}
+                    >
                       <PenSquare className="mr-2 h-4 w-4" />
                       Generador de Guiones
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/recursos" className="flex items-center">
+                    <Link 
+                      href="/recursos" 
+                      className="flex items-center"
+                      onClick={() => playSound('click')}
+                      onMouseEnter={() => playSound('hover')}
+                    >
                       <Library className="mr-2 h-4 w-4" />
                       Biblioteca de Recursos
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/recursos/subir" className="flex items-center">
+                    <Link 
+                      href="/recursos/subir" 
+                      className="flex items-center"
+                      onClick={() => playSound('click')}
+                      onMouseEnter={() => playSound('hover')}
+                    >
                       <Library className="mr-2 h-4 w-4" />
                       Subir Recurso
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard" className="flex items-center">
+                    <Link 
+                      href="/dashboard" 
+                      className="flex items-center"
+                      onClick={() => playSound('click')}
+                      onMouseEnter={() => playSound('hover')}
+                    >
                       <UserIcon className="mr-2 h-4 w-4" />
                       Dashboard
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/calendar" className="flex items-center">
+                    <Link 
+                      href="/calendar" 
+                      className="flex items-center"
+                      onClick={() => playSound('click')}
+                      onMouseEnter={() => playSound('hover')}
+                    >
                       <Calendar className="mr-2 h-4 w-4" />
                       Calendario
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/estrategia-contenido" className="flex items-center">
+                    <Link 
+                      href="/estrategia-contenido" 
+                      className="flex items-center"
+                      onClick={() => playSound('click')}
+                      onMouseEnter={() => playSound('hover')}
+                    >
                       <FileEdit className="mr-2 h-4 w-4" />
                       Estrategia de Contenido
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/batch-generator" className="flex items-center">
+                    <Link 
+                      href="/batch-generator" 
+                      className="flex items-center"
+                      onClick={() => playSound('click')}
+                      onMouseEnter={() => playSound('hover')}
+                    >
                       <Layers className="mr-2 h-4 w-4" />
                       Generación por Lotes
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/teleprompter" className="flex items-center">
+                    <Link 
+                      href="/teleprompter" 
+                      className="flex items-center"
+                      onClick={() => playSound('click')}
+                      onMouseEnter={() => playSound('hover')}
+                    >
                       <MonitorPlay className="mr-2 h-4 w-4" />
                       Teleprompter
                     </Link>
                   </DropdownMenuItem>
 
                   <DropdownMenuItem asChild>
-                    <Link href="/metrics" className="flex items-center">
+                    <Link 
+                      href="/metrics" 
+                      className="flex items-center"
+                      onClick={() => playSound('click')}
+                      onMouseEnter={() => playSound('hover')}
+                    >
                       <BarChart3 className="mr-2 h-4 w-4" />
                       Métricas
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/blog" className="flex items-center">
+                    <Link 
+                      href="/blog" 
+                      className="flex items-center"
+                      onClick={() => playSound('click')}
+                      onMouseEnter={() => playSound('hover')}
+                    >
                       <FileText className="mr-2 h-4 w-4" />
                       Blog
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/testimonios" className="flex items-center">
+                    <Link 
+                      href="/testimonios" 
+                      className="flex items-center"
+                      onClick={() => playSound('click')}
+                      onMouseEnter={() => playSound('hover')}
+                    >
                       <Star className="mr-2 h-4 w-4" />
                       Testimonios
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center">
+                    <Link 
+                      href="/profile" 
+                      className="flex items-center"
+                      onClick={() => playSound('click')}
+                      onMouseEnter={() => playSound('hover')}
+                    >
                       <Settings className="mr-2 h-4 w-4" />
                       Perfil
                     </Link>
@@ -157,12 +237,24 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link href="/subscribe">Actualizar a Premium</Link>
+                        <Link
+                          href="/subscribe"
+                          onClick={() => playSound('success')}
+                          onMouseEnter={() => playSound('hover')}
+                        >
+                          Actualizar a Premium
+                        </Link>
                       </DropdownMenuItem>
                     </>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={onLogout}>
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      playSound('click');
+                      onLogout();
+                    }}
+                    onMouseEnter={() => playSound('hover')}
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Cerrar sesión</span>
                   </DropdownMenuItem>
@@ -171,12 +263,24 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
             ) : (
               <>
                 <Link href="/login">
-                  <Button variant="ghost" size="sm" className="text-sm font-medium">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-sm font-medium"
+                    onClick={() => playSound('click')}
+                    onMouseEnter={() => playSound('hover')}
+                  >
                     Iniciar sesión
                   </Button>
                 </Link>
                 <Link href="/register">
-                  <Button variant="default" size="sm" className="text-sm font-medium">
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="text-sm font-medium"
+                    onClick={() => playSound('click')}
+                    onMouseEnter={() => playSound('hover')}
+                  >
                     Registrarse
                   </Button>
                 </Link>
