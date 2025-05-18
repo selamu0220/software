@@ -1148,27 +1148,20 @@ DaVinci Resolve 17 o superior
         contenidoSanitizado = contenidoSanitizado.substring(0, 1000);
       }
       
-      // Insertar comentario usando ejecución SQL directa
+      console.log(`Intentando insertar comentario - resourceId: ${resourceId}, userId: ${userId}, valoracion: ${valoracion || 'null'}`);
+      
+      // Insertar comentario usando ejecución SQL directa con valores ajustados
       let comentario;
       try {
-        // Convertir resourceId a número
-        const resourceIdNum = parseInt(resourceId);
-        if (isNaN(resourceIdNum)) {
-          return res.status(400).json({ message: "ID de recurso inválido" });
-        }
-
-        const queryText = `
-          INSERT INTO resource_comments 
-          (resource_id, user_id, content, rating, likes, is_pinned, parent_id, created_at, updated_at)
-          VALUES 
-          ($1, $2, $3, $4, 0, false, null, NOW(), NOW())
-          RETURNING *
-        `;
-        
-        const queryParams = [resourceIdNum, userId, contenidoSanitizado, valoracion || null];
-        console.log("Ejecutando consulta con parámetros:", queryParams);
-        
-        const result = await db.execute(queryText, queryParams);
+        // Insertar comentario de manera más simple
+        const result = await db.execute(
+          `INSERT INTO resource_comments 
+           (resource_id, user_id, content, rating, likes, is_pinned, created_at, updated_at)
+           VALUES 
+           ($1, $2, $3, $4, 0, false, NOW(), NOW())
+           RETURNING *`,
+          [resourceId, userId, contenidoSanitizado, valoracion ? parseInt(valoracion) : null]
+        );
         
         if (!result || !result.rows || result.rows.length === 0) {
           return res.status(500).json({ message: "Error al crear el comentario" });
@@ -1178,7 +1171,11 @@ DaVinci Resolve 17 o superior
         console.log("Comentario insertado con éxito:", comentario);
       } catch (error: any) {
         console.error("Error al insertar comentario:", error);
-        return res.status(500).json({ message: "Error al crear el comentario: " + (error.message || "Error desconocido") });
+        return res.status(500).json({ 
+          message: "Error al crear el comentario",
+          error: error.message,
+          details: error.toString()
+        });
       }
       
       // Obtener información del usuario para la respuesta
