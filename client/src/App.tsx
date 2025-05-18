@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
+import { SoundProvider } from "@/hooks/use-sound-effects";
 import { ProtectedRoute } from "@/lib/protected-route";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
@@ -101,26 +102,27 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          {/* SEO Metatags - Default para toda la aplicación */}
-          <SEOMeta 
-            title="Red Creativa Pro - Herramientas para creadores de contenido"
-            description="Potencia tu creación de contenido en YouTube con Red Creativa Pro. Genera ideas, guiones y planes de contenido mediante inteligencia artificial."
-            keywords="creador de contenido, YouTube, ideas para videos, generador de guiones, AI, estrategia de contenido"
-            ogImage="/images/og-image.svg"
-            ogType="website"
-            lang="es"
-          />
-          {/* Animación de introducción */}
-          {showIntro && <IntroAnimation onComplete={() => setShowIntro(false)} />}
-          {showNavAndFooter && <Navbar user={user} onLogout={logout} />}
-          <main className="min-h-screen">
-            {showNavAndFooter && location !== "/" && (
-              <div className="container pt-4">
-                <Breadcrumb />
-              </div>
-            )}
-            <Switch>
+        <SoundProvider>
+          <TooltipProvider>
+            {/* SEO Metatags - Default para toda la aplicación */}
+            <SEOMeta 
+              title="Red Creativa Pro - Herramientas para creadores de contenido"
+              description="Potencia tu creación de contenido en YouTube con Red Creativa Pro. Genera ideas, guiones y planes de contenido mediante inteligencia artificial."
+              keywords="creador de contenido, YouTube, ideas para videos, generador de guiones, AI, estrategia de contenido"
+              ogImage="/images/og-image.svg"
+              ogType="website"
+              lang="es"
+            />
+            {/* Animación de introducción */}
+            {showIntro && <IntroAnimation onComplete={() => setShowIntro(false)} />}
+            {showNavAndFooter && <Navbar user={user} onLogout={logout} />}
+            <main className="min-h-screen">
+              {showNavAndFooter && location !== "/" && (
+                <div className="container pt-4">
+                  <Breadcrumb />
+                </div>
+              )}
+              <Switch>
               <Route path="/" component={() => <Recursos />} />
               <Route path="/login" component={() => <Login onLogin={login} />} />
               <Route path="/register" component={() => <Register onRegister={login} />} />
@@ -173,7 +175,8 @@ function App() {
         {showNavAndFooter && <Footer />}
         {/* Sidebar del asistente que se puede abrir/cerrar */}
         <AssistantSidebar />
-        </TooltipProvider>
+          </TooltipProvider>
+        </SoundProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
