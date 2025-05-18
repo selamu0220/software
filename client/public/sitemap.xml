@@ -1,54 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
                             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
   <url>
-    <loc>https://redcreativapro.com/</loc>
-    <lastmod>2024-07-17</lastmod>
+    <loc>https://redcreativa.pro/</loc>
+    <lastmod>2025-05-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/"/>
   </url>
   <url>
-    <loc>https://redcreativapro.com/generador</loc>
-    <lastmod>2024-07-17</lastmod>
+    <loc>https://redcreativa.pro/generador</loc>
+    <lastmod>2025-05-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/generador"/>
   </url>
   <url>
-    <loc>https://redcreativapro.com/calendario</loc>
-    <lastmod>2024-07-17</lastmod>
+    <loc>https://redcreativa.pro/calendario</loc>
+    <lastmod>2025-05-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/calendario"/>
   </url>
   <url>
-    <loc>https://redcreativapro.com/recursos</loc>
-    <lastmod>2024-07-17</lastmod>
+    <loc>https://redcreativa.pro/recursos</loc>
+    <lastmod>2025-05-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/recursos"/>
   </url>
   <url>
-    <loc>https://redcreativapro.com/blog</loc>
-    <lastmod>2024-07-17</lastmod>
+    <loc>https://redcreativa.pro/blog</loc>
+    <lastmod>2025-05-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/blog"/>
   </url>
   <url>
-    <loc>https://redcreativapro.com/estrategia-contenido</loc>
-    <lastmod>2024-07-17</lastmod>
+    <loc>https://redcreativa.pro/estrategia-contenido</loc>
+    <lastmod>2025-05-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/estrategia-contenido"/>
   </url>
   <url>
-    <loc>https://redcreativapro.com/precios</loc>
-    <lastmod>2024-07-17</lastmod>
+    <loc>https://redcreativa.pro/precios</loc>
+    <lastmod>2025-05-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/precios"/>
   </url>
   <url>
-    <loc>https://redcreativapro.com/auth</loc>
-    <lastmod>2024-07-17</lastmod>
+    <loc>https://redcreativa.pro/auth</loc>
+    <lastmod>2025-05-18</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/auth"/>
   </url>
 </urlset>
