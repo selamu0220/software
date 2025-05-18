@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Red Creativa Pro",
+  "url": "https://redcreativa.pro/",
+  "description": "Plataforma premium para creadores de contenido en español. Genera ideas y guiones completos para YouTube con IA, planifica tu contenido y accede a recursos creativos profesionales.",
+  "inLanguage": "es-ES",
+  "logo": "https://redcreativa.pro/images/logo.png",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://redcreativa.pro/recursos?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
