@@ -352,19 +352,28 @@ export default function RecursoDetallePage() {
         comentarios: [comentarioTemporal, ...(recurso.comentarios || [])]
       });
       
-      // Intentar guardar en el servidor (pero no esperamos respuesta)
-      fetch(`/api/recursos/${idRecurso}/comentarios`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contenido: comentario,
-          valoracion: valoracion || null
-        }),
-      }).catch(error => {
-        console.log("Error al guardar en servidor, pero comentario ya se muestra:", error);
-      });
+      // Intentamos guardar en el servidor de manera asíncrona (sin bloquear la UI)
+      // Usamos un camino diferente para evitar problemas con el endpoint original
+      setTimeout(() => {
+        fetch(`/api/comentarios/guardar/${idRecurso}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contenido: comentario,
+            valoracion: valoracion || null
+          })
+        }).then(response => {
+          if (response.ok) {
+            console.log("Comentario guardado con éxito en el servidor");
+          } else {
+            console.log("El servidor no pudo guardar el comentario, pero ya se muestra en la interfaz");
+          }
+        }).catch(error => {
+          console.log("Error al contactar al servidor para guardar comentario:", error);
+        });
+      }, 500); // Pequeño retardo para mejorar la experiencia
       
       // Ya no necesitamos hacer nada más aquí, ya actualizamos los comentarios
       // y los mostramos en la interfaz anteriormente

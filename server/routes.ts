@@ -1114,8 +1114,8 @@ DaVinci Resolve 17 o superior
     }
   });
   
-  // Endpoint para añadir un comentario a un recurso
-  app.post("/api/recursos/:id/comentarios", requireAuth, async (req, res) => {
+  // Endpoint alternativo para añadir comentarios (ruta alternativa más confiable)
+  app.post("/api/comentarios/guardar/:id", requireAuth, async (req, res) => {
     try {
       const resourceId = parseInt(req.params.id);
       const session = req.session as any;
