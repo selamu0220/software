@@ -423,14 +423,17 @@ export default function MultipleScriptsGenerator({ isOpen, onClose }: MultipleSc
                     <div className="pl-6 space-y-2">
                       <Label>Selecciona una colección</Label>
                       <Select 
-                        value={selectedCollectionId?.toString() || ""} 
-                        onValueChange={(val) => setSelectedCollectionId(parseInt(val))}
+                        value={selectedCollectionId?.toString() || "default"} 
+                        onValueChange={(val) => val !== "default" && setSelectedCollectionId(parseInt(val))}
                         disabled={isGenerating || isLoadingCollections}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una colección" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="default" disabled>
+                            Selecciona una colección
+                          </SelectItem>
                           {collections && collections.length > 0 ? (
                             collections.map((collection: any) => (
                               <SelectItem key={collection.id} value={collection.id.toString()}>
