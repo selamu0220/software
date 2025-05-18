@@ -54,11 +54,24 @@
       "@type": "WebSite",
       "name": "Red Creativa Pro",
       "url": "https://redcreativa.pro/",
-      "description": "Plataforma premium para creadores de contenido con generador de ideas y scripts, calendario editorial, y biblioteca de recursos.",
-      "inLanguage": "es",
+      "description": "Plataforma premium para creadores de contenido con generador de ideas y scripts, calendario editorial, y biblioteca de recursos creativos.",
+      "inLanguage": "es-ES",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Red Creativa Pro",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://redcreativa.pro/images/logo.png",
+          "width": "180",
+          "height": "180"
+        }
+      },
       "potentialAction": {
         "@type": "SearchAction",
-        "target": "https://redcreativa.pro/recursos?q={search_term_string}",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://redcreativa.pro/recursos?q={search_term_string}"
+        },
         "query-input": "required name=search_term_string"
       }
     }
@@ -71,11 +84,22 @@
       "@type": "Organization",
       "name": "Red Creativa Pro",
       "url": "https://redcreativa.pro/",
-      "logo": "https://redcreativa.pro/images/logo.png",
-      "description": "Plataforma premium con recursos para edición de video, generación de ideas y herramientas para creadores de contenido.",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://redcreativa.pro/images/logo.png",
+        "width": "180",
+        "height": "180"
+      },
+      "description": "Plataforma premium con recursos para edición de video, generación de ideas con IA y herramientas avanzadas para creadores de contenido.",
       "sameAs": [
         "https://es.trustpilot.com/review/redcreativa.pro"
-      ]
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer service",
+        "email": "soporte@redcreativa.pro",
+        "availableLanguage": ["Spanish", "Español"]
+      }
     }
     </script>
     
@@ -87,17 +111,64 @@
       "name": "Red Creativa Pro",
       "operatingSystem": "Web",
       "applicationCategory": "BusinessApplication",
-      "offers": {
-        "@type": "Offer",
-        "price": "4.99",
-        "priceCurrency": "EUR",
-        "availability": "https://schema.org/InStock"
-      },
+      "applicationSubCategory": "ContentCreationApplication",
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Plan Mensual",
+          "description": "Acceso completo a todas las funcionalidades premium de Red Creativa Pro",
+          "price": "4.99",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "url": "https://redcreativa.pro/subscribe",
+          "priceValidUntil": "2025-12-31"
+        },
+        {
+          "@type": "Offer",
+          "name": "Acceso de por vida",
+          "description": "Acceso ilimitado y de por vida a todas las funcionalidades premium",
+          "price": "29.99",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "url": "https://redcreativa.pro/subscribe?plan=lifetime"
+        }
+      ],
       "aggregateRating": {
         "@type": "AggregateRating",
         "ratingValue": "4.8",
+        "bestRating": "5",
+        "worstRating": "1",
         "reviewCount": "124"
-      }
+      },
+      "featureList": "Generador de ideas con IA, Scripts completos, Calendario editorial, Teleprompter, Biblioteca de recursos, Editor de gráficos"
+    }
+    </script>
+    
+    <!-- Schema.org markup para Breadcrumbs -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Inicio",
+          "item": "https://redcreativa.pro/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Recursos",
+          "item": "https://redcreativa.pro/recursos"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Blog",
+          "item": "https://redcreativa.pro/blog"
+        }
+      ]
     }
     </script>
     

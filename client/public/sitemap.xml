@@ -2,62 +2,156 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
                             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+  <!-- Página principal -->
   <url>
     <loc>https://redcreativa.pro/</loc>
     <lastmod>2025-05-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://redcreativa.pro/"/>
+    <image:image>
+      <image:loc>https://redcreativa.pro/images/logo.png</image:loc>
+      <image:title>Red Creativa Pro Logo</image:title>
+    </image:image>
   </url>
+  
+  <!-- Herramientas principales -->
   <url>
     <loc>https://redcreativa.pro/generador</loc>
     <lastmod>2025-05-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
     <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/generador"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/generador"/>
   </url>
   <url>
-    <loc>https://redcreativa.pro/calendario</loc>
+    <loc>https://redcreativa.pro/calendar</loc>
     <lastmod>2025-05-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/calendario"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/calendar"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/calendar"/>
   </url>
+  <url>
+    <loc>https://redcreativa.pro/mis-guiones</loc>
+    <lastmod>2025-05-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/mis-guiones"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/mis-guiones"/>
+  </url>
+  <url>
+    <loc>https://redcreativa.pro/teleprompter</loc>
+    <lastmod>2025-05-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/teleprompter"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/teleprompter"/>
+  </url>
+  
+  <!-- Recursos y biblioteca -->
   <url>
     <loc>https://redcreativa.pro/recursos</loc>
     <lastmod>2025-05-18</lastmod>
-    <changefreq>weekly</changefreq>
+    <changefreq>daily</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/recursos"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/recursos"/>
   </url>
+  <url>
+    <loc>https://redcreativa.pro/recursos/subir</loc>
+    <lastmod>2025-05-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/recursos/subir"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/recursos/subir"/>
+  </url>
+  
+  <!-- Blog y contenido editorial -->
   <url>
     <loc>https://redcreativa.pro/blog</loc>
     <lastmod>2025-05-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/blog"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/blog"/>
   </url>
+  
+  <!-- Estrategia de contenido -->
   <url>
     <loc>https://redcreativa.pro/estrategia-contenido</loc>
     <lastmod>2025-05-18</lastmod>
-    <changefreq>monthly</changefreq>
+    <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/estrategia-contenido"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/estrategia-contenido"/>
   </url>
+  
+  <!-- Planes y precios -->
   <url>
     <loc>https://redcreativa.pro/precios</loc>
     <lastmod>2025-05-18</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/precios"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/precios"/>
   </url>
   <url>
-    <loc>https://redcreativa.pro/auth</loc>
+    <loc>https://redcreativa.pro/subscribe</loc>
+    <lastmod>2025-05-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/subscribe"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/subscribe"/>
+  </url>
+  
+  <!-- Autenticación -->
+  <url>
+    <loc>https://redcreativa.pro/login</loc>
     <lastmod>2025-05-18</lastmod>
     <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
-    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/auth"/>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/login"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/login"/>
+  </url>
+  <url>
+    <loc>https://redcreativa.pro/register</loc>
+    <lastmod>2025-05-18</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/register"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/register"/>
+  </url>
+  
+  <!-- Herramientas avanzadas -->
+  <url>
+    <loc>https://redcreativa.pro/batch-generator</loc>
+    <lastmod>2025-05-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/batch-generator"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/batch-generator"/>
+  </url>
+  <url>
+    <loc>https://redcreativa.pro/testimonios</loc>
+    <lastmod>2025-05-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/testimonios"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/testimonios"/>
+  </url>
+  <url>
+    <loc>https://redcreativa.pro/dashboard</loc>
+    <lastmod>2025-05-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://redcreativa.pro/dashboard"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://redcreativa.pro/dashboard"/>
   </url>
 </urlset>

@@ -1,11 +1,36 @@
 User-agent: *
 Allow: /
+Allow: /recursos
+Allow: /blog
+Allow: /guiones
+Allow: /generador
+Allow: /calendar
+Allow: /teleprompter
+Allow: /estrategia-contenido
 Disallow: /admin/
 Disallow: /api/
 Disallow: /backend/
 Disallow: /private/
+Disallow: /password-reset
+Disallow: /*?q=*
+Disallow: /*&q=*
 
 # Optimizado para indexación rápida y completa
+Crawl-delay: 1
+
+# Agentes específicos
+User-agent: Googlebot
+Crawl-delay: 0.5
+
+User-agent: Googlebot-Image
+Allow: /images/
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.png$
+Allow: /*.svg$
+Allow: /*.webp$
+
+User-agent: Bingbot
 Crawl-delay: 1
 
 # Sitemap principal
