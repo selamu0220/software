@@ -13,6 +13,7 @@ import {
   resources,
   resourceCategories,
   resourceSubcategories,
+  resourceComments,
   contentStrategies,
   type User, 
   type InsertUser, 
@@ -1778,11 +1779,18 @@ export class DatabaseStorage implements IStorage {
   // Obtener comentarios de un recurso
   async getResourceComments(resourceId: number): Promise<any[]> {
     try {
-      const result = await db.query.resourceComments.findMany({
-        where: eq(resourceComments.resourceId, resourceId),
-        orderBy: [desc(resourceComments.createdAt)]
-      });
-      return result;
+      // Usamos una consulta SQL directa para tener más control
+      const query = `
+        SELECT rc.*, u.username 
+        FROM resource_comments rc
+        LEFT JOIN users u ON rc.user_id = u.id
+        WHERE rc.resource_id = $1
+        ORDER BY rc.created_at DESC
+      `;
+      
+      const result = await pool.query(query, [resourceId]);
+      
+      return result.rows;
     } catch (error) {
       console.error("Error obteniendo comentarios del recurso:", error);
       return [];
