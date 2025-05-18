@@ -50,6 +50,13 @@ export type VideoIdeaContent = {
   category: string;
   subcategory: string;
   videoLength: string;
+  
+  // Campos adicionales para guiones completos
+  fullScript?: string | { [section: string]: string };
+  timings?: { [section: string]: string } | string[];
+  tags?: string[];
+  intro?: string;
+  conclusion?: string;
 };
 
 export type BlogPostContent = {
