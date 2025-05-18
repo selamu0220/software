@@ -19,6 +19,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { VideoIdeaContent } from "@/lib/openai";
 import { apiRequest } from "@/lib/queryClient";
+import { AnimatedButton } from "@/components/ui/animated-button";
+import { AnimatedCard } from "@/components/ui/animated-card";
+import { AnimatedText } from "@/components/ui/animated-text";
 
 interface TeleprompterProps {
   user: User | null;
@@ -442,27 +445,45 @@ export default function Teleprompter({ user }: TeleprompterProps) {
             </Card>
             
             {/* Script Management */}
-            <Card className="border-primary/20 shadow-lg shadow-primary/5 backdrop-blur-sm overflow-hidden">
+            <AnimatedCard 
+              className="border-primary/20 shadow-lg shadow-primary/5 backdrop-blur-sm overflow-hidden" 
+              hoverEffect="glow"
+              intensity="medium"
+              soundEffect="hover"
+              glowColor="rgba(var(--primary), 0.2)"
+            >
               <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0 animate-gradient-x"></div>
               <CardHeader className="bg-black/30">
                 <CardTitle className="flex items-center gap-2 text-lg font-mono">
                   <SlidersHorizontal className="h-5 w-5 text-primary" />
-                  Gestión de Guiones
+                  <AnimatedText 
+                    text="Gestión de Guiones" 
+                    effect="gradient"
+                    gradient={{
+                      from: "rgba(var(--primary), 0.8)",
+                      to: "rgba(var(--foreground), 0.9)",
+                      speed: "slow"
+                    }}
+                  />
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5 pt-5">
                 <div className="relative group">
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-primary/50 rounded-lg blur opacity-30 group-hover:opacity-60 transition duration-1000"></div>
-                  <textarea 
-                    value={text} 
-                    onChange={(e) => setText(e.target.value)} 
-                    placeholder="Pega tu guión aquí..."
-                    className="w-full h-24 p-3 border rounded-md bg-black/70 text-foreground border-primary/20 resize-none relative z-10 focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all duration-300"
-                  />
+                  <div className="relative overflow-hidden rounded-md">
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/60 z-0"></div>
+                    <textarea 
+                      value={text} 
+                      onChange={(e) => setText(e.target.value)} 
+                      placeholder="Pega tu guión aquí..."
+                      className="w-full h-32 p-4 bg-transparent text-foreground border border-primary/20 resize-none relative z-10 focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all duration-300 rounded-md font-mono"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-black/40 to-transparent pointer-events-none z-0"></div>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
+                  <div className="relative overflow-hidden rounded-md group">
                     <Input
                       id="script-file"
                       type="file"
@@ -470,56 +491,86 @@ export default function Teleprompter({ user }: TeleprompterProps) {
                       onChange={handleFileUpload}
                       className="hidden"
                     />
-                    <Button 
+                    <AnimatedButton 
                       variant="outline" 
                       onClick={() => document.getElementById("script-file")?.click()}
-                      className="w-full bg-black/30 border-primary/30 hover:bg-black/50 hover:border-primary/50 transition-all duration-300 group"
+                      className="w-full bg-black/40 border-primary/30 hover:bg-black/50 hover:border-primary/50 transition-all duration-300"
+                      animation="pulse"
+                      soundEffect="click"
+                      tooltip="Subir un archivo de guión"
                     >
-                      <Upload className="mr-2 h-4 w-4 group-hover:text-primary transition-colors duration-300" />
-                      <span className="group-hover:text-primary transition-colors duration-300">Subir Archivo</span>
-                    </Button>
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary/0 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0"></div>
+                      <div className="relative z-10 flex items-center justify-center">
+                        <Upload className="mr-2 h-4 w-4 text-primary" />
+                        <span className="font-medium">Subir Archivo</span>
+                      </div>
+                    </AnimatedButton>
                   </div>
-                  <Button 
+                  <AnimatedButton 
                     variant="outline"
                     onClick={() => {
                       setText("");
                       resetPrompter();
                     }}
-                    className="w-full bg-black/30 border-primary/30 hover:bg-black/50 hover:border-primary/50 transition-all duration-300 group"
+                    className="w-full bg-black/40 border-primary/30 hover:bg-black/50 hover:border-primary/50 transition-all duration-300"
+                    animation="bounce"
+                    soundEffect="click"
+                    tooltip="Limpiar el guión actual"
                   >
-                    <span className="group-hover:text-primary transition-colors duration-300">Limpiar</span>
-                  </Button>
+                    <div className="flex items-center justify-center">
+                      <span className="font-medium">Limpiar</span>
+                    </div>
+                  </AnimatedButton>
                 </div>
                 
                 {savedScripts.length > 0 && (
-                  <div className="space-y-3 bg-black/20 p-3 rounded-lg">
-                    <h3 className="text-sm font-medium flex items-center gap-2 text-primary">
-                      <span className="h-1 w-1 rounded-full bg-primary"></span>
-                      Tus guiones guardados
-                      <span className="h-1 w-1 rounded-full bg-primary"></span>
-                    </h3>
-                    <div className="max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-track-black/20">
+                  <div className="space-y-4 rounded-lg overflow-hidden">
+                    <div className="bg-gradient-to-r from-black/60 via-black/80 to-black/60 p-3 border-b border-primary/20">
+                      <h3 className="text-sm font-medium flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
+                        <AnimatedText
+                          text="Tus guiones guardados"
+                          effect="typewriter"
+                          tag="span"
+                          className="text-primary font-mono"
+                          delay={0.5}
+                          duration={1}
+                        />
+                        <div className="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
+                      </h3>
+                    </div>
+                    <div className="max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-track-black/20 bg-black/20 p-3 rounded-b-lg">
                       <ul className="space-y-2">
-                        {savedScripts.map((script) => (
-                          <li key={script.id} className="text-sm">
+                        {savedScripts.map((script, index) => (
+                          <AnimatedCard
+                            key={script.id}
+                            hoverEffect="shine"
+                            soundEffect="hover"
+                            className="bg-black/40 border border-primary/10 rounded-md overflow-hidden"
+                            delayed={true}
+                            index={index}
+                          >
                             <Button 
                               variant="ghost" 
-                              className="w-full justify-start truncate hover:bg-primary/10 border border-transparent hover:border-primary/20 transition-all duration-300 rounded-md p-2"
+                              className="w-full justify-start truncate transition-all duration-300 rounded-md p-2 h-auto"
                               onClick={() => loadScript(script.content)}
                             >
-                              <Keyboard className="mr-2 h-4 w-4 flex-shrink-0 text-primary/70" />
+                              <Keyboard className="mr-2 h-4 w-4 flex-shrink-0 text-primary" />
                               <div className="truncate text-left">
-                                {script.title}
+                                <span className="font-medium">{script.title}</span>
+                                <span className="text-xs block text-muted-foreground">
+                                  {script.content.substring(0, 30)}...
+                                </span>
                               </div>
                             </Button>
-                          </li>
+                          </AnimatedCard>
                         ))}
                       </ul>
                     </div>
                   </div>
                 )}
               </CardContent>
-            </Card>
+            </AnimatedCard>
           </div>
         )}
       </div>

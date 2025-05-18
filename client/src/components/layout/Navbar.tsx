@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Menu, X, User as UserIcon, Calendar, LogOut, Settings, MonitorPlay, Video, BarChart3, BookOpen, Library, FileText, Star, Pencil, PenSquare, FileEdit, LightbulbIcon, Layers, Volume2, VolumeX } from "lucide-react";
 import { useSoundEffects } from "@/hooks/use-sound-effects";
+import { AnimatedButton } from "@/components/ui/animated-button";
+import { AnimatedText } from "@/components/ui/animated-text";
 
 interface NavbarProps {
   user: User | null;
@@ -261,31 +263,44 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <>
+              <div className="flex items-center gap-3">
                 <Link href="/login">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-sm font-medium mr-1 hover:text-primary hover:border-primary"
-                    onClick={() => playSound('click')}
-                    onMouseEnter={() => playSound('hover')}
-                  >
-                    <UserIcon className="mr-1 h-4 w-4" />
-                    Iniciar sesión
-                  </Button>
+                  <div className="relative group">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-primary/50 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
+                    <AnimatedButton 
+                      variant="outline" 
+                      size="sm" 
+                      animation="pulse"
+                      soundEffect="click"
+                      className="text-sm font-medium relative z-10 border-primary/30 hover:border-primary bg-black/50 backdrop-blur-sm"
+                      tooltip="Accede a tu cuenta"
+                    >
+                      <div className="flex items-center">
+                        <UserIcon className="mr-2 h-4 w-4 text-primary" />
+                        <span>Iniciar sesión</span>
+                      </div>
+                    </AnimatedButton>
+                  </div>
                 </Link>
                 <Link href="/register">
-                  <Button 
-                    variant="default" 
-                    size="sm" 
-                    className="text-sm font-medium bg-primary hover:bg-primary/90"
-                    onClick={() => playSound('click')}
-                    onMouseEnter={() => playSound('hover')}
-                  >
-                    Registrarse
-                  </Button>
+                  <div className="relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80 group-hover:from-primary/80 group-hover:to-primary duration-500 transition-colors"></div>
+                    <AnimatedButton 
+                      variant="default" 
+                      size="sm"
+                      animation="grow"
+                      soundEffect="click" 
+                      className="text-sm font-medium relative z-10 bg-transparent hover:bg-transparent"
+                      tooltip="Crea una nueva cuenta"
+                    >
+                      <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                      <div className="relative z-10">
+                        Registrarse
+                      </div>
+                    </AnimatedButton>
+                  </div>
                 </Link>
-              </>
+              </div>
             )}
           </div>
           <div className="-mr-2 flex items-center sm:hidden">
@@ -325,20 +340,32 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
               </Link>
             ))}
           </div>
-          <div className="pt-4 pb-3 border-t border-border">
+          <div className="pt-4 pb-3 border-t border-border bg-black/20 backdrop-blur-sm">
             {user ? (
               <>
                 <div className="flex items-center px-4">
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-primary/10 rounded-full blur-sm"></div>
                     <img 
                       src="/images/logo.png" 
                       alt="Red Creativa Gen Logo" 
-                      className="h-9 w-auto"
+                      className="h-9 w-auto relative z-10"
                     />
                   </div>
                   <div className="ml-3">
-                    <div className="text-sm font-medium text-foreground">{user.username}</div>
-                    <div className="text-xs text-muted-foreground">{user.email}</div>
+                    <AnimatedText 
+                      text={user.username}
+                      effect="fadeIn"
+                      tag="div"
+                      className="text-sm font-medium text-foreground"
+                    />
+                    <AnimatedText 
+                      text={user.email || ''}
+                      effect="fadeIn"
+                      delay={0.2}
+                      tag="div"
+                      className="text-xs text-muted-foreground"
+                    />
                   </div>
                 </div>
                 <div className="mt-3 space-y-0.5">
