@@ -2461,16 +2461,46 @@ DaVinci Resolve 17 o superior
         (req.query.year as string) || new Date().getFullYear().toString(),
       );
       const month = parseInt(
-        (req.query.month as string) || new Date().getMonth().toString(),
+        (req.query.month as string) || (new Date().getMonth() + 1).toString(), // Ajuste: month base-1 (1-12)
       );
+      
+      console.log(`API /calendar/month: Buscando entradas para usuario=${req.session.userId}, año=${year}, mes=${month}`);
 
+      // Hacemos una consulta directa a la base de datos para diagnosticar
+      const directQueryResults = await storage.getAllCalendarEntriesByUser(req.session.userId!);
+      
+      console.log(`Consulta directa encontró ${directQueryResults.length} entradas totales para el usuario ${req.session.userId}`);
+      
+      if (directQueryResults.length > 0) {
+        // Mostrar las primeras 3 entradas para diagnóstico
+        console.log("Primeras entradas (consulta directa):", 
+          directQueryResults.slice(0, 3).map(e => ({
+            id: e.id, 
+            title: e.title, 
+            date: e.date.toISOString(),
+            month: e.date.getMonth() + 1,
+            year: e.date.getFullYear()
+          }))
+        );
+      }
+
+      // Luego obtenemos las del mes específico
       const entries = await storage.getCalendarEntriesByMonth(
         req.session.userId!,
         year,
         month,
       );
-      res.json(entries);
+      
+      // Asegurar que las fechas se formatean correctamente
+      const formattedEntries = entries.map(entry => ({
+        ...entry,
+        date: new Date(entry.date).toISOString() // Normalizar formato de fecha
+      }));
+      
+      console.log(`API /calendar/month: Enviando ${formattedEntries.length} entradas para ${month}/${year}`);
+      res.json(formattedEntries);
     } catch (error) {
+      console.error("Error fetching calendar entries:", error);
       res.status(500).json({ message: "Error fetching calendar entries" });
     }
   });

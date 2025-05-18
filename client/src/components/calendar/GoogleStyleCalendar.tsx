@@ -130,7 +130,9 @@ export default function GoogleStyleCalendar({ user }: GoogleStyleCalendarProps) 
     setIsLoading(true);
     try {
       const year = currentDate.getFullYear();
-      const month = currentDate.getMonth() + 1;
+      const month = currentDate.getMonth() + 1; // Mes base-1 (1-12) para la API
+      
+      console.log(`Solicitando entradas para usuario ${user.id}, año=${year}, mes=${month}`);
       
       const response = await apiRequest(
         "GET", 
@@ -142,8 +144,22 @@ export default function GoogleStyleCalendar({ user }: GoogleStyleCalendarProps) 
       }
       
       const data = await response.json();
-      console.log(`Calendario: Cargadas ${data.length} entradas para ${month}/${year}`);
-      setEntries(data);
+      
+      // Importante: Convertir las fechas de string a objetos Date
+      const processedData = data.map(entry => ({
+        ...entry,
+        date: new Date(entry.date)
+      }));
+      
+      console.log(`Calendario: Cargadas ${processedData.length} entradas para ${month}/${year}`);
+      
+      // Si hay entradas, mostrar la primera para diagnóstico
+      if (processedData.length > 0) {
+        console.log("Primera entrada:", processedData[0].title, 
+                   "Fecha:", processedData[0].date.toISOString());
+      }
+      
+      setEntries(processedData);
     } catch (error) {
       console.error("Error fetching calendar entries:", error);
       toast({

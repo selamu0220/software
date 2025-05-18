@@ -1210,19 +1210,38 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCalendarEntriesByMonth(userId: number, year: number, month: number): Promise<CalendarEntry[]> {
-    // Create start and end dates for the month
-    const startDate = new Date(year, month, 1);
-    const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999); // Last day of month
+    // SOLUCIÓN DEFINITIVA: Debido a los problemas persistentes con las fechas en PostgreSQL,
+    // vamos a obtener TODAS las entradas del usuario y luego filtrar en JavaScript
+    // utilizando el formato ISO para evitar problemas de zona horaria
+    console.log(`Buscando entradas para usuario ${userId} en ${month}/${year}`);
     
-    return db.select()
+    // Obtener todas las entradas del usuario
+    const allEntries = await db.select()
       .from(calendarEntries)
-      .where(
-        and(
-          eq(calendarEntries.userId, userId),
-          sql`${calendarEntries.date} >= ${startDate}`,
-          sql`${calendarEntries.date} <= ${endDate}`
-        )
-      );
+      .where(eq(calendarEntries.userId, userId));
+    
+    console.log(`Total de entradas para el usuario ${userId}: ${allEntries.length}`);
+    
+    // Filtrar por mes y año en JavaScript para evitar problemas con PostgreSQL
+    const filtered = allEntries.filter(entry => {
+      const entryDate = new Date(entry.date);
+      const entryMonth = entryDate.getMonth() + 1; // base 1 (1-12)
+      const entryYear = entryDate.getFullYear();
+      
+      return entryMonth === month && entryYear === year;
+    });
+    
+    console.log(`Entradas filtradas para ${month}/${year}: ${filtered.length}`);
+    
+    if (filtered.length > 0) {
+      console.log("Primera entrada filtrada:", {
+        id: filtered[0].id,
+        title: filtered[0].title,
+        date: new Date(filtered[0].date).toISOString()
+      });
+    }
+    
+    return filtered;
   }
 
   async updateCalendarEntry(id: number, updates: Partial<CalendarEntry>): Promise<CalendarEntry> {
