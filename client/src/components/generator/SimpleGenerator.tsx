@@ -252,6 +252,19 @@ export default function SimpleGenerator({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="flex items-center space-x-2 mb-4">
+          <input 
+            type="checkbox" 
+            id="advanced-options"
+            checked={useAdvancedOptions}
+            onChange={(e) => setUseAdvancedOptions(e.target.checked)}
+            className="rounded border-gray-300 text-primary focus:ring-primary"
+          />
+          <label htmlFor="advanced-options" className="text-sm font-medium">
+            Mostrar opciones avanzadas ({useAdvancedOptions ? '100+ opciones' : 'opciones básicas'})
+          </label>
+        </div>
+      
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Categoría</label>
@@ -262,7 +275,7 @@ export default function SimpleGenerator({
               <SelectTrigger>
                 <SelectValue placeholder="Selecciona una categoría" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-72">
                 {categories.map((cat) => (
                   <SelectItem key={cat.value} value={cat.value}>
                     {cat.label}
@@ -271,6 +284,50 @@ export default function SimpleGenerator({
               </SelectContent>
             </Select>
           </div>
+          
+          {(category === 'tecnología' && useAdvancedOptions) && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Subcategoría de Tecnología</label>
+              <Select 
+                value={subcategory} 
+                onValueChange={setSubcategory}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Subcategoría (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sin subcategoría específica</SelectItem>
+                  {techSubcategories.map((subcat) => (
+                    <SelectItem key={subcat.value} value={subcat.value}>
+                      {subcat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
+          {(category === 'marketing' && useAdvancedOptions) && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Subcategoría de Marketing</label>
+              <Select 
+                value={subcategory} 
+                onValueChange={setSubcategory}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Subcategoría (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sin subcategoría específica</SelectItem>
+                  {marketingSubcategories.map((subcat) => (
+                    <SelectItem key={subcat.value} value={subcat.value}>
+                      {subcat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           
           <div className="space-y-2">
             <label className="text-sm font-medium">Duración del Video</label>
@@ -285,9 +342,119 @@ export default function SimpleGenerator({
                 <SelectItem value="corto">Corto (menos de 5 min)</SelectItem>
                 <SelectItem value="medio">Medio (5-15 min)</SelectItem>
                 <SelectItem value="largo">Largo (más de 15 min)</SelectItem>
+                {useAdvancedOptions && (
+                  <>
+                    <SelectItem value="muy_corto">Muy corto (menos de 60 seg)</SelectItem>
+                    <SelectItem value="shorts">Shorts/Reels (15-60 seg)</SelectItem>
+                    <SelectItem value="extendido">Extendido (20-30 min)</SelectItem>
+                    <SelectItem value="documental">Documental (30+ min)</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
+          
+          {useAdvancedOptions && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tipo de Contenido</label>
+                <Select 
+                  value={contentType} 
+                  onValueChange={setContentType as (value: string) => void}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tipo de contenido" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="idea">Solo idea</SelectItem>
+                    <SelectItem value="keypoints">Puntos clave</SelectItem>
+                    <SelectItem value="fullScript">Guión completo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Estilo de Contenido</label>
+                <Select 
+                  value={contentStyle} 
+                  onValueChange={setContentStyle}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Estilo de contenido" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {contentStyles.map((style) => (
+                      <SelectItem key={style.value} value={style.value}>
+                        {style.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tono de Contenido</label>
+                <Select 
+                  value={contentTone} 
+                  onValueChange={setContentTone}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tono de contenido" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {contentTones.map((tone) => (
+                      <SelectItem key={tone.value} value={tone.value}>
+                        {tone.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Formato de Video</label>
+                <Select 
+                  value={videoFormat} 
+                  onValueChange={setVideoFormat}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Formato de video" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {videoFormats.map((format) => (
+                      <SelectItem key={format.value} value={format.value}>
+                        {format.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2 col-span-2">
+                <label className="text-sm font-medium">Audiencia Específica (opcional)</label>
+                <input
+                  type="text"
+                  value={specificTarget}
+                  onChange={(e) => setSpecificTarget(e.target.value)}
+                  placeholder="Ej: emprendedores, diseñadores, estudiantes..."
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              
+              <div className="col-span-2 flex items-center space-x-2">
+                <input 
+                  type="checkbox" 
+                  id="timing-detail"
+                  checked={timingDetail}
+                  onChange={(e) => setTimingDetail(e.target.checked)}
+                  className="rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <label htmlFor="timing-detail" className="text-sm font-medium">
+                  Incluir tiempos específicos para cada sección del guión
+                </label>
+              </div>
+            </>
+          )}
         </div>
         
         <div className="flex justify-center mt-4">
