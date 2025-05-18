@@ -1849,6 +1849,252 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
   }
+  
+  // ===============================================================
+  // Métodos para sistema de estrategias de contenido
+  // ===============================================================
+
+  // 1. Operaciones básicas para estrategias de contenido
+  async getContentStrategy(id: number): Promise<ContentStrategy | undefined> {
+    try {
+      const [strategy] = await db.select()
+        .from(contentStrategies)
+        .where(eq(contentStrategies.id, id));
+      return strategy;
+    } catch (error) {
+      console.error('Error al obtener estrategia de contenido:', error);
+      throw new Error('Error al obtener estrategia de contenido');
+    }
+  }
+
+  async getContentStrategyByUser(userId: number): Promise<ContentStrategy[]> {
+    try {
+      return db.select()
+        .from(contentStrategies)
+        .where(eq(contentStrategies.userId, userId));
+    } catch (error) {
+      console.error('Error al obtener estrategias del usuario:', error);
+      throw new Error('Error al obtener estrategias del usuario');
+    }
+  }
+
+  async getPublicContentStrategies(): Promise<ContentStrategy[]> {
+    try {
+      return db.select()
+        .from(contentStrategies)
+        .where(eq(contentStrategies.isPublic, true));
+    } catch (error) {
+      console.error('Error al obtener estrategias públicas:', error);
+      throw new Error('Error al obtener estrategias públicas');
+    }
+  }
+
+  async createContentStrategy(strategy: InsertContentStrategy): Promise<ContentStrategy> {
+    try {
+      const [newStrategy] = await db.insert(contentStrategies)
+        .values(strategy)
+        .returning();
+      return newStrategy;
+    } catch (error) {
+      console.error('Error al crear estrategia de contenido:', error);
+      throw new Error('Error al crear estrategia de contenido');
+    }
+  }
+
+  async updateContentStrategy(id: number, strategy: Partial<ContentStrategy>): Promise<ContentStrategy | undefined> {
+    try {
+      const [updatedStrategy] = await db.update(contentStrategies)
+        .set(strategy)
+        .where(eq(contentStrategies.id, id))
+        .returning();
+      return updatedStrategy;
+    } catch (error) {
+      console.error('Error al actualizar estrategia de contenido:', error);
+      throw new Error('Error al actualizar estrategia de contenido');
+    }
+  }
+
+  async deleteContentStrategy(id: number): Promise<boolean> {
+    try {
+      await db.delete(contentStrategies)
+        .where(eq(contentStrategies.id, id));
+      return true;
+    } catch (error) {
+      console.error('Error al eliminar estrategia de contenido:', error);
+      throw new Error('Error al eliminar estrategia de contenido');
+    }
+  }
+
+  // 2. Operaciones para configuración de estrategias
+  async getContentStrategyConfig(strategyId: number): Promise<ContentStrategyConfig | undefined> {
+    try {
+      const [config] = await db.select()
+        .from(contentStrategyConfigs)
+        .where(eq(contentStrategyConfigs.strategyId, strategyId));
+      return config;
+    } catch (error) {
+      console.error('Error al obtener configuración de estrategia:', error);
+      throw new Error('Error al obtener configuración de estrategia');
+    }
+  }
+
+  async createContentStrategyConfig(config: InsertContentStrategyConfig): Promise<ContentStrategyConfig> {
+    try {
+      const [newConfig] = await db.insert(contentStrategyConfigs)
+        .values(config)
+        .returning();
+      return newConfig;
+    } catch (error) {
+      console.error('Error al crear configuración de estrategia:', error);
+      throw new Error('Error al crear configuración de estrategia');
+    }
+  }
+
+  async updateContentStrategyConfig(id: number, config: Partial<ContentStrategyConfig>): Promise<ContentStrategyConfig | undefined> {
+    try {
+      const [updatedConfig] = await db.update(contentStrategyConfigs)
+        .set(config)
+        .where(eq(contentStrategyConfigs.id, id))
+        .returning();
+      return updatedConfig;
+    } catch (error) {
+      console.error('Error al actualizar configuración de estrategia:', error);
+      throw new Error('Error al actualizar configuración de estrategia');
+    }
+  }
+
+  // 3. Operaciones para plantillas de estrategias
+  async getContentStrategyTemplates(strategyId: number): Promise<ContentStrategyTemplate[]> {
+    try {
+      return db.select()
+        .from(contentStrategyTemplates)
+        .where(eq(contentStrategyTemplates.strategyId, strategyId));
+    } catch (error) {
+      console.error('Error al obtener plantillas de estrategia:', error);
+      throw new Error('Error al obtener plantillas de estrategia');
+    }
+  }
+
+  async getContentStrategyTemplatesByDay(strategyId: number, dayOfWeek: number): Promise<ContentStrategyTemplate[]> {
+    try {
+      return db.select()
+        .from(contentStrategyTemplates)
+        .where(and(
+          eq(contentStrategyTemplates.strategyId, strategyId),
+          eq(contentStrategyTemplates.dayOfWeek, dayOfWeek)
+        ));
+    } catch (error) {
+      console.error('Error al obtener plantillas por día:', error);
+      throw new Error('Error al obtener plantillas por día');
+    }
+  }
+
+  async createContentStrategyTemplate(template: InsertContentStrategyTemplate): Promise<ContentStrategyTemplate> {
+    try {
+      const [newTemplate] = await db.insert(contentStrategyTemplates)
+        .values(template)
+        .returning();
+      return newTemplate;
+    } catch (error) {
+      console.error('Error al crear plantilla de estrategia:', error);
+      throw new Error('Error al crear plantilla de estrategia');
+    }
+  }
+
+  async updateContentStrategyTemplate(id: number, template: Partial<ContentStrategyTemplate>): Promise<ContentStrategyTemplate | undefined> {
+    try {
+      const [updatedTemplate] = await db.update(contentStrategyTemplates)
+        .set(template)
+        .where(eq(contentStrategyTemplates.id, id))
+        .returning();
+      return updatedTemplate;
+    } catch (error) {
+      console.error('Error al actualizar plantilla de estrategia:', error);
+      throw new Error('Error al actualizar plantilla de estrategia');
+    }
+  }
+
+  async deleteContentStrategyTemplate(id: number): Promise<boolean> {
+    try {
+      await db.delete(contentStrategyTemplates)
+        .where(eq(contentStrategyTemplates.id, id));
+      return true;
+    } catch (error) {
+      console.error('Error al eliminar plantilla de estrategia:', error);
+      throw new Error('Error al eliminar plantilla de estrategia');
+    }
+  }
+
+  // 4. Operaciones para contenido generado con estrategias
+  async createStrategyGeneratedContent(content: InsertStrategyGeneratedContent): Promise<StrategyGeneratedContent> {
+    try {
+      const [newContent] = await db.insert(strategyGeneratedContent)
+        .values(content)
+        .returning();
+      return newContent;
+    } catch (error) {
+      console.error('Error al crear contenido generado:', error);
+      throw new Error('Error al crear contenido generado');
+    }
+  }
+
+  async getStrategyGeneratedContent(id: number): Promise<StrategyGeneratedContent | undefined> {
+    try {
+      const [content] = await db.select()
+        .from(strategyGeneratedContent)
+        .where(eq(strategyGeneratedContent.id, id));
+      return content;
+    } catch (error) {
+      console.error('Error al obtener contenido generado:', error);
+      throw new Error('Error al obtener contenido generado');
+    }
+  }
+
+  async getStrategyGeneratedContentByUser(userId: number): Promise<StrategyGeneratedContent[]> {
+    try {
+      return db.select()
+        .from(strategyGeneratedContent)
+        .where(eq(strategyGeneratedContent.userId, userId));
+    } catch (error) {
+      console.error('Error al obtener contenido generado del usuario:', error);
+      throw new Error('Error al obtener contenido generado del usuario');
+    }
+  }
+
+  async getStrategyGeneratedContentByStrategy(strategyId: number): Promise<StrategyGeneratedContent[]> {
+    try {
+      return db.select()
+        .from(strategyGeneratedContent)
+        .where(eq(strategyGeneratedContent.strategyId, strategyId));
+    } catch (error) {
+      console.error('Error al obtener contenido generado por estrategia:', error);
+      throw new Error('Error al obtener contenido generado por estrategia');
+    }
+  }
+
+  async updateStrategyGeneratedContent(id: number, content: Partial<StrategyGeneratedContent>): Promise<StrategyGeneratedContent | undefined> {
+    try {
+      const [updatedContent] = await db.update(strategyGeneratedContent)
+        .set(content)
+        .where(eq(strategyGeneratedContent.id, id))
+        .returning();
+      return updatedContent;
+    } catch (error) {
+      console.error('Error al actualizar contenido generado:', error);
+      throw new Error('Error al actualizar contenido generado');
+    }
+  }
+
+  async deleteStrategyGeneratedContent(id: number): Promise<boolean> {
+    try {
+      await db.delete(strategyGeneratedContent)
+        .where(eq(strategyGeneratedContent.id, id));
+      return true;
+    } catch (error) {
+      console.error('Error al eliminar contenido generado:', error);
+      throw new Error('Error al eliminar contenido generado');
+    }
+  }
 }
 
 // Use DatabaseStorage instead of MemStorage
