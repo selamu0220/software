@@ -2467,7 +2467,7 @@ DaVinci Resolve 17 o superior
       console.log(`API /calendar/month: Buscando entradas para usuario=${req.session.userId}, año=${year}, mes=${month}`);
 
       // Hacemos una consulta directa a la base de datos para diagnosticar
-      const directQueryResults = await storage.getAllCalendarEntriesByUser(req.session.userId!);
+      const directQueryResults = await storage.getCalendarEntriesByUser(req.session.userId!);
       
       console.log(`Consulta directa encontró ${directQueryResults.length} entradas totales para el usuario ${req.session.userId}`);
       

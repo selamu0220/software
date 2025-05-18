@@ -37,7 +37,7 @@ export default function SimpleGenerator({
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedIdea, setGeneratedIdea] = useState<VideoIdeaContent | null>(null);
   
-  // Categorías para generación rápida
+  // Categorías principales
   const categories = [
     { value: "tecnología", label: "Tecnología" },
     { value: "negocios", label: "Negocios" },
@@ -53,27 +53,156 @@ export default function SimpleGenerator({
     { value: "salud", label: "Salud y Bienestar" },
     { value: "deportes", label: "Deportes" },
     { value: "arte", label: "Arte y Creatividad" },
+    { value: "ciencia", label: "Ciencia y Conocimiento" },
+    { value: "historia", label: "Historia" },
+    { value: "música", label: "Música" },
+    { value: "cine", label: "Cine y Series" },
+    { value: "libros", label: "Literatura y Libros" },
+    { value: "moda", label: "Moda y Estilo" },
+    { value: "arquitectura", label: "Arquitectura y Diseño" },
+    { value: "psicología", label: "Psicología" },
+    { value: "filosofía", label: "Filosofía" },
+    { value: "espiritualidad", label: "Espiritualidad" },
+    { value: "emprendimiento", label: "Emprendimiento" },
+    { value: "idiomas", label: "Idiomas y Lenguaje" },
+    { value: "sostenibilidad", label: "Sostenibilidad y Medio Ambiente" },
+    { value: "parentalidad", label: "Parentalidad y Familia" },
+    { value: "belleza", label: "Belleza" },
+    { value: "jardinería", label: "Jardinería" },
   ];
-  
+
+  // Subcategorías de tecnología
+  const techSubcategories = [
+    { value: "gadgets", label: "Gadgets y Dispositivos" },
+    { value: "software", label: "Software y Apps" },
+    { value: "ia", label: "Inteligencia Artificial" },
+    { value: "programacion", label: "Programación" },
+    { value: "seguridad", label: "Ciberseguridad" },
+    { value: "gaming", label: "Gaming y E-sports" },
+    { value: "hardware", label: "Hardware y PCs" },
+    { value: "moviles", label: "Smartphones y Móviles" },
+    { value: "redes", label: "Redes Sociales" },
+    { value: "blockchain", label: "Blockchain y Cripto" },
+    { value: "robotica", label: "Robótica" },
+    { value: "realidad_virtual", label: "Realidad Virtual y Aumentada" },
+    { value: "diseno", label: "Diseño y Creatividad Digital" },
+    { value: "tutoriales", label: "Tutoriales Técnicos" },
+    { value: "tendencias", label: "Tendencias Tecnológicas" },
+  ];
+
+  // Subcategorías de marketing
+  const marketingSubcategories = [
+    { value: "social_media", label: "Social Media Marketing" },
+    { value: "seo", label: "SEO y Posicionamiento" },
+    { value: "paid_ads", label: "Publicidad de Pago" },
+    { value: "content", label: "Marketing de Contenidos" },
+    { value: "email", label: "Email Marketing" },
+    { value: "branding", label: "Branding y Marca Personal" },
+    { value: "copywriting", label: "Copywriting" },
+    { value: "storytelling", label: "Storytelling" },
+    { value: "analytics", label: "Analítica y Datos" },
+    { value: "conversiones", label: "Optimización de Conversiones" },
+    { value: "tendencias", label: "Tendencias de Marketing" },
+    { value: "automatizacion", label: "Automatización de Marketing" },
+    { value: "videos", label: "Video Marketing" },
+    { value: "voz", label: "Marketing de Voz" },
+    { value: "influencers", label: "Marketing con Influencers" },
+  ];
+
+  // Estilos de contenido
+  const contentStyles = [
+    { value: "educativo", label: "Educativo" },
+    { value: "tutorial", label: "Tutorial Paso a Paso" },
+    { value: "inspiracional", label: "Inspiracional" },
+    { value: "entretenimiento", label: "Entretenimiento" },
+    { value: "debate", label: "Debate/Opinión" },
+    { value: "storytelling", label: "Storytelling" },
+    { value: "informativo", label: "Informativo/Noticias" },
+    { value: "reseña", label: "Reseña/Review" },
+    { value: "entrevista", label: "Entrevista" },
+    { value: "reacción", label: "Reacción" },
+    { value: "lista", label: "Lista Top-N" },
+    { value: "challenge", label: "Desafío/Challenge" },
+    { value: "detrás_escenas", label: "Detrás de Escenas" },
+    { value: "misterio", label: "Misterio/Intriga" },
+    { value: "caso_estudio", label: "Caso de Estudio" },
+  ];
+
+  // Tonos de contenido
+  const contentTones = [
+    { value: "profesional", label: "Profesional/Serio" },
+    { value: "casual", label: "Casual/Conversacional" },
+    { value: "humorístico", label: "Humorístico" },
+    { value: "motivacional", label: "Motivacional" },
+    { value: "informativo", label: "Informativo/Neutro" },
+    { value: "provocativo", label: "Provocativo" },
+    { value: "misterioso", label: "Misterioso" },
+    { value: "nostálgico", label: "Nostálgico" },
+    { value: "autoritativo", label: "Autoritativo/Experto" },
+    { value: "amigable", label: "Amigable/Cercano" },
+    { value: "dramático", label: "Dramático" },
+    { value: "inspirador", label: "Inspirador" },
+    { value: "emocional", label: "Emocional" },
+    { value: "analítico", label: "Analítico" },
+    { value: "reflexivo", label: "Reflexivo" },
+  ];
+
+  // Formatos de video
+  const videoFormats = [
+    { value: "sin_rostro", label: "Sin Mostrar Rostro" },
+    { value: "facecam", label: "Con Cámara Frontal" },
+    { value: "screen_recording", label: "Grabación de Pantalla" },
+    { value: "animacion", label: "Animado" },
+    { value: "presentacion", label: "Presentación" },
+    { value: "entrevista", label: "Entrevista" },
+    { value: "documental", label: "Estilo Documental" },
+    { value: "vlog", label: "Vlog" },
+    { value: "narrado", label: "Narrado con Voz en Off" },
+    { value: "hybrid", label: "Híbrido" },
+  ];
+
+  // Hooks para todos los parámetros
   const [category, setCategory] = useState(categories[0].value);
+  const [subcategory, setSubcategory] = useState("");
   const [videoLength, setVideoLength] = useState("corto");
+  const [contentStyle, setContentStyle] = useState("educativo");
+  const [contentTone, setContentTone] = useState("profesional");
+  const [videoFormat, setVideoFormat] = useState("sin_rostro");
+  const [contentType, setContentType] = useState("idea");
+  const [useAdvancedOptions, setUseAdvancedOptions] = useState(false);
+  const [timingDetail, setTimingDetail] = useState(false);
+  const [specificTarget, setSpecificTarget] = useState("");
   
   const generateIdea = async () => {
     setIsGenerating(true);
     
     try {
+      // Seleccionar subcategorías según la categoría principal
+      let selectedSubcategory = subcategory;
+      if (category === "tecnología" && !subcategory) {
+        // Si no hay subcategoría seleccionada, usar una aleatoria
+        const randomIndex = Math.floor(Math.random() * techSubcategories.length);
+        selectedSubcategory = techSubcategories[randomIndex].value;
+      } else if (category === "marketing" && !subcategory) {
+        const randomIndex = Math.floor(Math.random() * marketingSubcategories.length);
+        selectedSubcategory = marketingSubcategories[randomIndex].value;
+      }
+      
       // Utilizamos la función importada para mejor tipado y manejo de errores
       const params = {
         category: category,
-        subcategory: "",
-        videoFocus: `Ideas para video de ${category}`,
+        subcategory: selectedSubcategory,
+        videoFocus: specificTarget ? `Ideas para ${specificTarget}` : `Ideas para video de ${category}`,
         videoLength: videoLength,
-        templateStyle: "educativo",
-        contentTone: "informativo",
-        contentType: "idea" as const, // Usar tipo literal para cumplir con la interfaz
-        timingDetail: false,
-        useSubcategory: false
+        templateStyle: contentStyle,
+        contentTone: contentTone,
+        contentType: contentType as "idea" | "keypoints" | "fullScript", // Usar tipo literal para cumplir con la interfaz
+        timingDetail: timingDetail,
+        useSubcategory: !!selectedSubcategory,
+        videoFormat: videoFormat
       };
+      
+      console.log("Generando idea con parámetros:", params);
       
       const data = await generateVideoIdea(params);
       setGeneratedIdea(data);
