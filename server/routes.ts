@@ -4445,7 +4445,7 @@ DaVinci Resolve 17 o superior
           }
           
           // Crear el guión en la colección seleccionada
-          const script = await storage.createScript({
+          const script = await storage.addScriptToCollection({
             collectionId,
             videoIdeaId: videoIdea.id,
             title: generatedContent.title,
@@ -4457,8 +4457,8 @@ DaVinci Resolve 17 o superior
             subcategory: params.subcategory || "",
             tags: generatedContent.tags || [],
             timings: [],
-            totalDuration: 0,
-            version: "1.0",
+            totalDuration: "0",
+            version: 1,
             isTemplate: false,
             favorite: false
           });
