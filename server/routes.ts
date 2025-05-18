@@ -4545,6 +4545,265 @@ DaVinci Resolve 17 o superior
 
   // Iniciar el programador de publicación automática
   scheduleAutomaticPublishing();
+  
+  /**
+   * Rutas para sistema de estrategias de contenido
+   */
+  
+  // Obtener todas las estrategias públicas
+  app.get("/api/estrategias", async (req, res) => {
+    try {
+      const strategies = await storage.getPublicContentStrategies();
+      res.json(strategies);
+    } catch (error) {
+      console.error("Error al obtener estrategias públicas:", error);
+      res.status(500).json({ message: "Error al obtener estrategias públicas" });
+    }
+  });
+
+  // Obtener estrategias del usuario autenticado
+  app.get("/api/mis-estrategias", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const strategies = await storage.getContentStrategyByUser(userId);
+      res.json(strategies);
+    } catch (error) {
+      console.error("Error al obtener estrategias del usuario:", error);
+      res.status(500).json({ message: "Error al obtener estrategias del usuario" });
+    }
+  });
+
+  // Obtener una estrategia específica por ID
+  app.get("/api/estrategias/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const strategy = await storage.getContentStrategy(id);
+      
+      if (!strategy) {
+        return res.status(404).json({ message: "Estrategia no encontrada" });
+      }
+      
+      // Si no es pública, verificar que sea el propietario
+      if (!strategy.isPublic && (!req.isAuthenticated() || req.user?.id !== strategy.userId)) {
+        return res.status(403).json({ message: "No tienes permiso para ver esta estrategia" });
+      }
+      
+      res.json(strategy);
+    } catch (error) {
+      console.error("Error al obtener estrategia:", error);
+      res.status(500).json({ message: "Error al obtener estrategia" });
+    }
+  });
+
+  // Crear nueva estrategia
+  app.post("/api/estrategias", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      
+      const strategyData = {
+        ...req.body,
+        userId,
+        // Por defecto, las estrategias son privadas al crearse
+        isPublic: req.body.isPublic || false,
+        isVerified: false // Solo los administradores pueden verificar estrategias
+      };
+      
+      const newStrategy = await storage.createContentStrategy(strategyData);
+      
+      res.status(201).json(newStrategy);
+    } catch (error) {
+      console.error("Error al crear estrategia:", error);
+      res.status(500).json({ message: "Error al crear estrategia" });
+    }
+  });
+
+  // Actualizar estrategia existente
+  app.put("/api/estrategias/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const strategy = await storage.getContentStrategy(id);
+      
+      if (!strategy) {
+        return res.status(404).json({ message: "Estrategia no encontrada" });
+      }
+      
+      // Solo el propietario o administrador puede actualizar
+      if (strategy.userId !== req.user?.id && req.user?.username !== 'sela_gr') {
+        return res.status(403).json({ message: "No tienes permiso para actualizar esta estrategia" });
+      }
+      
+      // No permitir cambiar el propietario o estado de verificación a menos que sea administrador
+      let updateData = { ...req.body };
+      if (req.user?.username !== 'sela_gr') {
+        delete updateData.userId;
+        delete updateData.isVerified;
+      }
+      
+      const updatedStrategy = await storage.updateContentStrategy(id, updateData);
+      res.json(updatedStrategy);
+    } catch (error) {
+      console.error("Error al actualizar estrategia:", error);
+      res.status(500).json({ message: "Error al actualizar estrategia" });
+    }
+  });
+
+  // Eliminar estrategia
+  app.delete("/api/estrategias/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const strategy = await storage.getContentStrategy(id);
+      
+      if (!strategy) {
+        return res.status(404).json({ message: "Estrategia no encontrada" });
+      }
+      
+      // Solo el propietario o administrador puede eliminar
+      if (strategy.userId !== req.user?.id && req.user?.username !== 'sela_gr') {
+        return res.status(403).json({ message: "No tienes permiso para eliminar esta estrategia" });
+      }
+      
+      await storage.deleteContentStrategy(id);
+      res.json({ message: "Estrategia eliminada correctamente" });
+    } catch (error) {
+      console.error("Error al eliminar estrategia:", error);
+      res.status(500).json({ message: "Error al eliminar estrategia" });
+    }
+  });
+
+  // Rutas para configuración de estrategias
+  
+  // Obtener configuración de una estrategia
+  app.get("/api/estrategias/:id/config", async (req, res) => {
+    try {
+      const strategyId = parseInt(req.params.id);
+      const strategy = await storage.getContentStrategy(strategyId);
+      
+      if (!strategy) {
+        return res.status(404).json({ message: "Estrategia no encontrada" });
+      }
+      
+      // Si no es pública, verificar que sea el propietario
+      if (!strategy.isPublic && (!req.isAuthenticated() || req.user?.id !== strategy.userId)) {
+        return res.status(403).json({ message: "No tienes permiso para ver esta configuración" });
+      }
+      
+      const config = await storage.getContentStrategyConfig(strategyId);
+      res.json(config || {});
+    } catch (error) {
+      console.error("Error al obtener configuración:", error);
+      res.status(500).json({ message: "Error al obtener configuración" });
+    }
+  });
+
+  // Crear/actualizar configuración de estrategia
+  app.post("/api/estrategias/:id/config", requireAuth, async (req, res) => {
+    try {
+      const strategyId = parseInt(req.params.id);
+      const strategy = await storage.getContentStrategy(strategyId);
+      
+      if (!strategy) {
+        return res.status(404).json({ message: "Estrategia no encontrada" });
+      }
+      
+      // Solo el propietario puede configurar
+      if (strategy.userId !== req.user?.id && req.user?.username !== 'sela_gr') {
+        return res.status(403).json({ message: "No tienes permiso para configurar esta estrategia" });
+      }
+      
+      // Verificar si ya existe una configuración
+      const existingConfig = await storage.getContentStrategyConfig(strategyId);
+      
+      let result;
+      if (existingConfig) {
+        result = await storage.updateContentStrategyConfig(existingConfig.id, req.body);
+      } else {
+        result = await storage.createContentStrategyConfig({
+          ...req.body,
+          strategyId
+        });
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error al guardar configuración:", error);
+      res.status(500).json({ message: "Error al guardar configuración" });
+    }
+  });
+
+  // Rutas para plantillas de estrategias
+  
+  // Obtener todas las plantillas de una estrategia
+  app.get("/api/estrategias/:id/plantillas", async (req, res) => {
+    try {
+      const strategyId = parseInt(req.params.id);
+      const strategy = await storage.getContentStrategy(strategyId);
+      
+      if (!strategy) {
+        return res.status(404).json({ message: "Estrategia no encontrada" });
+      }
+      
+      // Si no es pública, verificar que sea el propietario
+      if (!strategy.isPublic && (!req.isAuthenticated() || req.user?.id !== strategy.userId)) {
+        return res.status(403).json({ message: "No tienes permiso para ver estas plantillas" });
+      }
+      
+      const templates = await storage.getContentStrategyTemplates(strategyId);
+      res.json(templates);
+    } catch (error) {
+      console.error("Error al obtener plantillas:", error);
+      res.status(500).json({ message: "Error al obtener plantillas" });
+    }
+  });
+  
+  // Generar contenido siguiendo una plantilla de estrategia
+  app.post("/api/estrategias/generar", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const { strategyId, templateId, scheduledDate } = req.body;
+      
+      // Verificar si el usuario tiene acceso a la estrategia
+      const strategy = await storage.getContentStrategy(strategyId);
+      if (!strategy || (!strategy.isPublic && strategy.userId !== userId && req.user?.username !== 'sela_gr')) {
+        return res.status(403).json({ message: "No tienes permiso para usar esta estrategia" });
+      }
+      
+      // Obtener la plantilla
+      const templates = await storage.getContentStrategyTemplates(strategyId);
+      const template = templates.find(t => t.id === templateId);
+      
+      if (!template) {
+        return res.status(404).json({ message: "Plantilla no encontrada" });
+      }
+      
+      // Aquí llamaríamos a la API de Gemini para generar el contenido
+      // En una implementación completa, esto usaría el template y variables del usuario
+      
+      // Por ahora, generamos un contenido básico como ejemplo
+      const content = {
+        title: `Contenido generado basado en '${template.title}'`,
+        content: `Este es un contenido de ejemplo basado en la plantilla '${template.title}' de la estrategia '${strategy.name}'.\n\n${template.template}`,
+        contentType: template.contentType
+      };
+      
+      // Guardar el contenido generado
+      const generatedContent = await storage.createStrategyGeneratedContent({
+        userId,
+        strategyId,
+        templateId,
+        title: content.title,
+        contentType: content.contentType,
+        content: content.content,
+        scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
+        isPublished: false,
+        calendarEntryId: null
+      });
+      
+      res.status(201).json(generatedContent);
+    } catch (error) {
+      console.error("Error al generar contenido:", error);
+      res.status(500).json({ message: "Error al generar contenido" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
