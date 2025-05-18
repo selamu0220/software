@@ -813,6 +813,27 @@ DaVinci Resolve 17 o superior
         }
       }
       
+      // Sanitizar la descripción para evitar problemas
+      let descripcionSanitizada = "";
+      if (descripcion) {
+        // Verificar si es realmente una descripción o código
+        if (descripcion.includes('import ') || 
+            descripcion.includes('export ') || 
+            descripcion.includes('function ') || 
+            descripcion.includes('<script') ||
+            descripcion.includes('console.log')) {
+          // Es código, no una descripción válida
+          descripcionSanitizada = `Descripción de: ${titulo}`;
+        } else {
+          // Es una descripción válida, limitar longitud
+          descripcionSanitizada = descripcion.length > 500 
+            ? descripcion.substring(0, 500) + '...' 
+            : descripcion;
+        }
+      } else {
+        descripcionSanitizada = "Sin descripción";
+      }
+      
       // Preparar los datos del recurso con detección automática de tipo
       const resourceData = {
         userId,
@@ -820,20 +841,20 @@ DaVinci Resolve 17 o superior
         subcategoryId: null,
         title: titulo,
         slug,
-        description: descripcion || "Sin descripción",
+        description: descripcionSanitizada,
         content: contenido || null,
-        thumbnailUrl: files.imagen ? files.imagen[0].path.replace(/^uploads\//, '') : null,
+        thumbnailUrl: files?.imagen ? files.imagen[0].path : null,
         externalUrl: enlaceExterno || null,
-        downloadUrl: files.archivo ? files.archivo[0].path.replace(/^uploads\//, '') : null,
-        fileSize: files.archivo ? files.archivo[0].size : null,
-        fileType: files.archivo ? files.archivo[0].mimetype : null,
+        downloadUrl: files?.archivo ? files.archivo[0].path : null,
+        fileSize: files?.archivo ? files.archivo[0].size : null,
+        fileType: files?.archivo ? files.archivo[0].mimetype : null,
         version: version || "1.0",
         tags: tags ? tags.split(',').map((tag: string) => tag.trim()) : [],
         isVerified: true, // Los recursos se publican sin necesidad de verificación
         isPublic: true, // Todos los recursos son públicos por defecto
         isFeatured: false, // Solo admin puede marcar como destacado
         resourceType, // Asignamos el tipo detectado automáticamente
-        aiCategory: resourceType === "aiTool" ? detectAICategory(descripcion || "", categoria) : null
+        aiCategory: resourceType === "aiTool" ? detectAICategory(descripcionSanitizada, categoria) : null
       };
       
       // Guardar el recurso en la base de datos
