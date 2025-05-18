@@ -124,40 +124,54 @@ export default function GoogleStyleCalendar({ user }: GoogleStyleCalendarProps) 
   const capitalizedMonth = formattedMonth.charAt(0).toUpperCase() + formattedMonth.slice(1);
   
   // Cargar entradas del calendario
-  useEffect(() => {
-    const fetchEntries = async () => {
-      if (!user) return;
-      
-      setIsLoading(true);
-      try {
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth() + 1;
-        
-        const response = await apiRequest(
-          "GET", 
-          `/api/calendar/month?year=${year}&month=${month}`
-        );
-        
-        if (!response.ok) {
-          throw new Error("Error al cargar el calendario");
-        }
-        
-        const data = await response.json();
-        setEntries(data);
-      } catch (error) {
-        console.error("Error fetching calendar entries:", error);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar las entradas del calendario",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchEntries = async () => {
+    if (!user) return;
     
+    setIsLoading(true);
+    try {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth() + 1;
+      
+      const response = await apiRequest(
+        "GET", 
+        `/api/calendar/month?year=${year}&month=${month}`
+      );
+      
+      if (!response.ok) {
+        throw new Error("Error al cargar el calendario");
+      }
+      
+      const data = await response.json();
+      console.log(`Calendario: Cargadas ${data.length} entradas para ${month}/${year}`);
+      setEntries(data);
+    } catch (error) {
+      console.error("Error fetching calendar entries:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las entradas del calendario",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchEntries();
-  }, [currentDate, user, toast]);
+    
+    // Suscribirse a cambios en la caché de consultas para detectar actualizaciones
+    const unsubscribe = queryClient.getQueryCache().subscribe(() => {
+      // Verificar si las consultas de calendario han sido invalidadas
+      if (queryClient.getQueryState(['/api/calendar/month'])?.isInvalidated) {
+        console.log("Actualizando calendario por cambios en datos");
+        fetchEntries();
+      }
+    });
+    
+    return () => {
+      unsubscribe();
+    };
+  }, [currentDate, user]);
   
   // Navegación entre meses
   const prevMonth = () => {

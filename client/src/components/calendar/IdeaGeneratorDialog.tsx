@@ -133,16 +133,24 @@ export default function IdeaGeneratorDialog({
         throw new Error("Error al añadir la idea al calendario");
       }
 
+      // Obtener el nuevo elemento creado
+      const newEntry = await response.json();
+      
       toast({
         title: "Idea añadida al calendario",
         description: `La idea "${generatedIdea.title}" se ha añadido a tu calendario para el ${format(selectedDate, "dd/MM/yyyy")}`,
       });
 
-      // Invalidar consultas relacionadas
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar/month'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/video-ideas'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/scripts'] });
+      // Forzar la invalidación de consultas relacionadas con un retraso para asegurar que se refresquen los datos
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/calendar'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/calendar/month'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/video-ideas'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/scripts'] });
+        
+        // Forzar una refetch explícita de los datos del calendario
+        queryClient.refetchQueries({ queryKey: ['/api/calendar/month'] });
+      }, 300);
 
       // Cerrar el diálogo
       onClose();

@@ -62,6 +62,7 @@ export default function ContentCalendar({ user }: ContentCalendarProps) {
       }
       
       const entries = await response.json();
+      console.log("Entradas del calendario cargadas:", entries.length);
       setCalendarEntries(entries);
     } catch (error) {
       console.error("Error fetching calendar entries:", error);
@@ -75,9 +76,24 @@ export default function ContentCalendar({ user }: ContentCalendarProps) {
     }
   }, [selectedDate, user, toast]);
   
+  // Configurar un refetch periódico para asegurar que tenemos los datos más recientes
   useEffect(() => {
     fetchCalendarEntries();
-  }, [fetchCalendarEntries]);
+    
+    // Suscribirse a cambios en las consultas de calendario
+    const unsubscribe = queryClient.getQueryCache().subscribe(() => {
+      // Esto se ejecutará cada vez que cambie algo en el queryCache
+      const queryKey = ['/api/calendar/month'];
+      if (queryClient.getQueryState(queryKey)?.isInvalidated) {
+        console.log("Refetching calendar entries due to invalidation");
+        fetchCalendarEntries();
+      }
+    });
+    
+    return () => {
+      unsubscribe();
+    };
+  }, [fetchCalendarEntries, queryClient]);
 
   // Marcar días con entradas en el calendario
   const getCalendarDaysWithContent = useCallback(() => {
