@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, Circle, FileText } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parse } from "date-fns";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, Circle, FileText, FilesIcon, Plus } from "lucide-react";
+import IdeaGeneratorDialog from "./IdeaGeneratorDialog";
+import MultipleScriptsGenerator from "./MultipleScriptsGenerator";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +20,8 @@ export default function ContentCalendar({ user }: ContentCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarEntries, setCalendarEntries] = useState<CalendarEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showIdeaGeneratorDialog, setShowIdeaGeneratorDialog] = useState(false);
+  const [showMultiScriptDialog, setShowMultiScriptDialog] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -40,43 +44,43 @@ export default function ContentCalendar({ user }: ContentCalendarProps) {
   };
 
   // Cargar entradas del calendario para el mes seleccionado
-  useEffect(() => {
-    const fetchCalendarEntries = async () => {
-      if (!user) return;
-      
-      setIsLoading(true);
-      try {
-        const year = selectedDate.getFullYear();
-        const month = selectedDate.getMonth() + 1; // API espera mes en formato 1-12
-        
-        const response = await apiRequest(
-          "GET", 
-          `/api/calendar/month?year=${year}&month=${month}`
-        );
-        
-        if (!response.ok) {
-          throw new Error("Error al cargar entradas del calendario");
-        }
-        
-        const entries = await response.json();
-        setCalendarEntries(entries);
-      } catch (error) {
-        console.error("Error fetching calendar entries:", error);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar las entradas del calendario",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchCalendarEntries = useCallback(async () => {
+    if (!user) return;
     
-    fetchCalendarEntries();
+    setIsLoading(true);
+    try {
+      const year = selectedDate.getFullYear();
+      const month = selectedDate.getMonth() + 1; // API espera mes en formato 1-12
+      
+      const response = await apiRequest(
+        "GET", 
+        `/api/calendar/month?year=${year}&month=${month}`
+      );
+      
+      if (!response.ok) {
+        throw new Error("Error al cargar entradas del calendario");
+      }
+      
+      const entries = await response.json();
+      setCalendarEntries(entries);
+    } catch (error) {
+      console.error("Error fetching calendar entries:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las entradas del calendario",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }, [selectedDate, user, toast]);
+  
+  useEffect(() => {
+    fetchCalendarEntries();
+  }, [fetchCalendarEntries]);
 
   // Marcar días con entradas en el calendario
-  const getCalendarDaysWithContent = () => {
+  const getCalendarDaysWithContent = useCallback(() => {
     const days: Date[] = [];
     
     // Convertir las fechas de string a objetos Date
@@ -89,15 +93,15 @@ export default function ContentCalendar({ user }: ContentCalendarProps) {
     });
     
     return days;
-  };
+  }, [calendarEntries]);
 
   // Obtener entradas para un día específico
-  const getEntriesForDay = (date: Date) => {
+  const getEntriesForDay = useCallback((date: Date) => {
     return calendarEntries.filter(entry => {
       const entryDate = new Date(entry.date);
       return isSameDay(entryDate, date);
     });
-  };
+  }, [calendarEntries]);
 
   // Completar/descompletar una entrada
   const toggleEntryCompletion = async (entryId: number, completed: boolean) => {
@@ -174,8 +178,33 @@ export default function ContentCalendar({ user }: ContentCalendarProps) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <Card className="border-border shadow-md">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-xl font-bold font-heading">Calendario de Contenido</CardTitle>
+        <CardHeader className="flex flex-col md:flex-row md:items-center justify-between pb-2 gap-4">
+          <div className="flex flex-row justify-between md:justify-start items-center gap-4">
+            <CardTitle className="text-xl font-bold font-heading">Calendario de Contenido</CardTitle>
+            
+            {(user?.isPremium || user?.lifetimeAccess) && (
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowIdeaGeneratorDialog(true)}
+                  className="text-xs"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  Idea
+                </Button>
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={() => setShowMultiScriptDialog(true)}
+                  className="text-xs"
+                >
+                  <FilesIcon className="h-3.5 w-3.5 mr-1" />
+                  Múltiples guiones
+                </Button>
+              </div>
+            )}
+          </div>
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="icon" onClick={prevMonth} className="hover:bg-primary/10">
               <ChevronLeft className="h-4 w-4" />
@@ -341,14 +370,21 @@ export default function ContentCalendar({ user }: ContentCalendarProps) {
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-xl bg-muted/10">
-                      <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                      <p className="font-medium text-foreground">No hay contenido programado para este día</p>
-                      <p className="text-sm mt-2 mb-4 max-w-md mx-auto">
-                        Genera ideas de video y agrégalas al calendario para organizar tu contenido.
+                    <div className="text-center py-12 border border-dashed rounded-lg">
+                      <div className="mb-3">
+                        <CalendarIcon className="h-10 w-10 mx-auto text-muted-foreground" />
+                      </div>
+                      <h3 className="text-lg font-medium mb-2">No hay entradas para este día</h3>
+                      <p className="text-muted-foreground text-sm mb-4 max-w-md mx-auto">
+                        Puedes crear nuevas ideas, añadir recordatorios o planificar tus videos para esta fecha.
                       </p>
-                      <Button asChild variant="outline" size="sm">
-                        <a href="/">Generar nueva idea</a>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setShowIdeaGeneratorDialog(true)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Generar nueva idea
                       </Button>
                     </div>
                   )}
@@ -358,6 +394,24 @@ export default function ContentCalendar({ user }: ContentCalendarProps) {
           )}
         </CardContent>
       </Card>
+      
+      {/* Diálogo de generación de ideas individuales */}
+      <IdeaGeneratorDialog
+        isOpen={showIdeaGeneratorDialog}
+        onClose={() => setShowIdeaGeneratorDialog(false)}
+        onGenerate={(idea) => {
+          setShowIdeaGeneratorDialog(false);
+          // Refrescar entradas del calendario después de generar una idea
+          fetchCalendarEntries();
+        }}
+        selectedDate={selectedDate}
+      />
+      
+      {/* Diálogo de generación múltiple de guiones */}
+      <MultipleScriptsGenerator
+        isOpen={showMultiScriptDialog}
+        onClose={() => setShowMultiScriptDialog(false)}
+      />
     </div>
   );
 }
