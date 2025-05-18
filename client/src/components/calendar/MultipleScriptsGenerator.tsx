@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, CalendarDays, FileText, Plus, Save } from "lucide-react";
-import { format } from "date-fns";
+import { Loader2, CalendarDays, FileText, Plus, Save, Upload, Calendar as CalendarIcon } from "lucide-react";
+import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 
 interface MultipleScriptsGeneratorProps {
   isOpen: boolean;
@@ -29,6 +31,17 @@ export default function MultipleScriptsGenerator({ isOpen, onClose }: MultipleSc
   const [createNewCollection, setCreateNewCollection] = useState(true);
   const [newCollectionName, setNewCollectionName] = useState("");
   const [selectedCollectionId, setSelectedCollectionId] = useState<number | undefined>(undefined);
+  const [customInstructions, setCustomInstructions] = useState("");
+  const [selectedAiModel, setSelectedAiModel] = useState("gemini");
+  const [uploadedFileId, setUploadedFileId] = useState<number | undefined>(undefined);
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const [generateWeek, setGenerateWeek] = useState(false);
+  const [generateMonth, setGenerateMonth] = useState(false);
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
+  const [activeTab, setActiveTab] = useState("selection");
+  
+  // Referencias
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Limpiar estado al abrir/cerrar
   useEffect(() => {
@@ -40,6 +53,14 @@ export default function MultipleScriptsGenerator({ isOpen, onClose }: MultipleSc
       setCreateNewCollection(true);
       setNewCollectionName(format(new Date(), "'Guiones para' MMMM yyyy", { locale: es }));
       setSelectedCollectionId(undefined);
+      setCustomInstructions("");
+      setSelectedAiModel("gemini");
+      setUploadedFileId(undefined);
+      setUploadedFileName("");
+      setGenerateWeek(false);
+      setGenerateMonth(false);
+      setStartDate(new Date());
+      setActiveTab("selection");
     }
   }, [isOpen]);
   

@@ -4361,18 +4361,58 @@ DaVinci Resolve 17 o superior
         collectionId: z.number().int().optional(), // ID de la colección donde guardar los guiones
         createNewCollection: z.boolean().optional(), // Si es true, crear una nueva colección
         newCollectionName: z.string().optional(), // Nombre de la nueva colección
+        customInstructions: z.string().optional(), // Instrucciones personalizadas para la generación
+        uploadedFileId: z.number().optional(), // ID del archivo subido con instrucciones
+        aiModel: z.string().optional(), // Modelo de IA a utilizar (gemini, perplexity, anthropic, etc.)
+        generateWeek: z.boolean().optional(), // Si es true, generar para toda la semana actual
+        generateMonth: z.boolean().optional(), // Si es true, generar para todo el mes actual
+        startDate: z.string().optional(), // Fecha de inicio para generación de semana/mes
       }).parse(req.body);
 
       const userId = req.session.userId as number;
       
       // Verificar límites para usuarios no premium
       const user = await storage.getUser(userId);
-      const isPremium = user?.isPremium || false;
+      const isPremium = user?.isPremium || user?.lifetimeAccess || false;
       
-      if (!isPremium && params.dates.length > 5) {
+      // Si se solicita generar para toda la semana o mes, calcular las fechas
+      let datesToGenerate = [...params.dates];
+      
+      if (params.generateWeek || params.generateMonth) {
+        const startDate = params.startDate ? new Date(params.startDate) : new Date();
+        
+        if (params.generateWeek) {
+          // Generar para los próximos 7 días
+          datesToGenerate = [];
+          for (let i = 0; i < 7; i++) {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+            datesToGenerate.push(date.toISOString());
+          }
+        } else if (params.generateMonth) {
+          // Generar para todos los días del mes actual
+          datesToGenerate = [];
+          const year = startDate.getFullYear();
+          const month = startDate.getMonth();
+          const daysInMonth = new Date(year, month + 1, 0).getDate();
+          
+          for (let i = 1; i <= daysInMonth; i++) {
+            const date = new Date(year, month, i);
+            datesToGenerate.push(date.toISOString());
+          }
+        }
+      }
+      
+      // Verificar límites de generación según tipo de usuario
+      const maxScriptsLimit = isPremium ? 31 : 5;
+      
+      if (datesToGenerate.length > maxScriptsLimit) {
         return res.status(403).json({
-          message: "Solo usuarios premium pueden generar más de 5 guiones a la vez",
-          upgrade: true
+          message: isPremium 
+            ? `Puedes generar hasta ${maxScriptsLimit} guiones por lote` 
+            : `Los usuarios gratuitos pueden generar hasta ${maxScriptsLimit} guiones por lote. Actualiza a premium para generar hasta 31.`,
+          upgrade: !isPremium,
+          limitReached: true
         });
       }
 
@@ -4410,31 +4450,85 @@ DaVinci Resolve 17 o superior
           message: "No tienes permiso para acceder a esta colección o no existe" 
         });
       }
+      
+      // Si hay un archivo de instrucciones subido, obtenerlo
+      let customInstructionsFromFile = "";
+      if (params.uploadedFileId) {
+        try {
+          const uploadedFile = await storage.getFileById(params.uploadedFileId);
+          if (uploadedFile && uploadedFile.userId === userId) {
+            const filePath = uploadedFile.filePath;
+            if (filePath && fs.existsSync(filePath)) {
+              // Leer el contenido del archivo según su tipo
+              if (uploadedFile.mimeType?.includes('pdf')) {
+                // Para implementar lectura de PDF se necesitaría una biblioteca adicional
+                // como pdf-parse, pero por ahora mostramos un mensaje
+                customInstructionsFromFile = "Las instrucciones del PDF se procesarán automáticamente.";
+              } else if (uploadedFile.mimeType?.includes('text')) {
+                // Leer archivo de texto plano
+                customInstructionsFromFile = fs.readFileSync(filePath, 'utf8');
+              } else {
+                console.warn(`Tipo de archivo no soportado: ${uploadedFile.mimeType}`);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error al leer el archivo de instrucciones:", error);
+        }
+      }
+      
+      // Combinar instrucciones del archivo con las proporcionadas manualmente
+      const finalInstructions = customInstructionsFromFile 
+        ? `${customInstructionsFromFile}\n\n${params.customInstructions || ''}`
+        : params.customInstructions;
 
       // Generar guiones para cada fecha
       const results = [];
       
-      for (let i = 0; i < params.dates.length; i++) {
-        const date = new Date(params.dates[i]);
+      for (let i = 0; i < datesToGenerate.length; i++) {
+        const date = new Date(datesToGenerate[i]);
         
         if (isNaN(date.getTime())) {
-          console.error(`Fecha inválida: ${params.dates[i]}`);
+          console.error(`Fecha inválida: ${datesToGenerate[i]}`);
           continue;
         }
         
-        console.log(`Generando guión para ${date.toLocaleDateString()}`);
+        console.log(`Generando guión para ${date.toLocaleDateString()} (${i+1}/${datesToGenerate.length})`);
         
         try {
-          // Generar idea/guión con IA
-          const generatedContent = await generateVideoIdea({
-            category: params.category,
-            subcategory: params.subcategory || "",
-            videoLength: params.videoLength,
-            contentType: "fullScript", // Siempre generamos guión completo
-            fullScript: true,
-            model: "gemini-1.5-pro",
-            fromTemplates: false,
-          });
+          // Aplicar reintentos para mayor fiabilidad
+          let success = false;
+          let retryCount = 0;
+          let generatedContent;
+          
+          while (!success && retryCount < 3) {
+            try {
+              // Generar idea/guión con IA
+              generatedContent = await generateVideoIdea({
+                category: params.category,
+                subcategory: params.subcategory || "",
+                videoLength: params.videoLength,
+                contentType: "fullScript", // Siempre generamos guión completo
+                fullScript: true,
+                model: params.aiModel || "gemini", // Usar el modelo de IA seleccionado
+                fromTemplates: false,
+                customInstructions: finalInstructions
+                  ? `${finalInstructions}\n\nEste guion es para la fecha: ${date.toLocaleDateString('es-ES')}`
+                  : `Genera un guion para la fecha: ${date.toLocaleDateString('es-ES')}`,
+              });
+              success = true;
+            } catch (error) {
+              retryCount++;
+              console.error(`Error al generar guión (intento ${retryCount}/3):`, error);
+              
+              if (retryCount >= 3) {
+                throw new Error(`No se pudo generar el guión después de 3 intentos: ${error.message}`);
+              }
+              
+              // Esperar antes de reintentar
+              await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+          }
           
           console.log(`Guión generado: ${generatedContent.title}`);
           
