@@ -264,12 +264,13 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
               <>
                 <Link href="/login">
                   <Button 
-                    variant="ghost" 
+                    variant="outline" 
                     size="sm" 
-                    className="text-sm font-medium"
+                    className="text-sm font-medium mr-1 hover:text-primary hover:border-primary"
                     onClick={() => playSound('click')}
                     onMouseEnter={() => playSound('hover')}
                   >
+                    <UserIcon className="mr-1 h-4 w-4" />
                     Iniciar sesión
                   </Button>
                 </Link>
@@ -277,7 +278,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   <Button 
                     variant="default" 
                     size="sm" 
-                    className="text-sm font-medium"
+                    className="text-sm font-medium bg-primary hover:bg-primary/90"
                     onClick={() => playSound('click')}
                     onMouseEnter={() => playSound('hover')}
                   >
@@ -445,17 +446,18 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
               <div className="mt-3 space-y-1 p-2">
                 <Link
                   href="/login"
-                  className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/20 rounded-md"
+                  className="flex items-center px-4 py-3 text-sm font-medium text-foreground border border-border hover:text-primary hover:border-primary hover:bg-secondary/10 rounded-md"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Sign In
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  Iniciar sesión
                 </Link>
                 <Link
                   href="/register"
-                  className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary/50 bg-secondary/30 rounded-md mt-2"
+                  className="flex items-center px-4 py-3 text-sm font-medium text-background bg-primary hover:bg-primary/90 rounded-md mt-3"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Get Started
+                  Registrarse
                 </Link>
               </div>
             )}
