@@ -168,11 +168,33 @@ function RecursoCard({ recurso }: { recurso: any }) {
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
       <div className="aspect-video relative overflow-hidden bg-muted">
-        <img 
-          src={corregirRutaRecurso(recurso.imagen)} 
-          alt={recurso.titulo} 
-          className="object-cover w-full h-full"
-        />
+        {recurso.imagen ? (
+          <div className="w-full h-full bg-muted flex items-center justify-center">
+            <img 
+              src={corregirRutaRecurso(recurso.imagen)} 
+              alt={recurso.titulo} 
+              className="object-cover w-full h-full"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement.innerHTML = `
+                  <div class="w-full h-full flex items-center justify-center bg-muted">
+                    <div class="text-muted-foreground flex flex-col items-center">
+                      <FileIcon class="w-10 h-10 mb-2 opacity-50" />
+                      <span class="text-xs">${recurso.titulo}</span>
+                    </div>
+                  </div>
+                `;
+              }}
+            />
+          </div>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-muted">
+            <div className="text-muted-foreground flex flex-col items-center">
+              <FileIcon className="w-10 h-10 mb-2 opacity-50" />
+              <span className="text-xs">{recurso.titulo}</span>
+            </div>
+          </div>
+        )}
         <Badge className="absolute top-2 right-2 bg-primary">{recurso.categoria}</Badge>
       </div>
       <CardHeader className="p-4 pb-2">
@@ -378,7 +400,21 @@ export default function RecursosPage() {
     e.preventDefault();
     if (searchQuery.trim()) {
       setBuscando(true);
-      // Simular búsqueda
+      
+      // Filtrar los recursos basados en la consulta
+      const resultados = recursosReales.filter(recurso => 
+        recurso.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        recurso.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (recurso.tags && recurso.tags.some((tag: string) => 
+          tag.toLowerCase().includes(searchQuery.toLowerCase())
+        ))
+      );
+      
+      // Actualizar la lista de recursos mostrados
+      setRecursosReales(resultados);
+      setFiltroActivo(true);
+      
+      // Desactivar el indicador de búsqueda
       setTimeout(() => {
         setBuscando(false);
       }, 1000);
