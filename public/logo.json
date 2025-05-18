@@ -1,0 +1,13 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "url": "https://redcreativa.pro/",
+  "logo": "https://redcreativa.pro/images/logo-red.svg",
+  "name": "Red Creativa Pro",
+  "description": "Plataforma premium para creadores de contenido en español. Genera ideas y guiones completos para YouTube con IA, planifica tu contenido y accede a recursos creativos profesionales.",
+  "sameAs": [
+    "https://twitter.com/redcreativapro",
+    "https://facebook.com/redcreativapro",
+    "https://instagram.com/redcreativapro"
+  ]
+}

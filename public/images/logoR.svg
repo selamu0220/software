@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo negro -->
+  <rect width="512" height="512" rx="64" fill="#000000"/>
+  
+  <!-- Letra R principal en rojo -->
+  <path d="M128 128H256C292.362 128 320 155.638 320 192C320 228.362 292.362 256 256 256H192L256 384H192L128 256V128Z" fill="#FF3E00" stroke="#FFFFFF" stroke-width="8"/>
+  
+  <!-- Círculo creativo -->
+  <circle cx="352" cy="160" r="32" fill="#FFFFFF"/>
+  
+  <!-- Texto "RED CREATIVA" debajo -->
+  <text x="256" y="450" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="#FFFFFF" text-anchor="middle">RED CREATIVA</text>
+</svg>
