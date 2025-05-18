@@ -409,7 +409,9 @@ function buildPrompt(params: GenerationRequest): string {
     videoLength,
     templateStyle,
     contentTone,
-    titleTemplate
+    titleTemplate,
+    contentType,
+    fullScript
   } = params;
 
   // Usa la plantilla de título seleccionada por el usuario, o selecciona una aleatoria si no se proporciona
@@ -421,10 +423,11 @@ function buildPrompt(params: GenerationRequest): string {
     selectedTemplate = IDEA_TEMPLATES[randomIndex];
   }
 
-  return `
+  // Base común para todos los tipos de contenido
+  let basePrompt = `
 Genera una idea de video profesional para YouTube dirigida a empresas SaaS y negocios que quieren crear anuncios atractivos sin mostrar la cara. 
-El tema está en el nicho de ${category}, específicamente sobre ${subcategory}.
-El video debe centrarse en ${videoFocus}, tener aproximadamente ${videoLength} de duración, y usar un estilo ${templateStyle} con un tono ${contentTone}.
+El tema está en el nicho de ${category}, específicamente sobre ${subcategory || category}.
+El video debe tener aproximadamente ${videoLength} de duración.
 
 IMPORTANTE: Usa este formato para el título (adaptado a tu idea): "${selectedTemplate}"
 Haz que el título sea IMPACTANTE, use MAYÚSCULAS estratégicamente, y tenga entre 6-10 palabras.
@@ -433,20 +436,49 @@ La idea debe incluir estos servicios que ofrezco:
 - Edición de video para anuncios de YouTube 
 - Herramientas gratuitas (con y sin IA)
 - Creación de páginas web o funnels con Framer/Figma + Stripe
-- Herramienta específica de "cortador de silencios" para videos (con planes de 10€/mes o 50€/mes con acceso vitalicio)
+- Herramienta específica de "cortador de silencios" para videos (con planes de 10€/mes o 50€/vitalicio)
 - Plantillas gratuitas de DaVinci Resolve con videos preeditados
+`;
 
-Incluye estos elementos EXACTOS en tu respuesta como un objeto JSON:
+  // Elementos comunes del JSON de respuesta
+  let jsonStructure = `
+Incluye estos elementos BÁSICOS en tu respuesta como un objeto JSON:
 1. title: Un título llamativo siguiendo el formato proporcionado, resaltando ALGUNAS palabras en MAYÚSCULAS para énfasis visual
 2. outline: Un array de 7-10 puntos concretos para cubrir en el video (como strings)
 3. midVideoMention: Una mención breve (5-10 segundos) destacando mi herramienta de "cortador de silencios"
-4. endVideoMention: Una mención rápida (10-15 segundos) que resuma TODOS mis servicios (edición de video, web, cortador de silencios, plantillas)
-5. thumbnailIdea: Una miniatura impactante que muestre el beneficio principal, con texto grande y legible
-6. interactionQuestion: Una pregunta para fomentar comentarios como "¿Qué te ha parecido esta herramienta?", "¿La usarías?", "¿Qué opinas?"
-7. category: La categoría proporcionada
-8. subcategory: La subcategoría proporcionada
-9. videoLength: La duración de video proporcionada
+4. endVideoMention: Una mención rápida (10-15 segundos) que resuma TODOS mis servicios
+5. thumbnailIdea: Una miniatura impactante que muestre el beneficio principal
+6. interactionQuestion: Una pregunta para fomentar comentarios
+7. category: "${category}"
+8. subcategory: "${subcategory || ""}"
+9. videoLength: "${videoLength}"
+`;
 
+  // Si se solicita un guión completo, añadir instrucciones adicionales
+  if (contentType === "fullScript" || fullScript) {
+    basePrompt += `
+Estoy solicitando un GUIÓN COMPLETO para este video, no solo una idea. El guión debe ser detallado y listo para grabar.
+
+ESTRUCTURA DEL GUIÓN:
+- Introducción: Un gancho inicial poderoso y presentación del problema (30-45 segundos)
+- Desarrollo principal: Cada punto del esquema con detalles y ejemplos (60-90 segundos cada punto)
+- Mención media: Debe incluir la promoción de mi cortador de silencios
+- Conclusión: Resumen y llamada a la acción (45-60 segundos)
+- Mención final: Todos mis servicios mencionados claramente
+`;
+
+    jsonStructure += `
+10. tags: Un array de 5-7 etiquetas relevantes para YouTube
+11. fullScript: Un objeto JSON con las secciones del guión completo, donde cada clave es el nombre de la sección y el valor es el texto completo para esa sección. Debe incluir al menos:
+   - "Introducción"
+   - Secciones para cada punto del esquema (como "Punto 1", "Punto 2", etc.)
+   - "Conclusión"
+   - "CTA" (llamada a la acción)
+`;
+  }
+
+  // Advertencias comunes
+  let warnings = `
 EVITAR ABSOLUTAMENTE:
 - Mencionar SEO o estrategias de marketing
 - Incluir tácticas complejas o técnicas avanzadas
@@ -456,6 +488,8 @@ EVITAR ABSOLUTAMENTE:
 Enfócate en mostrar herramientas "increíbles" y FÁCILES de usar. El contenido debe ser PRÁCTICO, DIRECTO y ÚTIL.
 Responde ÚNICAMENTE con JSON válido, sin texto adicional.
 `;
+
+  return basePrompt + jsonStructure + warnings;
 }
 
 /**
@@ -463,7 +497,7 @@ Responde ÚNICAMENTE con JSON válido, sin texto adicional.
  * Exportada para poder ser usada como alternativa cuando falla la API
  */
 export function getMockVideoIdea(params: GenerationRequest): VideoIdeaContent {
-  const { category, subcategory, videoLength, titleTemplate } = params;
+  const { category, subcategory, videoLength, titleTemplate, contentType, fullScript } = params;
   
   // Si hay una plantilla de título seleccionada, úsala o proporciona una por defecto
   const titleBase = titleTemplate || "Top [Número] Secretos que Nadie te Cuenta sobre [Tema]";
@@ -479,19 +513,22 @@ export function getMockVideoIdea(params: GenerationRequest): VideoIdeaContent {
     .replace("[Resultado]", "videos profesionales")
     .replace("[Resultado brutal]", "ediciones perfectas");
   
-  return {
+  const outline = [
+    "Presentación del problema: Demasiado tiempo editando videos",
+    "Secreto #1: Configuración de atajos de teclado personalizados para DaVinci Resolve",
+    "Secreto #2: Uso de plantillas pre-editadas para acelerar la producción",
+    "Secreto #3: Técnica del 'corte duro' para dinamizar cualquier video",
+    "Secreto #4: Herramientas de eliminación automática de silencios",
+    "Secreto #5: Técnicas avanzadas de recorte y composición para anuncios sin rostro",
+    "Secreto #6: Configuración de presets personalizados para exportación rápida",
+    "Secreto #7: Automatización del proceso de edición usando scripts y macros",
+    "Demostración de resultados: Antes vs Después"
+  ];
+  
+  // Resultado base para todos los tipos de contenido
+  const baseResult: VideoIdeaContent = {
     title: formattedTitle,
-    outline: [
-      "Presentación del problema: Demasiado tiempo editando videos",
-      "Secreto #1: Configuración de atajos de teclado personalizados para DaVinci Resolve",
-      "Secreto #2: Uso de plantillas pre-editadas para acelerar la producción",
-      "Secreto #3: Técnica del 'corte duro' para dinamizar cualquier video",
-      "Secreto #4: Herramientas de eliminación automática de silencios",
-      "Secreto #5: Técnicas avanzadas de recorte y composición para anuncios sin rostro",
-      "Secreto #6: Configuración de presets personalizados para exportación rápida",
-      "Secreto #7: Automatización del proceso de edición usando scripts y macros",
-      "Demostración de resultados: Antes vs Después"
-    ],
+    outline,
     midVideoMention: "Hablando de ahorrar tiempo... he desarrollado un cortador de silencios increíblemente potente que puede reducir el tiempo de edición hasta en un 70%. Con planes desde solo 10€ al mes o 50€ para acceso de por vida, es la herramienta perfecta para creadores y empresas.",
     endVideoMention: "Si quieres mejorar tu contenido, ofrezco servicios profesionales de edición de video para anuncios, creación de sitios web con Framer y Figma, mi herramienta de cortador de silencios, y plantillas gratuitas de DaVinci Resolve. Toda la información está en la descripción del video.",
     thumbnailIdea: "Imagen dividida mostrando 'ANTES' (persona estresada frente a una línea de tiempo desordenada) y 'DESPUÉS' (persona relajada con línea de tiempo optimizada), con texto grande que dice '7 SECRETOS DE EDICIÓN' y una flecha roja señalando el resultado final pulido.",
@@ -500,6 +537,57 @@ export function getMockVideoIdea(params: GenerationRequest): VideoIdeaContent {
     subcategory,
     videoLength
   };
+  
+  // Si se solicita un guión completo, añadir los campos adicionales
+  if (contentType === "fullScript" || fullScript) {
+    // Añadir etiquetas
+    baseResult.tags = ["edición de video", "tutoriales", "productividad", "DaVinci Resolve", "YouTube", "creación de contenido", "automatización"];
+    
+    // Añadir guión completo estructurado por secciones
+    baseResult.fullScript = {
+      "Introducción": "¡Hola creadores de contenido! Hoy vamos a resolver uno de los mayores problemas que enfrentamos: el tiempo excesivo que pasamos editando videos. Si te has encontrado pasando horas y horas frente a tu software de edición, este video va a cambiar completamente tu flujo de trabajo. Voy a revelarte 7 secretos de edición que los profesionales no comparten y que pueden reducir tu tiempo de edición hasta en un 70%.",
+      
+      "Secreto #1": "El primer secreto que quiero compartirte es la configuración de atajos de teclado personalizados en DaVinci Resolve. La mayoría de los creadores usan los atajos predeterminados, pero personalizar los tuyos puede ahorrarte horas de trabajo. Aquí te muestro cómo configurar los 5 atajos más útiles: para cortar clips (Alt+C), para dividir audio y video (Alt+L), para insertar transiciones (Alt+T), para aplicar corrección de color rápida (Alt+G) y para exportar con presets (Alt+E).",
+      
+      "Secreto #2": "El segundo secreto es el uso de plantillas pre-editadas. Muchos editores profesionales tienen una biblioteca de secuencias ya preparadas que simplemente adaptan para cada nuevo proyecto. Te enseñaré cómo crear tus propias plantillas para intros, outros, transiciones, y llamadas a la acción que puedes reutilizar en todos tus videos. Y lo mejor: ¡tengo plantillas gratuitas de DaVinci Resolve disponibles en mi web!",
+      
+      "Secreto #3": "El tercer secreto es la técnica del 'corte duro'. Es sorprendente lo efectiva que puede ser esta técnica para mantener la atención del espectador. Te mostraré exactamente cómo y cuándo implementarla para que tus videos sean dinámicos y profesionales sin necesidad de efectos complicados.",
+      
+      "Secreto #4": "El cuarto secreto, y quizás el más poderoso, es el uso de herramientas de eliminación automática de silencios. Estas herramientas pueden reducir drásticamente el tiempo de edición al detectar y eliminar automáticamente las pausas y silencios en tu grabación.",
+      
+      "Mención media": "Hablando de eliminar silencios... he desarrollado mi propia herramienta de eliminación de silencios que es increíblemente eficiente. Con planes desde solo 10€ al mes o un acceso vitalicio por 50€, esta herramienta puede procesar videos de una hora en menos de 5 minutos. Si estás interesado, encontrarás el enlace en la descripción del video.",
+      
+      "Secreto #5": "El quinto secreto son las técnicas avanzadas de recorte y composición para anuncios sin rostro. Te mostraré cómo crear anuncios efectivos utilizando motion graphics, imágenes stock y capturas de pantalla sin necesidad de aparecer frente a la cámara. Esta técnica es perfecta para empresas SaaS y negocios digitales.",
+      
+      "Secreto #6": "El sexto secreto es la configuración de presets personalizados para exportación rápida. Muchos creadores pierden tiempo configurando los ajustes de exportación cada vez. Te enseñaré cómo crear presets específicos para YouTube, Instagram, y otros canales que puedes utilizar con un solo clic.",
+      
+      "Secreto #7": "El séptimo y último secreto es la automatización del proceso de edición usando scripts y macros. Esta técnica avanzada pero accesible puede realizar tareas repetitivas automáticamente. Te mostraré tres ejemplos prácticos que puedes implementar hoy mismo.",
+      
+      "Demostración": "Ahora, vamos a ver estos secretos en acción. Aquí tengo un video que normalmente tomaría 3 horas editar. Observa cómo aplicando estas técnicas, puedo completarlo en menos de 45 minutos manteniendo la misma calidad o incluso mejorándola.",
+      
+      "Conclusión": "Como has visto, estos 7 secretos pueden transformar completamente tu proceso de edición de video. Al implementar estas técnicas, no solo ahorrarás horas de trabajo, sino que también mejorarás la calidad de tus contenidos. Recuerda que la edición eficiente te permite crear más contenido y enfocarte en lo que realmente importa: contar historias impactantes.",
+      
+      "CTA": "Si este video te ha resultado útil, no olvides suscribirte al canal y activar las notificaciones para más consejos de edición y creación de contenido. ¿Qué secreto te ha parecido más útil? Déjame saber en los comentarios y comparte tus propios trucos de edición. ¡Nos vemos en el próximo video!"
+    };
+    
+    // Añadir timings estimados para cada sección
+    baseResult.timings = {
+      "Introducción": "00:00 - 00:45",
+      "Secreto #1": "00:45 - 02:15",
+      "Secreto #2": "02:15 - 03:45",
+      "Secreto #3": "03:45 - 05:00",
+      "Secreto #4": "05:00 - 06:15",
+      "Mención media": "06:15 - 06:45",
+      "Secreto #5": "06:45 - 08:15",
+      "Secreto #6": "08:15 - 09:30",
+      "Secreto #7": "09:30 - 11:00",
+      "Demostración": "11:00 - 12:30",
+      "Conclusión": "12:30 - 13:15",
+      "CTA": "13:15 - 14:00"
+    };
+  }
+  
+  return baseResult;
 }
 
 /**

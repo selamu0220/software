@@ -34,12 +34,14 @@ interface IdeaGeneratorDialogProps {
   isOpen: boolean;
   onClose: () => void;
   selectedDate: Date;
+  onGenerate?: (idea: VideoIdeaContent) => void;
 }
 
 export default function IdeaGeneratorDialog({
   isOpen,
   onClose,
   selectedDate,
+  onGenerate,
 }: IdeaGeneratorDialogProps) {
   const { toast } = useToast();
   const [generatedIdea, setGeneratedIdea] = useState<VideoIdeaContent | null>(null);
