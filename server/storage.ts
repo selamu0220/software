@@ -15,6 +15,10 @@ import {
   resourceSubcategories,
   resourceComments,
   contentStrategies,
+  contentStrategyConfigs,
+  contentStrategyTemplates,
+  strategyGeneratedContent,
+  contentStrategiesWorkbook,
   type User, 
   type InsertUser, 
   type VideoIdea, 
@@ -45,7 +49,14 @@ import {
   type ResourceSubcategory,
   type InsertResourceSubcategory,
   type ContentStrategy,
-  type ContentStrategyInsert
+  type InsertContentStrategy,
+  type ContentStrategyConfig,
+  type InsertContentStrategyConfig,
+  type ContentStrategyTemplate,
+  type InsertContentStrategyTemplate,
+  type StrategyGeneratedContent,
+  type InsertStrategyGeneratedContent,
+  type ContentStrategyWorkbook
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, SQL, sql, desc, asc, isNotNull, lte, gt, gte, count } from "drizzle-orm";
@@ -62,10 +73,33 @@ export interface IStorage {
   updateStripeCustomerId(id: number, customerId: string): Promise<User>;
   updateUserStripeInfo(id: number, info: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User>;
   
-  // Estrategias de contenido
-  getContentStrategy(userId: number): Promise<ContentStrategy | undefined>;
-  createContentStrategy(strategy: ContentStrategyInsert): Promise<ContentStrategy>;
+  // Estrategias de contenido - Sistema nuevo
+  getContentStrategy(id: number): Promise<ContentStrategy | undefined>;
+  getContentStrategyByUser(userId: number): Promise<ContentStrategy[]>;
+  getPublicContentStrategies(): Promise<ContentStrategy[]>;
+  createContentStrategy(strategy: InsertContentStrategy): Promise<ContentStrategy>;
   updateContentStrategy(id: number, strategy: Partial<ContentStrategy>): Promise<ContentStrategy | undefined>;
+  deleteContentStrategy(id: number): Promise<boolean>;
+  
+  // Configuración de estrategias
+  getContentStrategyConfig(strategyId: number): Promise<ContentStrategyConfig | undefined>;
+  createContentStrategyConfig(config: InsertContentStrategyConfig): Promise<ContentStrategyConfig>;
+  updateContentStrategyConfig(id: number, config: Partial<ContentStrategyConfig>): Promise<ContentStrategyConfig | undefined>;
+  
+  // Plantillas de estrategias
+  getContentStrategyTemplates(strategyId: number): Promise<ContentStrategyTemplate[]>;
+  getContentStrategyTemplatesByDay(strategyId: number, dayOfWeek: number): Promise<ContentStrategyTemplate[]>;
+  createContentStrategyTemplate(template: InsertContentStrategyTemplate): Promise<ContentStrategyTemplate>;
+  updateContentStrategyTemplate(id: number, template: Partial<ContentStrategyTemplate>): Promise<ContentStrategyTemplate | undefined>;
+  deleteContentStrategyTemplate(id: number): Promise<boolean>;
+  
+  // Contenido generado con estrategias
+  createStrategyGeneratedContent(content: InsertStrategyGeneratedContent): Promise<StrategyGeneratedContent>;
+  getStrategyGeneratedContent(id: number): Promise<StrategyGeneratedContent | undefined>;
+  getStrategyGeneratedContentByUser(userId: number): Promise<StrategyGeneratedContent[]>;
+  getStrategyGeneratedContentByStrategy(strategyId: number): Promise<StrategyGeneratedContent[]>;
+  updateStrategyGeneratedContent(id: number, content: Partial<StrategyGeneratedContent>): Promise<StrategyGeneratedContent | undefined>;
+  deleteStrategyGeneratedContent(id: number): Promise<boolean>;
   
   // Sistema de votación para recursos
   getUserVote(userId: number, resourceId: number): Promise<any>;

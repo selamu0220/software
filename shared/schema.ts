@@ -772,5 +772,13 @@ export const insertStrategyGeneratedContentSchema = createInsertSchema(strategyG
   isPublished: true,
   calendarEntryId: true,
 });
-export type ContentStrategyInsert = z.infer<typeof insertContentStrategySchema>;
-export type ContentStrategy = typeof contentStrategiesWorkbook.$inferSelect;
+// Definición de tipos para el sistema de estrategias
+export type InsertContentStrategy = z.infer<typeof insertContentStrategySchema>;
+export type ContentStrategy = typeof contentStrategies.$inferSelect;
+export type InsertContentStrategyConfig = z.infer<typeof insertContentStrategyConfigSchema>;
+export type ContentStrategyConfig = typeof contentStrategyConfigs.$inferSelect;
+export type InsertContentStrategyTemplate = z.infer<typeof insertContentStrategyTemplateSchema>;
+export type ContentStrategyTemplate = typeof contentStrategyTemplates.$inferSelect;
+export type InsertStrategyGeneratedContent = z.infer<typeof insertStrategyGeneratedContentSchema>;
+export type StrategyGeneratedContent = typeof strategyGeneratedContent.$inferSelect;
+export type ContentStrategyWorkbook = typeof contentStrategiesWorkbook.$inferSelect;
