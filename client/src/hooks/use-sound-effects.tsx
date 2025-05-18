@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
-type SoundEffectType = 'click' | 'success' | 'hover' | 'error' | 'intro';
+type SoundEffectType = 'click' | 'hover' | 'success' | 'error' | 'intro';
 
 interface SoundContextType {
   playSound: (effect: SoundEffectType) => void;
@@ -8,89 +8,85 @@ interface SoundContextType {
   muted: boolean;
 }
 
-// Creamos un contexto para los efectos de sonido
-const SoundContext = createContext<SoundContextType | undefined>(undefined);
+const SoundContext = createContext<SoundContextType | null>(null);
 
-export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
+export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [muted, setMuted] = useState(() => {
+    // Recuperar la preferencia de sonido del localStorage si existe
+    const savedPreference = localStorage.getItem('sound-muted');
+    return savedPreference ? savedPreference === 'true' : false;
+  });
+  
   const [audioElements, setAudioElements] = useState<Record<SoundEffectType, HTMLAudioElement | null>>({
     click: null,
-    success: null,
     hover: null,
+    success: null,
     error: null,
     intro: null
   });
-  
-  const [muted, setMuted] = useState<boolean>(() => {
-    // Intentamos recuperar la preferencia del usuario desde localStorage
-    const savedPreference = localStorage.getItem('soundMuted');
-    return savedPreference ? JSON.parse(savedPreference) : false;
-  });
 
-  // Cargar los archivos de audio cuando el componente se monta
+  // Inicializar los elementos de audio cuando el componente se monta
   useEffect(() => {
-    const clickSound = new Audio('/sounds/click.mp3');
-    const successSound = new Audio('/sounds/success.mp3');
-    const hoverSound = new Audio('/sounds/hover.mp3');
-    const errorSound = new Audio('/sounds/error.mp3');
-    const introSound = new Audio('/sounds/intro.mp3');
-    
-    // Configurar los volúmenes
-    clickSound.volume = 0.3;
-    successSound.volume = 0.5;
-    hoverSound.volume = 0.15;
-    errorSound.volume = 0.4;
-    introSound.volume = 0.6;
+    const sounds: Record<SoundEffectType, HTMLAudioElement> = {
+      click: new Audio('/sounds/click.mp3'),
+      hover: new Audio('/sounds/hover.mp3'),
+      success: new Audio('/sounds/success.mp3'),
+      error: new Audio('/sounds/error.mp3'),
+      intro: new Audio('/sounds/intro.mp3')
+    };
 
     // Precargar los sonidos
-    Promise.all([
-      clickSound.load(),
-      successSound.load(),
-      hoverSound.load(), 
-      errorSound.load(),
-      introSound.load()
-    ]).then(() => {
-      setAudioElements({
-        click: clickSound,
-        success: successSound,
-        hover: hoverSound,
-        error: errorSound,
-        intro: introSound
-      });
-    }).catch(err => {
-      console.error("Error reproduciendo sonido:", err);
+    Object.values(sounds).forEach(audio => {
+      audio.preload = 'auto';
+      audio.volume = 0.3; // Volumen predeterminado
     });
-    
-    // Limpiar al desmontar
+
+    // La intro puede tener un volumen más alto
+    sounds.intro.volume = 0.5;
+
+    setAudioElements(sounds);
+
+    // Limpiar cuando el componente se desmonte
     return () => {
-      // No es necesario limpiar AudioElements en la mayoría de casos
-      // pero puede ser útil si necesitas detener sonidos en curso
+      Object.values(sounds).forEach(audio => {
+        audio.pause();
+        audio.src = '';
+      });
     };
   }, []);
 
-  // Actualiza localStorage cuando cambia la preferencia de mute
+  // Guardar la preferencia de sonido cuando cambia
   useEffect(() => {
-    localStorage.setItem('soundMuted', JSON.stringify(muted));
+    localStorage.setItem('sound-muted', muted.toString());
   }, [muted]);
 
   const playSound = useCallback((effect: SoundEffectType) => {
     if (muted || !audioElements[effect]) return;
     
-    try {
-      // Clonamos para poder reproducir el mismo sonido múltiples veces rápidamente
-      const sound = audioElements[effect]?.cloneNode() as HTMLAudioElement;
-      if (sound) {
-        sound.play().catch(err => {
-          // Maneja errores silenciosamente para evitar excepciones en consola
-          // Común en navegadores que requieren interacción de usuario
-        });
-      }
-    } catch (error) {
-      console.error("Error reproduciendo sonido:", error);
+    const audio = audioElements[effect];
+    if (!audio) return;
+
+    // Detener el sonido si ya está reproduciéndose y volver a empezar
+    audio.pause();
+    audio.currentTime = 0;
+    
+    // Ajustar el volumen según el tipo de efecto
+    if (effect === 'hover') {
+      audio.volume = 0.15; // Los efectos de hover son más sutiles
+    } else if (effect === 'intro') {
+      audio.volume = 0.5; // La intro puede ser más prominente
+    } else {
+      audio.volume = 0.3; // Volumen estándar para otros efectos
     }
-  }, [audioElements, muted]);
+    
+    audio.play().catch(error => {
+      // Algunas navegadores bloquean la reproducción automática
+      console.error('Error reproduciendo sonido:', error);
+    });
+  }, [muted, audioElements]);
 
   const toggleMute = useCallback(() => {
-    setMuted(prevMuted => !prevMuted);
+    setMuted(prev => !prev);
   }, []);
 
   return (
@@ -100,13 +96,10 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Hook personalizado para usar los efectos de sonido
 export const useSoundEffects = (): SoundContextType => {
   const context = useContext(SoundContext);
-  
-  if (context === undefined) {
-    throw new Error("useSoundEffects debe usarse dentro de un SoundProvider");
+  if (!context) {
+    throw new Error('useSoundEffects debe usarse dentro de un SoundProvider');
   }
-  
   return context;
 };

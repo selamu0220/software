@@ -123,58 +123,58 @@ function App() {
                 </div>
               )}
               <Switch>
-              <Route path="/" component={() => <Recursos />} />
-              <Route path="/login" component={() => <Login onLogin={login} />} />
-              <Route path="/register" component={() => <Register onRegister={login} />} />
-            <Route path="/dashboard" component={() => <Dashboard user={user} />} />
-            {/* Calendario estilo Google con generación de ideas integrada */}
-            <Route path="/calendar" component={() => <CalendarPage />} />
-            <Route path="/calendar-old" component={() => <Calendar user={user} />} />
-            <Route path="/profile" component={() => <Profile user={user} onProfileUpdate={setUser} />} />
-            <Route path="/subscribe" component={() => <Subscribe user={user} onSubscriptionUpdate={setUser} />} />
-            <Route path="/teleprompter" component={() => <Teleprompter user={user} />} />
-            
-            {/* Nuevas rutas para la biblioteca de recursos */}
-            <Route path="/recursos" component={() => <Recursos />} />
-            <Route path="/recursos/subir" component={() => <SubirRecurso />} />
-            <Route path="/recursos/:id" component={RecursoDetalle} />
-            <Route path="/web-viewer/:id" component={WebViewer} />
-            
-            {/* Nuevas rutas para el blog (mejora SEO) */}
-            <Route path="/blog" component={() => <BlogPage />} />
-            <ProtectedRoute path="/blog/new" component={() => <BlogEditorPage />} />
-            <ProtectedRoute path="/blog/edit/:id" component={() => <BlogEditorPage />} />
-            <Route path="/blog/:slug" component={BlogPostPage} />
-            
-            {/* Rutas para la biblioteca de guiones */}
-            <ProtectedRoute path="/mis-guiones" component={() => <MisGuiones />} />
-            <ProtectedRoute path="/script-editor/:id?" component={ScriptEditor} />
-            <Route path="/guiones" component={() => <SimpleScript />} />
-            
-            {/* Página de testimonios y opiniones */}
-            <Route path="/testimonios" component={() => <Testimonios />} />
-            
-            {/* Ruta para ideas de video públicas con URLs amigables para SEO */}
-            <Route path="/ideas/:slug" component={IdeaPublica} />
-            
-            {/* Ruta para gestionar todas las ideas del usuario */}
-            <ProtectedRoute path="/mis-ideas" component={() => <MisIdeas />} />
-            
-            {/* Ruta para crear o editar ideas de forma manual (tipo Google Docs) */}
-            <ProtectedRoute path="/idea-manual/:id?" component={() => <IdeaManual />} />
-            
-            {/* Ruta para generación de guiones por lotes */}
-            <ProtectedRoute path="/batch-generator" component={() => <BatchGenerationPage />} />
-            
-            {/* Ruta para estrategia de contenido basada en personal brand thesis */}
-            <ProtectedRoute path="/estrategia" component={() => <EstrategiaContenido />} />
-            
-            <Route component={NotFound} />
-          </Switch>
-        </main>
-        {showNavAndFooter && <Footer />}
-        {/* Sidebar del asistente que se puede abrir/cerrar */}
-        <AssistantSidebar />
+                <Route path="/" component={() => <Recursos />} />
+                <Route path="/login" component={() => <Login onLogin={login} />} />
+                <Route path="/register" component={() => <Register onRegister={login} />} />
+                <Route path="/dashboard" component={() => <Dashboard user={user} />} />
+                {/* Calendario estilo Google con generación de ideas integrada */}
+                <Route path="/calendar" component={() => <CalendarPage />} />
+                <Route path="/calendar-old" component={() => <Calendar user={user} />} />
+                <Route path="/profile" component={() => <Profile user={user} onProfileUpdate={setUser} />} />
+                <Route path="/subscribe" component={() => <Subscribe user={user} onSubscriptionUpdate={setUser} />} />
+                <Route path="/teleprompter" component={() => <Teleprompter user={user} />} />
+                
+                {/* Nuevas rutas para la biblioteca de recursos */}
+                <Route path="/recursos" component={() => <Recursos />} />
+                <Route path="/recursos/subir" component={() => <SubirRecurso />} />
+                <Route path="/recursos/:id" component={RecursoDetalle} />
+                <Route path="/web-viewer/:id" component={WebViewer} />
+                
+                {/* Nuevas rutas para el blog (mejora SEO) */}
+                <Route path="/blog" component={() => <BlogPage />} />
+                <ProtectedRoute path="/blog/new" component={() => <BlogEditorPage />} />
+                <ProtectedRoute path="/blog/edit/:id" component={() => <BlogEditorPage />} />
+                <Route path="/blog/:slug" component={BlogPostPage} />
+                
+                {/* Rutas para la biblioteca de guiones */}
+                <ProtectedRoute path="/mis-guiones" component={() => <MisGuiones />} />
+                <ProtectedRoute path="/script-editor/:id?" component={ScriptEditor} />
+                <Route path="/guiones" component={() => <SimpleScript />} />
+                
+                {/* Página de testimonios y opiniones */}
+                <Route path="/testimonios" component={() => <Testimonios />} />
+                
+                {/* Ruta para ideas de video públicas con URLs amigables para SEO */}
+                <Route path="/ideas/:slug" component={IdeaPublica} />
+                
+                {/* Ruta para gestionar todas las ideas del usuario */}
+                <ProtectedRoute path="/mis-ideas" component={() => <MisIdeas />} />
+                
+                {/* Ruta para crear o editar ideas de forma manual (tipo Google Docs) */}
+                <ProtectedRoute path="/idea-manual/:id?" component={() => <IdeaManual />} />
+                
+                {/* Ruta para generación de guiones por lotes */}
+                <ProtectedRoute path="/batch-generator" component={() => <BatchGenerationPage />} />
+                
+                {/* Ruta para estrategia de contenido basada en personal brand thesis */}
+                <ProtectedRoute path="/estrategia" component={() => <EstrategiaContenido />} />
+                
+                <Route component={NotFound} />
+              </Switch>
+            </main>
+            {showNavAndFooter && <Footer />}
+            {/* Sidebar del asistente que se puede abrir/cerrar */}
+            <AssistantSidebar />
           </TooltipProvider>
         </SoundProvider>
       </AuthProvider>

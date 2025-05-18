@@ -1,73 +1,144 @@
-import React from 'react';
-import { Button, ButtonProps } from "@/components/ui/button";
-import { useSoundEffects } from '@/hooks/use-sound-effects';
-import { motion } from 'framer-motion';
+import * as React from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useSoundEffects } from "@/hooks/use-sound-effects";
+import { cva } from "class-variance-authority";
 
-interface AnimatedButtonProps extends ButtonProps {
-  soundEffect?: 'click' | 'success' | 'hover' | 'error' | 'intro';
-  animation?: 'pulse' | 'bounce' | 'grow' | 'shake' | 'none';
+type ButtonProps = React.ComponentProps<typeof Button> & {
+  animation?: "pulse" | "bounce" | "grow" | "shake" | "none";
+  soundEffect?: "click" | "hover" | "success" | "error" | "none";
   tooltip?: string;
-}
-
-export const AnimatedButton = ({
-  children,
-  soundEffect = 'click',
-  animation = 'pulse',
-  tooltip,
-  ...props
-}: AnimatedButtonProps) => {
-  const { playSound } = useSoundEffects();
-
-  // Configuración de las animaciones disponibles
-  const animations = {
-    pulse: {
-      scale: [1, 1.05, 1],
-      transition: { duration: 0.3 }
-    },
-    bounce: {
-      y: [0, -6, 0],
-      transition: { duration: 0.4 }
-    },
-    grow: {
-      scale: [1, 1.1],
-      transition: { duration: 0.2 }
-    },
-    shake: {
-      x: [0, -5, 5, -5, 0],
-      transition: { duration: 0.4 }
-    },
-    none: {}
-  };
-
-  // Wrapper del botón
-  const ButtonWrapper = animation !== 'none' ? motion.div : React.Fragment;
-
-  // Props para el wrapper cuando es motion.div
-  const wrapperProps = animation !== 'none' 
-    ? { 
-        whileHover: animations[animation],
-        whileTap: { scale: 0.95 },
-        className: "inline-block", // Para que la animación funcione correctamente
-      } 
-    : {};
-
-  return (
-    <ButtonWrapper {...wrapperProps}>
-      <Button
-        {...props}
-        onClick={(e) => {
-          playSound(soundEffect);
-          if (props.onClick) {
-            props.onClick(e);
-          }
-        }}
-        onMouseEnter={() => {
-          playSound('hover');
-        }}
-        title={tooltip}
-      >
-        {children}
-      </Button>
-    </ButtonWrapper>
-  );
+  tooltipPosition?: "top" | "bottom" | "left" | "right";
+  tooltipDelay?: number;
+  tooltipClass?: string;
 };
+
+const animationVariants = {
+  pulse: {
+    initial: {},
+    animate: {},
+    whileTap: { scale: 0.95 },
+    transition: { type: "spring", stiffness: 400, damping: 10 },
+    hover: { scale: 1.05 },
+    className: "transition-transform duration-200",
+  },
+  bounce: {
+    initial: {},
+    animate: {},
+    whileTap: { y: 3 },
+    transition: { type: "spring", stiffness: 400, damping: 10 },
+    hover: { y: -3 },
+    className: "transition-transform duration-200",
+  },
+  grow: {
+    initial: {},
+    animate: {},
+    whileTap: { scale: 0.95 },
+    transition: { type: "spring", stiffness: 300, damping: 10 },
+    hover: { scale: 1.03 },
+    className: "transition-transform duration-200",
+  },
+  shake: {
+    initial: {},
+    animate: {},
+    whileTap: { x: [0, -5, 5, -5, 5, 0] },
+    transition: { duration: 0.4 },
+    hover: {},
+    className: "transition-transform duration-200",
+  },
+  none: {
+    initial: {},
+    animate: {},
+    whileTap: {},
+    transition: {},
+    hover: {},
+    className: "",
+  },
+};
+
+export const AnimatedButton = React.forwardRef<
+  HTMLButtonElement,
+  ButtonProps
+>(
+  (
+    {
+      className,
+      variant,
+      size,
+      animation = "pulse",
+      soundEffect = "click",
+      tooltip,
+      tooltipPosition = "top",
+      tooltipDelay = 700,
+      tooltipClass,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const { playSound } = useSoundEffects();
+    const animationProps = animationVariants[animation];
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (soundEffect !== "none") {
+        playSound(soundEffect);
+      }
+      props.onClick?.(e);
+    };
+
+    const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (soundEffect === "hover") {
+        playSound("hover");
+      }
+      props.onMouseEnter?.(e);
+    };
+
+    const button = (
+      <motion.div
+        initial={animationProps.initial}
+        animate={animationProps.animate}
+        whileTap={animationProps.whileTap}
+        whileHover={animationProps.hover}
+        transition={animationProps.transition}
+        className={cn(animationProps.className)}
+      >
+        <Button
+          className={className}
+          variant={variant}
+          size={size}
+          ref={ref}
+          onClick={handleClick}
+          onMouseEnter={handleMouseEnter}
+          {...props}
+        >
+          {children}
+        </Button>
+      </motion.div>
+    );
+
+    if (tooltip) {
+      return (
+        <Tooltip delayDuration={tooltipDelay}>
+          <TooltipTrigger asChild>{button}</TooltipTrigger>
+          <TooltipContent
+            side={tooltipPosition}
+            className={tooltipClass}
+          >
+            {tooltip}
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return button;
+  }
+);
+
+AnimatedButton.displayName = "AnimatedButton";
