@@ -168,10 +168,28 @@ export default function GoogleStyleCalendar({ user }: GoogleStyleCalendarProps) 
       }
     });
     
+    // Configurar un intervalo para actualizar las entradas del calendario periódicamente
+    const intervalId = setInterval(() => {
+      console.log("Actualizando calendario periódicamente...");
+      fetchEntries();
+    }, 5000); // Actualizar cada 5 segundos
+    
     return () => {
       unsubscribe();
+      clearInterval(intervalId);
     };
   }, [currentDate, user]);
+  
+  // Forzar actualización inmediata cuando el componente se monta
+  useEffect(() => {
+    // Pequeño retraso para asegurar que todo está listo
+    const timerId = setTimeout(() => {
+      fetchEntries();
+      console.log("Forzando actualización inicial del calendario");
+    }, 1000);
+    
+    return () => clearTimeout(timerId);
+  }, []);
   
   // Navegación entre meses
   const prevMonth = () => {
@@ -190,10 +208,27 @@ export default function GoogleStyleCalendar({ user }: GoogleStyleCalendarProps) 
   
   // Obtener entradas para un día específico
   const getEntriesForDay = (day: Date) => {
-    return entries.filter(entry => {
+    if (!entries || entries.length === 0) return [];
+    
+    const filtered = entries.filter(entry => {
+      // Asegurarnos de que la fecha es un objeto Date válido
       const entryDate = new Date(entry.date);
-      return isSameDay(entryDate, day);
+      
+      if (isNaN(entryDate.getTime())) {
+        console.error("Fecha inválida en entrada:", entry);
+        return false;
+      }
+      
+      const isSame = isSameDay(entryDate, day);
+      
+      if (isSame) {
+        console.log(`Entrada encontrada para ${format(day, 'dd/MM/yyyy')}:`, entry.title);
+      }
+      
+      return isSame;
     });
+    
+    return filtered;
   };
   
   // Marcar una entrada como completada/incompleta
