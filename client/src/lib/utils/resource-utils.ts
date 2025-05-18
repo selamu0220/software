@@ -13,8 +13,18 @@ export function corregirRutaRecurso(path: string | null | undefined): string {
     return path;
   }
 
-  // Si es una ruta absoluta del servidor, la convertimos a relativa
+  // Si es una ruta de home/runner/workspace, la convertimos a relativa
+  if (path.includes('/home/runner/workspace')) {
+    return path.replace('/home/runner/workspace', '');
+  }
+
+  // Si es una ruta absoluta del servidor que comienza con /uploads/, la devolvemos tal cual
   if (path.startsWith('/uploads/')) {
+    return path;
+  }
+
+  // Si es una ruta que comienza con /recursos/ o /uploads/recursos/
+  if (path.startsWith('/recursos/') || path.startsWith('/uploads/recursos/')) {
     return path;
   }
 
