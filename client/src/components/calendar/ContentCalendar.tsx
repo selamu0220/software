@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, Circle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, Circle, FileText } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parse } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -307,17 +307,36 @@ export default function ContentCalendar({ user }: ContentCalendarProps) {
                             </p>
                           )}
                         </div>
-                        <div className="ml-2 flex items-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 px-2 text-xs"
-                            asChild
-                          >
-                            <a href={entry.videoIdeaId ? `/video-ideas/${entry.videoIdeaId}` : '#'} target="_blank" rel="noopener noreferrer">
-                              Ver detalles
-                            </a>
-                          </Button>
+                        <div className="ml-2 flex items-center gap-2">
+                          {/* Verificar si es un guión (comprobando el formato de las notas) */}
+                          {entry.notes && entry.notes.includes("Guión ID:") ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2 text-xs bg-green-500/10 hover:bg-green-500/20 text-green-500"
+                              asChild
+                            >
+                              <a 
+                                href={`/script-editor?id=${entry.notes.match(/Guión ID: (\d+)/)?.[1]}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                              >
+                                <FileText className="h-3.5 w-3.5 mr-1" />
+                                Ver guión
+                              </a>
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2 text-xs"
+                              asChild
+                            >
+                              <a href={entry.videoIdeaId ? `/video-ideas/${entry.videoIdeaId}` : '#'} target="_blank" rel="noopener noreferrer">
+                                Ver detalles
+                              </a>
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))

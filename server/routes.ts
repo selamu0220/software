@@ -4319,6 +4319,200 @@ DaVinci Resolve 17 o superior
     }
   });
 
+  // Endpoint para generar múltiples guiones a la vez
+  app.post("/api/generate-multiple-scripts", requireAuth, async (req, res) => {
+    try {
+      // Validar los parámetros
+      const params = z.object({
+        dates: z.array(z.string()).min(1).max(31), // Array de fechas en formato ISO
+        category: z.string(),
+        subcategory: z.string().optional(),
+        videoLength: z.string(),
+        collectionId: z.number().int().optional(), // ID de la colección donde guardar los guiones
+        createNewCollection: z.boolean().optional(), // Si es true, crear una nueva colección
+        newCollectionName: z.string().optional(), // Nombre de la nueva colección
+      }).parse(req.body);
+
+      const userId = req.session.userId as number;
+      
+      // Verificar límites para usuarios no premium
+      const user = await storage.getUser(userId);
+      const isPremium = user?.isPremium || false;
+      
+      if (!isPremium && params.dates.length > 5) {
+        return res.status(403).json({
+          message: "Solo usuarios premium pueden generar más de 5 guiones a la vez",
+          upgrade: true
+        });
+      }
+
+      // Determinar la colección para los guiones
+      let collectionId = params.collectionId;
+      
+      // Si se solicita crear una nueva colección
+      if (params.createNewCollection && params.newCollectionName) {
+        try {
+          const newCollection = await storage.createScriptCollection({
+            userId: userId,
+            name: params.newCollectionName,
+            description: `Guiones generados automáticamente para ${params.category}`
+          });
+          
+          collectionId = newCollection.id;
+          console.log(`Colección de guiones creada con ID: ${collectionId}`);
+        } catch (collectionError) {
+          console.error("Error al crear colección de guiones:", collectionError);
+          return res.status(500).json({ message: "Error al crear colección de guiones" });
+        }
+      }
+      
+      // Si no hay colección, responder con error
+      if (!collectionId) {
+        return res.status(400).json({ 
+          message: "Debes especificar una colección o solicitar crear una nueva" 
+        });
+      }
+      
+      // Verificar que la colección existe y pertenece al usuario
+      const collection = await storage.getScriptCollection(collectionId);
+      if (!collection || collection.userId !== userId) {
+        return res.status(403).json({ 
+          message: "No tienes permiso para acceder a esta colección o no existe" 
+        });
+      }
+
+      // Generar guiones para cada fecha
+      const results = [];
+      
+      for (let i = 0; i < params.dates.length; i++) {
+        const date = new Date(params.dates[i]);
+        
+        if (isNaN(date.getTime())) {
+          console.error(`Fecha inválida: ${params.dates[i]}`);
+          continue;
+        }
+        
+        console.log(`Generando guión para ${date.toLocaleDateString()}`);
+        
+        try {
+          // Generar idea/guión con IA
+          const generatedContent = await generateVideoIdea({
+            category: params.category,
+            subcategory: params.subcategory || "",
+            videoLength: params.videoLength,
+            contentType: "fullScript", // Siempre generamos guión completo
+            fullScript: true,
+            model: "gemini-1.5-pro",
+            fromTemplates: false,
+          });
+          
+          console.log(`Guión generado: ${generatedContent.title}`);
+          
+          // Guardar la idea
+          const slug = await createUniqueSlug(slugify(generatedContent.title, { lower: true, strict: true }));
+          const videoIdea = await storage.createVideoIdea({
+            userId,
+            title: generatedContent.title,
+            slug,
+            category: params.category,
+            subcategory: params.subcategory || "",
+            videoLength: params.videoLength,
+            content: generatedContent
+          });
+          
+          // Formatear secciones del guión
+          const scriptSections = [];
+          
+          if (typeof generatedContent.fullScript === 'string') {
+            // Si el guión es un string, crear una sección única
+            scriptSections.push({
+              id: crypto.randomUUID(),
+              title: "Guión completo",
+              content: generatedContent.fullScript,
+              type: "main"
+            });
+          } else if (typeof generatedContent.fullScript === 'object') {
+            // Si es un objeto, transformar cada clave/valor en una sección
+            for (const [title, content] of Object.entries(generatedContent.fullScript || {})) {
+              scriptSections.push({
+                id: crypto.randomUUID(),
+                title,
+                content: content as string,
+                type: title.toLowerCase().includes("intro") ? "intro" : 
+                      title.toLowerCase().includes("conclu") ? "conclusion" : "main"
+              });
+            }
+          }
+          
+          // Crear el guión en la colección seleccionada
+          const script = await storage.createScript({
+            collectionId,
+            videoIdeaId: videoIdea.id,
+            title: generatedContent.title,
+            subtitle: `Guión para ${date.toLocaleDateString()}`,
+            description: Array.isArray(generatedContent.outline) ? generatedContent.outline.join("\n") : "",
+            content: "",
+            sections: scriptSections,
+            category: params.category,
+            subcategory: params.subcategory || "",
+            tags: generatedContent.tags || [],
+            timings: [],
+            totalDuration: 0,
+            version: "1.0",
+            isTemplate: false,
+            favorite: false
+          });
+          
+          // Crear entrada en el calendario para este guión
+          const calendarEntry = await storage.createCalendarEntry({
+            userId,
+            videoIdeaId: videoIdea.id,
+            title: generatedContent.title,
+            date: date,
+            completed: false,
+            notes: `Guión ID: ${script.id} - Colección: ${collection.name}`,
+            color: "#10b981", // Verde para guiones completos
+          });
+          
+          results.push({
+            date: date.toISOString(),
+            videoIdeaId: videoIdea.id,
+            scriptId: script.id,
+            calendarEntryId: calendarEntry.id,
+            title: generatedContent.title
+          });
+          
+        } catch (error) {
+          console.error(`Error generando guión para ${date.toLocaleDateString()}:`, error);
+          results.push({
+            date: date.toISOString(),
+            error: "No se pudo generar el guión para esta fecha"
+          });
+        }
+        
+        // Pausa para evitar sobrecargar la API
+        if (i < params.dates.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      res.json({
+        message: "Guiones generados y programados en el calendario",
+        collectionId,
+        collectionName: collection.name,
+        count: results.filter(r => !r.error).length,
+        results
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Datos inválidos", errors: error.errors });
+      } else {
+        console.error("Error generando múltiples guiones:", error);
+        res.status(500).json({ message: "Error generando múltiples guiones" });
+      }
+    }
+  });
+
   // Iniciar el programador de publicación automática
   scheduleAutomaticPublishing();
 
