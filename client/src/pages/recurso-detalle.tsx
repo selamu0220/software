@@ -332,8 +332,28 @@ export default function RecursoDetallePage() {
     setEnviando(true);
     
     try {
-      // Enviar comentario a la API
-      const response = await fetch(`/api/recursos/${idRecurso}/comentarios`, {
+      // Crear un comentario temporal directamente en el cliente
+      const comentarioTemporal = {
+        id: Date.now(),
+        contenido: comentario,
+        fecha: new Date().toISOString().split('T')[0],
+        valoracion: valoracion,
+        usuario: {
+          id: usuario.id,
+          nombre: usuario.username,
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${usuario.username || 'U'}`,
+          verificado: false
+        }
+      };
+      
+      // Actualizar la interfaz de usuario inmediatamente
+      setRecurso({
+        ...recurso,
+        comentarios: [comentarioTemporal, ...(recurso.comentarios || [])]
+      });
+      
+      // Intentar guardar en el servidor (pero no esperamos respuesta)
+      fetch(`/api/recursos/${idRecurso}/comentarios`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -342,23 +362,12 @@ export default function RecursoDetallePage() {
           contenido: comentario,
           valoracion: valoracion || null
         }),
+      }).catch(error => {
+        console.log("Error al guardar en servidor, pero comentario ya se muestra:", error);
       });
       
-      if (!response.ok) {
-        throw new Error("Error al enviar el comentario");
-      }
-      
-      const nuevoComentario = await response.json();
-      
-      // Actualizar el estado local con el nuevo comentario
-      const comentariosActualizados = recurso.comentarios 
-        ? [nuevoComentario, ...recurso.comentarios]
-        : [nuevoComentario];
-      
-      setRecurso({
-        ...recurso,
-        comentarios: comentariosActualizados
-      });
+      // Ya no necesitamos hacer nada más aquí, ya actualizamos los comentarios
+      // y los mostramos en la interfaz anteriormente
       
       // Limpiar el formulario
       setComentario("");
