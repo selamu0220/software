@@ -441,92 +441,100 @@ export const generationRequestSchema = z.object({
 // Eliminado debido a la duplicación
 
 // Esta definición reemplaza la anterior de contentStrategies
-// para implementar el esquema del Personal Brand Thesis Workbook
+// Sistema flexible de estrategias de contenido
+export const contentStrategies = pgTable("content_strategies", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  authorName: text("author_name").notNull(), // Ej: "Iman Ghadzi", "Personal", etc.
+  isPublic: boolean("is_public").default(false).notNull(), // Si es visible para otros usuarios
+  isVerified: boolean("is_verified").default(false).notNull(), // Si es verificada por administradores
+  templateType: text("template_type").notNull(), // "personal_brand", "youtube", "tiktok", etc.
+  thumbnailUrl: text("thumbnail_url"), // Imagen de la estrategia
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Configuración específica de cada estrategia
+export const contentStrategyConfigs = pgTable("content_strategy_configs", {
+  id: serial("id").primaryKey(),
+  strategyId: integer("strategy_id").references(() => contentStrategies.id).notNull(),
+  
+  // Métricas y objetivos
+  currentFollowers: integer("current_followers"), // Número actual de seguidores
+  followerGoal: integer("follower_goal"), // Meta de seguidores
+  targetDate: timestamp("target_date"), // Fecha objetivo para alcanzar metas
+  dailyContentGoal: integer("daily_content_goal").default(1), // Cuántos contenidos por día
+  
+  // Plataformas principales
+  mainPlatform: text("main_platform"), // YouTube, TikTok, IG, etc.
+  secondaryPlatforms: text("secondary_platforms").array(), // Otras plataformas
+  
+  // Audiencia
+  targetAudience: text("target_audience").notNull(), // Descripción de la audiencia objetivo
+  audienceAge: text("audience_age"), // Rango de edad "18-24", "25-34", etc.
+  audienceInterests: text("audience_interests").array(), // Intereses principales
+  audienceProblems: text("audience_problems").array(), // Problemas que resuelve
+  
+  // Pilares de contenido (estructura flexible para diferentes estrategias)
+  contentPillars: json("content_pillars"), // Pilares de contenido en formato JSON
+  
+  // Datos adicionales específicos
+  additionalSettings: json("additional_settings"), // Campo JSON para configuraciones específicas
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Plantillas de la estrategia para cada día de la semana
+export const contentStrategyTemplates = pgTable("content_strategy_templates", {
+  id: serial("id").primaryKey(),
+  strategyId: integer("strategy_id").references(() => contentStrategies.id).notNull(),
+  dayOfWeek: integer("day_of_week").notNull(), // 0-6 (domingo-sábado)
+  contentType: text("content_type").notNull(), // "video", "post", "stories", etc.
+  contentPillar: text("content_pillar"), // Pilar al que pertenece
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  template: text("template").notNull(), // Plantilla con variables que se pueden reemplazar
+  exampleContent: text("example_content"), // Ejemplo de contenido usando esta plantilla
+  bestPractices: text("best_practices"), // Consejos para usar esta plantilla
+  isRequired: boolean("is_required").default(false).notNull(), // Si es obligatorio este día
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Contenido generado según la estrategia
+export const strategyGeneratedContent = pgTable("strategy_generated_content", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  strategyId: integer("strategy_id").references(() => contentStrategies.id).notNull(),
+  templateId: integer("template_id").references(() => contentStrategyTemplates.id),
+  title: text("title").notNull(),
+  contentType: text("content_type").notNull(), // "video", "post", "stories", etc.
+  content: text("content").notNull(),
+  scheduledDate: timestamp("scheduled_date"), // Fecha programada para publicar
+  isPublished: boolean("is_published").default(false).notNull(),
+  calendarEntryId: integer("calendar_entry_id").references(() => calendarEntries.id), // Vinculación con calendario
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Para compatibilidad con el código existente, mantenemos esta tabla pero la reemplazamos
 export const contentStrategiesWorkbook = pgTable("content_strategies_workbook", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
+  strategyId: integer("strategy_id").references(() => contentStrategies.id), // Vinculación con nueva estrategia
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   
-  // Sección 1: Fundamentos
-  adviceTopics: text("advice_topics"),
-  naturalSkills: text("natural_skills"),
-  introduction: text("introduction"),
-  uniqueValue: text("unique_value"),
-  uniqueExperiences: text("unique_experiences"),
-  problemsSolved: text("problems_solved"),
-  passionTopics: text("passion_topics"),
-  coreValues: text("core_values"),
-  guidingPrinciples: text("guiding_principles"),
-  unconventionalBelief: text("unconventional_belief"),
+  // Campos básicos para mantener compatibilidad
   targetAudience: text("target_audience"),
-  audienceProblem: text("audience_problem"),
-  audienceBenefit: text("audience_benefit"),
-  valueStatement: text("value_statement"),
-  
-  // Sección 2: Micro Personal Brand
-  audiencePlatforms: text("audience_platforms"),
-  selectedPlatform: text("selected_platform"),
-  platformReason: text("platform_reason"),
-  idealCustomerAge: text("ideal_customer_age"),
-  idealCustomerIncome: text("ideal_customer_income"),
-  idealCustomerJob: text("ideal_customer_job"),
-  idealCustomerProblems: text("ideal_customer_problems"),
-  idealCustomerGoals: text("ideal_customer_goals"),
-  idealCustomerSearches: text("ideal_customer_searches"),
-  contentStrategies: text("content_strategies"),
-  
-  // Sección 3: Estrategia de Contenido
-  audienceProblems: text("audience_problems"),
   contentTopics: text("content_topics"),
-  
-  // Pilares de contenido
-  pillarActionContent: text("pillar_action_content"),
-  pillarAwarenessContent: text("pillar_awareness_content"),
-  pillarNarrativeContent: text("pillar_narrative_content"),
-  pillarAttractorContent: text("pillar_attractor_content"),
-  pillarNurtureContent: text("pillar_nurture_content"),
-  
-  // Problem Farming
-  problemOriented1: text("problem_oriented_1"),
-  solutionOriented1: text("solution_oriented_1"),
-  problemOriented2: text("problem_oriented_2"),
-  solutionOriented2: text("solution_oriented_2"),
-  problemOriented3: text("problem_oriented_3"),
-  solutionOriented3: text("solution_oriented_3"),
-  
-  // Model & Dream Lists
-  modelList: text("model_list"),
-  dreamList: text("dream_list"),
-  
-  // Calendario de contenido
   contentCalendar: text("content_calendar"),
-  firstContentOutline: text("first_content_outline"),
   
-  // Sección 4: Monetización
-  monetizationReadiness: text("monetization_readiness"),
-  monetizationObstacles: text("monetization_obstacles"),
-  monetizationExpertise: text("monetization_expertise"),
-  problemToSolve: text("problem_to_solve"),
-  solutionDifferentiation: text("solution_differentiation"),
-  transformation: text("transformation"),
-  
-  // Sección 5: Automatización y Escalabilidad
-  systemWork: text("system_work"),
-  coachingPhases: text("coaching_phases"),
-  phaseDetails: text("phase_details"),
-  leadMagnets: text("lead_magnets"),
-  callToAction: text("call_to_action"),
-  qualifyingQuestion: text("qualifying_question"),
-  communityType: text("community_type"),
-  communityValue: text("community_value"),
-  communityRules: text("community_rules"),
-  communityEngagement: text("community_engagement"),
-  
-  // Plan de acción
-  shortTermPriorities: text("short_term_priorities"),
-  monthlyPriorities: text("monthly_priorities"),
-  quarterlyGoals: text("quarterly_goals")
+  // Campos adicionales que se migrarán a la nueva estructura
+  migratedToNewSystem: boolean("migrated_to_new_system").default(false),
 });
 
 // Quitamos estas definiciones para evitar conflictos
@@ -713,6 +721,56 @@ export const contentStrategiesWorkbookRelations = relations(contentStrategiesWor
 }));
 
 // Tipos para la estrategia de contenido
-export const insertContentStrategySchema = createInsertSchema(contentStrategiesWorkbook);
+// Esquemas de inserción para las nuevas tablas
+export const insertContentStrategySchema = createInsertSchema(contentStrategies).pick({
+  userId: true,
+  name: true,
+  description: true,
+  authorName: true,
+  isPublic: true,
+  templateType: true,
+  thumbnailUrl: true,
+});
+
+export const insertContentStrategyConfigSchema = createInsertSchema(contentStrategyConfigs).pick({
+  strategyId: true,
+  currentFollowers: true,
+  followerGoal: true,
+  targetDate: true,
+  dailyContentGoal: true,
+  mainPlatform: true,
+  secondaryPlatforms: true,
+  targetAudience: true,
+  audienceAge: true,
+  audienceInterests: true,
+  audienceProblems: true,
+  contentPillars: true,
+  additionalSettings: true,
+});
+
+export const insertContentStrategyTemplateSchema = createInsertSchema(contentStrategyTemplates).pick({
+  strategyId: true,
+  dayOfWeek: true,
+  contentType: true,
+  contentPillar: true,
+  title: true,
+  description: true,
+  template: true,
+  exampleContent: true,
+  bestPractices: true,
+  isRequired: true,
+});
+
+export const insertStrategyGeneratedContentSchema = createInsertSchema(strategyGeneratedContent).pick({
+  userId: true,
+  strategyId: true,
+  templateId: true,
+  title: true,
+  contentType: true,
+  content: true,
+  scheduledDate: true,
+  isPublished: true,
+  calendarEntryId: true,
+});
 export type ContentStrategyInsert = z.infer<typeof insertContentStrategySchema>;
 export type ContentStrategy = typeof contentStrategiesWorkbook.$inferSelect;
