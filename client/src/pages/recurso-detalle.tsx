@@ -275,12 +275,12 @@ export default function RecursoDetallePage() {
             id: data.id,
             titulo: data.title,
             descripcion: data.description,
-            categoria: data.categoryId ? `Categoría ${data.categoryId}` : "General",
-            imagen: data.thumbnailUrl || null,
+            categoria: data.categoryName || (data.categoryId ? `Categoría ${data.categoryId}` : "General"),
+            imagen: data.thumbnailUrl ? data.thumbnailUrl.replace('/home/runner/workspace', '') : null,
             autor: {
               id: data.userId,
-              nombre: data.userId ? `Usuario ${data.userId}` : "Anónimo",
-              avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${data.userId || 'AN'}`,
+              nombre: data.author || data.username || "Anónimo",
+              avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${data.author || data.username || 'AN'}`,
               verificado: false
             },
             fechaPublicacion: data.createdAt ? new Date(data.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
