@@ -1132,13 +1132,12 @@ DaVinci Resolve 17 o superior
       }
       
       // Verificar que el recurso existe
-      const recurso = await db
-        .select()
-        .from(resources)
-        .where(eq(resources.id, resourceId))
-        .limit(1);
+      const recurso = await pool.query(
+        "SELECT id FROM resources WHERE id = $1",
+        [resourceId]
+      );
         
-      if (!recurso || recurso.length === 0) {
+      if (!recurso || recurso.rows.length === 0) {
         return res.status(404).json({ message: "Recurso no encontrado" });
       }
       
@@ -1150,11 +1149,11 @@ DaVinci Resolve 17 o superior
       
       console.log(`Intentando insertar comentario - resourceId: ${resourceId}, userId: ${userId}, valoracion: ${valoracion || 'null'}`);
       
-      // Insertar comentario usando ejecución SQL directa con valores ajustados
+      // Insertar comentario usando pool.query directamente en lugar de db.execute
       let comentario;
       try {
-        // Insertar comentario de manera más simple
-        const result = await db.execute(
+        // Debemos usar pool.query en lugar de db.execute para ver si resuelve el problema
+        const result = await pool.query(
           `INSERT INTO resource_comments 
            (resource_id, user_id, content, rating, likes, is_pinned, created_at, updated_at)
            VALUES 
@@ -1163,7 +1162,7 @@ DaVinci Resolve 17 o superior
           [resourceId, userId, contenidoSanitizado, valoracion ? parseInt(valoracion) : null]
         );
         
-        if (!result || !result.rows || result.rows.length === 0) {
+        if (!result || result.rows.length === 0) {
           return res.status(500).json({ message: "Error al crear el comentario" });
         }
         
@@ -1179,9 +1178,10 @@ DaVinci Resolve 17 o superior
       }
       
       // Obtener información del usuario para la respuesta
-      const userResult = await db.execute(`
-        SELECT id, username FROM users WHERE id = $1
-      `, [userId]);
+      const userResult = await pool.query(
+        "SELECT id, username FROM users WHERE id = $1",
+        [userId]
+      );
       
       if (!userResult || !userResult.rows || userResult.rows.length === 0) {
         return res.status(500).json({ message: "Error al obtener información del usuario" });
