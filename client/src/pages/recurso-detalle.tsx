@@ -293,7 +293,7 @@ export default function RecursoDetallePage() {
             fileType: data.fileType,
             version: data.version || "1.0",
             tags: data.tags || [],
-            comentarios: [] // Inicialmente vacío, se cargará después
+            comentarios: data.comentarios || [] // Usar comentarios reales o array vacío
           });
         } else {
           toast({
