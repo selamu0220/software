@@ -1774,6 +1774,20 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
   }
+
+  // Obtener comentarios de un recurso
+  async getResourceComments(resourceId: number): Promise<any[]> {
+    try {
+      const result = await db.query.resourceComments.findMany({
+        where: eq(resourceComments.resourceId, resourceId),
+        orderBy: [desc(resourceComments.createdAt)]
+      });
+      return result;
+    } catch (error) {
+      console.error("Error obteniendo comentarios del recurso:", error);
+      return [];
+    }
+  }
 }
 
 // Use DatabaseStorage instead of MemStorage

@@ -966,6 +966,47 @@ DaVinci Resolve 17 o superior
         });
       }
       
+      // Obtenemos información del usuario autor del recurso
+      if (recurso.userId) {
+        const autor = await storage.getUser(recurso.userId);
+        if (autor) {
+          // Agregamos el nombre de usuario directamente
+          recurso.author = autor.username;
+        }
+      }
+      
+      // Corregir rutas de archivos
+      if (recurso.thumbnailUrl && recurso.thumbnailUrl.startsWith('/home/runner/workspace')) {
+        recurso.thumbnailUrl = recurso.thumbnailUrl.replace('/home/runner/workspace', '');
+      }
+      
+      if (recurso.downloadUrl && recurso.downloadUrl.startsWith('/home/runner/workspace')) {
+        recurso.downloadUrl = recurso.downloadUrl.replace('/home/runner/workspace', '');
+      }
+      
+      // Obtener los comentarios del recurso
+      const comentarios = await storage.getResourceComments(recurso.id);
+      
+      // Formatear los comentarios con información del usuario
+      const comentariosFormateados = await Promise.all(comentarios.map(async (com) => {
+        const usuario = await storage.getUser(com.userId);
+        return {
+          id: com.id,
+          contenido: com.content,
+          valoracion: com.rating,
+          fecha: new Date(com.createdAt).toISOString().split('T')[0],
+          usuario: {
+            id: com.userId,
+            nombre: usuario ? usuario.username : "Anónimo",
+            avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${usuario ? usuario.username : 'AN'}`,
+            verificado: false
+          }
+        };
+      }));
+      
+      // Añadir los comentarios al recurso
+      recurso.comentarios = comentariosFormateados;
+      
       res.json(recurso);
     } catch (error) {
       console.error("Error al obtener recurso:", error);
