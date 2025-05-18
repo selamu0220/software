@@ -10,111 +10,86 @@ interface IntroAnimationProps {
 
 const IntroAnimation = ({ 
   onComplete, 
-  logoPath = '/assets/logo.svg', 
+  logoPath = "/images/logo.png", 
   showTagline = true 
 }: IntroAnimationProps) => {
-  const { playSound } = useSoundEffects();
   const [animationComplete, setAnimationComplete] = useState(false);
+  const { playSound } = useSoundEffects();
   
-  // Iniciar sonido de intro cuando el componente se carga
   useEffect(() => {
+    // Reproducir sonido de intro cuando el componente se monta
     playSound('intro');
-  }, [playSound]);
-  
-  // Callback cuando la animación se completa
-  const handleAnimationComplete = () => {
-    setAnimationComplete(true);
-    if (onComplete) {
-      setTimeout(() => {
-        onComplete();
-      }, 500); // pequeño retraso antes de llamar a onComplete
-    }
-  };
-  
-  // Variantes de animación para el logo
-  const logoVariants = {
-    hidden: { scale: 0.3, opacity: 0, y: 50 },
-    visible: { 
-      scale: 1,
-      opacity: 1,
-      y: 0,
-      transition: { 
-        type: "spring",
-        damping: 15,
-        stiffness: 100,
-        delay: 0.2,
-        duration: 1.2
-      }
-    },
-    exit: {
-      scale: 1.2,
-      opacity: 0,
-      transition: { duration: 0.5 }
-    }
-  };
-  
-  // Variantes para el texto
-  const textVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1,
-      y: 0,
-      transition: { 
-        delay: 1.2,
-        duration: 0.8,
-        ease: "easeOut" 
-      } 
-    },
-    exit: {
-      opacity: 0,
-      transition: { duration: 0.3 }
-    }
-  };
-  
-  // Variantes para el fondo
-  const backgroundVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.5 } },
-    exit: { opacity: 0, transition: { duration: 0.8, delay: 0.3 } }
-  };
+    
+    // Configurar un temporizador para la animación completa
+    const timer = setTimeout(() => {
+      setAnimationComplete(true);
+      onComplete?.();
+    }, 3000); // La animación dura 3 segundos
+    
+    return () => clearTimeout(timer);
+  }, [onComplete, playSound]);
 
   return (
     <motion.div
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      variants={backgroundVariants}
-      onAnimationComplete={handleAnimationComplete}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black"
+      className="fixed inset-0 flex flex-col items-center justify-center bg-black z-50"
+      initial={{ opacity: 1 }}
+      animate={animationComplete ? { opacity: 0, display: 'none' } : { opacity: 1 }}
+      transition={{ duration: 0.5, ease: 'easeInOut' }}
     >
-      <motion.div 
-        variants={logoVariants}
-        className="relative w-72 h-72 mb-8 flex items-center justify-center"
+      <motion.div
+        className="flex flex-col items-center space-y-8"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
       >
-        {/* Logo principal */}
-        <img src={logoPath} alt="Red Creativa Pro" className="w-full h-full object-contain" />
-        
-        {/* Elementos decorativos animados alrededor del logo */}
-        <motion.div 
-          className="absolute inset-0"
-          animate={{ 
-            rotate: 360,
-            transition: { repeat: Infinity, duration: 20, ease: "linear" }
+        <motion.img
+          src={logoPath}
+          alt="Red Creativa Pro"
+          className="w-40 h-40 object-contain"
+          initial={{ y: -20 }}
+          animate={{ y: 0 }}
+          transition={{ 
+            duration: 0.8, 
+            ease: 'easeOut',
+            delay: 0.3
           }}
-        >
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-primary rounded-full" />
-          <div className="absolute top-1/3 right-0 w-1 h-1 bg-purple-400 rounded-full" />
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-indigo-500 rounded-full" />
-          <div className="absolute top-1/2 left-0 w-2 h-2 bg-blue-400 rounded-full" />
-        </motion.div>
+        />
+        
+        {showTagline && (
+          <motion.div
+            className="text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7, duration: 0.8 }}
+          >
+            <h1 className="text-xl md:text-2xl font-bold text-primary mb-2">
+              Red Creativa Pro
+            </h1>
+            <p className="text-sm md:text-base text-muted-foreground">
+              Potencia tu creatividad con inteligencia artificial
+            </p>
+          </motion.div>
+        )}
       </motion.div>
       
-      {showTagline && (
-        <motion.div variants={textVariants} className="text-center">
-          <h1 className="text-3xl font-bold text-white">Red Creativa Pro</h1>
-          <p className="text-lg text-gray-300 mt-2">Tu asistente IA para creación de contenido</p>
-        </motion.div>
-      )}
+      <motion.div
+        className="absolute bottom-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5, duration: 0.5 }}
+      >
+        <p className="text-sm text-muted-foreground">Cargando experiencia creativa...</p>
+        <motion.div 
+          className="h-1 bg-primary rounded-full mt-2"
+          initial={{ width: 0 }}
+          animate={{ width: '100%' }}
+          transition={{ 
+            duration: 2.5,
+            ease: 'easeInOut',
+            delay: 0.2
+          }}
+        />
+      </motion.div>
     </motion.div>
   );
 };

@@ -169,6 +169,9 @@ function App() {
                 {/* Ruta para estrategia de contenido basada en personal brand thesis */}
                 <ProtectedRoute path="/estrategia" component={() => <EstrategiaContenido />} />
                 
+                {/* Ruta para demostración de animaciones y efectos UI */}
+                <Route path="/demo-animaciones" component={() => <AnimationShowcase />} />
+                
                 <Route component={NotFound} />
               </Switch>
             </main>
