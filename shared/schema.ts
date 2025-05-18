@@ -433,6 +433,9 @@ export const generationRequestSchema = z.object({
   customChannelType: z.string().optional(),
   useSubcategory: z.boolean().default(true),
   geminiApiKey: z.string().optional(),
+  fullScript: z.boolean().optional(), // Indica si debe generar un guión completo
+  model: z.string().optional(), // Permite especificar el modelo de IA a usar
+  fromTemplates: z.boolean().optional(), // Si debe generar desde plantillas existentes
 });
 
 // Eliminado debido a la duplicación

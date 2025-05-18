@@ -65,6 +65,10 @@ export default function IdeaGeneratorDialog({
 
   const handleIdeaGenerated = (idea: VideoIdeaContent) => {
     setGeneratedIdea(idea);
+    // Si se proporcionó la función onGenerate, llamarla con la idea generada
+    if (onGenerate) {
+      onGenerate(idea);
+    }
   };
 
   // Obtener fechas basadas en el timeframe seleccionado

@@ -400,6 +400,7 @@ export default function ContentCalendar({ user }: ContentCalendarProps) {
         isOpen={showIdeaGeneratorDialog}
         onClose={() => setShowIdeaGeneratorDialog(false)}
         onGenerate={(idea) => {
+          // La idea ya se guarda automáticamente en el calendario dentro del componente
           setShowIdeaGeneratorDialog(false);
           // Refrescar entradas del calendario después de generar una idea
           fetchCalendarEntries();
