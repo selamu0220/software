@@ -67,94 +67,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-// Recurso de ejemplo (simulando datos de API)
-const recursoEjemplo = {
-  id: 1,
-  titulo: "Pack de 50 Transiciones para DaVinci Resolve",
-  descripcion: "Colección completa de transiciones profesionales para tus proyectos de video. Incluye efectos de desvanecimiento, barrido, zoom, glitch, distorsión y muchos más, todos optimizados para un rendimiento óptimo en DaVinci Resolve.",
-  contenido: `
-  <p>Este pack incluye 50 transiciones profesionales diseñadas específicamente para DaVinci Resolve, perfectas para proyectos de todo tipo:</p>
-  
-  <ul>
-    <li>10 transiciones de desvanecimiento avanzadas</li>
-    <li>15 transiciones de movimiento dinámico</li>
-    <li>8 transiciones con efectos glitch y distorsión</li>
-    <li>7 transiciones basadas en formas geométricas</li>
-    <li>10 transiciones de estilo cinematográfico</li>
-  </ul>
-  
-  <p>Todas las transiciones son fáciles de usar: simplemente arrastra y suelta en tu línea de tiempo y ajusta la duración según tus necesidades.</p>
-  
-  <h3>Compatibilidad</h3>
-  <p>DaVinci Resolve 17 o superior</p>
-  
-  <h3>Instrucciones de instalación</h3>
-  <ol>
-    <li>Descarga y descomprime el archivo</li>
-    <li>Copia la carpeta "Transiciones" en la ubicación: [Documentos/BlackmagicDesign/DaVinci Resolve/Effects]</li>
-    <li>Reinicia DaVinci Resolve</li>
-    <li>Las transiciones aparecerán en el panel de efectos</li>
-  </ol>
-  `,
-  categoria: "Edición de Video",
-  subcategoria: "Transiciones",
-  autor: {
-    id: 1,
-    nombre: "Red Creativa",
-    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=RC",
-    verificado: true,
-    fechaRegistro: "2022-05-15"
-  },
-  fechaPublicacion: "2023-10-12",
-  ultimaActualizacion: "2024-01-18",
-  tamanoArchivo: "156 MB",
-  tipo: "ZIP",
-  version: "2.1",
-  destacado: true,
-  verificado: true,
-  imagen: "https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1200&h=600",
-  enlaceExterno: "",
-  enlaceDescarga: "/descargas/pack-transiciones-davinci.zip",
-  tags: ["DaVinci Resolve", "Transiciones", "Efectos", "Edición", "Video"],
-  comentarios: [
-    {
-      id: 1,
-      usuario: {
-        id: 101,
-        nombre: "VideoEditor",
-        avatar: "https://api.dicebear.com/7.x/initials/svg?seed=VE",
-        verificado: false
-      },
-      contenido: "Excelente pack de transiciones, me ha ahorrado muchísimo tiempo en mis proyectos. Las transiciones de tipo glitch son especialmente útiles para mis videos de estilo urbano.",
-      fecha: "2024-03-15",
-      valoracion: 5
-    },
-    {
-      id: 2,
-      usuario: {
-        id: 102,
-        nombre: "FilmMaker",
-        avatar: "https://api.dicebear.com/7.x/initials/svg?seed=FM",
-        verificado: true
-      },
-      contenido: "Me ha funcionado muy bien, aunque algunas transiciones son un poco pesadas para mi equipo. La documentación podría ser más clara sobre los requisitos de sistema.",
-      fecha: "2024-02-28",
-      valoracion: 4
-    },
-    {
-      id: 3,
-      usuario: {
-        id: 103,
-        nombre: "ContentCreator",
-        avatar: "https://api.dicebear.com/7.x/initials/svg?seed=CC",
-        verificado: false
-      },
-      contenido: "Las transiciones son muy profesionales. Hay algunas que no me terminan de convencer, pero la mayoría son geniales. Volveré a descargar futuras actualizaciones.",
-      fecha: "2024-01-22",
-      valoracion: 4
-    }
-  ]
-};
+// Ya no usamos datos de ejemplo para evitar confusiones
+// La información real siempre vendrá de la API
 
 // Componente de valoración con estrellas
 function RatingStars({ rating }: { rating: number }) {
@@ -254,7 +168,7 @@ export default function RecursoDetallePage() {
   const [enviando, setEnviando] = useState(false);
   const [cargando, setCargando] = useState(true);
   // Estado para recursos con tipado mejorado
-  const [recurso, setRecurso] = useState<any>(recursoEjemplo);
+  const [recurso, setRecurso] = useState<any>(null);
   const [usuario, setUsuario] = useState<any>(null);
   // Estados para la galería de imágenes
   const [imagenActual, setImagenActual] = useState(0);
@@ -356,23 +270,30 @@ export default function RecursoDetallePage() {
         
         if (response.ok) {
           const data = await response.json();
+          // Usar solo los datos reales del recurso, sin datos de ejemplo
           setRecurso({
-            ...recursoEjemplo, // Mantener estructura base para campos que puedan faltar
-            ...data,
-            // Asegurar que tenemos los campos necesarios para la visualización
             id: data.id,
             titulo: data.title,
             descripcion: data.description,
             categoria: data.categoryId ? `Categoría ${data.categoryId}` : "General",
-            imagen: data.thumbnailUrl || recursoEjemplo.imagen,
+            imagen: data.thumbnailUrl || null,
             autor: {
-              ...recursoEjemplo.autor,
               id: data.userId,
-              nombre: data.userId ? `Usuario ${data.userId}` : "Anónimo"
+              nombre: data.userId ? `Usuario ${data.userId}` : "Anónimo",
+              avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${data.userId || 'AN'}`,
+              verificado: false
             },
             fechaPublicacion: data.createdAt ? new Date(data.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-            contenido: data.content || recursoEjemplo.contenido,
-            enlaceDescarga: data.fileUrl || data.downloadUrl || recursoEjemplo.enlaceDescarga
+            // No mostrar contenido de ejemplo si no hay contenido real
+            contenido: data.content || `<p>${data.description || 'Sin contenido adicional'}</p>`,
+            enlaceDescarga: data.downloadUrl || null,
+            enlaceExterno: data.externalUrl || null,
+            // Otros campos con datos reales
+            fileSize: data.fileSize,
+            fileType: data.fileType,
+            version: data.version || "1.0",
+            tags: data.tags || [],
+            comentarios: [] // Inicialmente vacío, se cargará después
           });
         } else {
           toast({
