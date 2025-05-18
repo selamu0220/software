@@ -271,16 +271,17 @@ export default function RecursoDetallePage() {
         if (response.ok) {
           const data = await response.json();
           // Usar solo los datos reales del recurso, sin datos de ejemplo
+          console.log("Datos recibidos:", data);
           setRecurso({
             id: data.id,
             titulo: data.title,
             descripcion: data.description,
             categoria: data.categoryName || (data.categoryId ? `Categoría ${data.categoryId}` : "General"),
-            imagen: data.thumbnailUrl ? data.thumbnailUrl.replace('/home/runner/workspace', '') : null,
+            imagen: corregirRutaRecurso(data.thumbnailUrl),
             autor: {
               id: data.userId,
-              nombre: data.author || data.username || "Anónimo",
-              avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${data.author || data.username || 'AN'}`,
+              nombre: data.username || data.author || "Anónimo",
+              avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${data.username || data.author || 'AN'}`,
               verificado: false
             },
             fechaPublicacion: data.createdAt ? new Date(data.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
