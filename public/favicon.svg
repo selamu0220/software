@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo negro -->
+  <rect width="32" height="32" rx="4" fill="#000000"/>
+  
+  <!-- Letra R estilizada -->
+  <path d="M8 8H16C18.2091 8 20 9.79086 20 12C20 14.2091 18.2091 16 16 16H12L16 24H12L8 16V8Z" fill="#FF3E00"/>
+  
+  <!-- Punto creativo -->
+  <circle cx="22" cy="10" r="2" fill="#FFFFFF"/>
+</svg>

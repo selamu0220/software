@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo negro con gradiente sutil -->
+  <rect width="1200" height="630" fill="url(#paint0_linear)"/>
+  
+  <!-- Formas decorativas en el fondo -->
+  <circle cx="100" cy="530" r="300" fill="url(#paint1_radial)" opacity="0.1"/>
+  <circle cx="1100" cy="100" r="200" fill="url(#paint2_radial)" opacity="0.1"/>
+  
+  <!-- Logo principal -->
+  <path d="M480 200C480 188.954 488.954 180 500 180H700C711.046 180 720 188.954 720 200V250C720 261.046 711.046 270 700 270H500C488.954 270 480 261.046 480 250V200Z" fill="#FF3E00"/>
+  
+  <!-- Texto - Red Creativa Pro -->
+  <text x="600" y="330" font-family="'JetBrains Mono', monospace" font-size="64" font-weight="700" fill="white" text-anchor="middle">RED CREATIVA PRO</text>
+  
+  <!-- Subtítulo -->
+  <text x="600" y="390" font-family="'JetBrains Mono', monospace" font-size="28" fill="#AAAAAA" text-anchor="middle">Recursos Avanzados para Creadores de Contenido</text>
+  
+  <!-- Característica 1 -->
+  <circle cx="350" cy="470" r="8" fill="#FF3E00"/>
+  <text x="370" y="475" font-family="'JetBrains Mono', monospace" font-size="20" fill="white">Ideas de Vídeo IA</text>
+  
+  <!-- Característica 2 -->
+  <circle cx="600" cy="470" r="8" fill="#FF3E00"/>
+  <text x="620" y="475" font-family="'JetBrains Mono', monospace" font-size="20" fill="white">Generador de Guiones</text>
+  
+  <!-- Característica 3 -->
+  <circle cx="850" cy="470" r="8" fill="#FF3E00"/>
+  <text x="870" y="475" font-family="'JetBrains Mono', monospace" font-size="20" fill="white">Recursos Creativos</text>
+  
+  <!-- URL del sitio -->
+  <text x="600" y="550" font-family="'JetBrains Mono', monospace" font-size="24" fill="#888888" text-anchor="middle">redcreativa.pro</text>
+  
+  <!-- Gradientes para los efectos -->
+  <defs>
+    <linearGradient id="paint0_linear" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#000000"/>
+      <stop offset="1" stop-color="#0A0A0A"/>
+    </linearGradient>
+    <radialGradient id="paint1_radial" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(100 530) rotate(90) scale(300)">
+      <stop stop-color="#FF3E00" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#FF3E00" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="paint2_radial" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1100 100) rotate(90) scale(200)">
+      <stop stop-color="#FF3E00" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#FF3E00" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+</svg>

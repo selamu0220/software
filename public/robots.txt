@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+Sitemap: https://redcreativa.pro/sitemap.xml
+
+# Permitir a todos los bots
+User-agent: Googlebot
+Allow: /
+User-agent: Googlebot-Image
+Allow: /
+User-agent: Googlebot-Mobile
+Allow: /
+User-agent: Bingbot
+Allow: /
+User-agent: Slurp
+Allow: /
+User-agent: DuckDuckBot
+Allow: /
+
+# Directorios privados o de administración
+Disallow: /dashboard/admin/
+Disallow: /cgi-bin/
