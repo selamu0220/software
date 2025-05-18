@@ -1142,64 +1142,51 @@ DaVinci Resolve 17 o superior
         return res.status(404).json({ message: "Recurso no encontrado" });
       }
       
-      // Insertar comentario en la base de datos usando la estructura correcta de la tabla
-      try {
-        const [comentarioCreado] = await db
-          .insert(resourceComments)
-          .values({
-            resource_id: resourceId,  // Cambiado a resource_id para coincidir con el nombre de la columna
-            user_id: userId,          // Cambiado a user_id para coincidir con el nombre de la columna
-            content: contenido,
-            rating: valoracion || null,
-            likes: 0,
-            is_pinned: false,
-            parent_id: null,
-          })
-          .returning();
-          
-        console.log("Comentario creado correctamente:", comentarioCreado);
-        
-        // Obtener información del usuario para la respuesta
-        const [usuario] = await db
-          .select()
-          .from(users)
-          .where(eq(users.id, userId));
-        
-        return res.status(201).json({
-          id: comentarioCreado.id,
-          content: comentarioCreado.content,
-          rating: comentarioCreado.rating,
-          resourceId: comentarioCreado.resource_id,
-          user: {
-            id: usuario.id,
-            username: usuario.username
-          },
-          createdAt: comentarioCreado.created_at
-        });
-      } catch (error) {
-        console.error("Error al crear comentario:", error);
-        return res.status(500).json({ message: "Error al procesar tu reseña" });
+      // Sanitizar el contenido del comentario para evitar inyecciones
+      let contenidoSanitizado = contenido;
+      if (contenidoSanitizado && contenidoSanitizado.length > 1000) {
+        contenidoSanitizado = contenidoSanitizado.substring(0, 1000);
       }
       
-      // Obtener información del usuario para la respuesta
-      const [usuario] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, userId));
+      // Insertar comentario usando ejecución SQL directa
+      const result = await db.execute(`
+        INSERT INTO resource_comments 
+        (resource_id, user_id, content, rating, likes, is_pinned, parent_id, created_at, updated_at)
+        VALUES 
+        ($1, $2, $3, $4, 0, false, null, NOW(), NOW())
+        RETURNING *
+      `, [resourceId, userId, contenidoSanitizado, valoracion || null]);
       
-      // Formatear respuesta para el cliente
-      res.status(201).json({
-        id: nuevoComentario.id,
-        resourceId: nuevoComentario.resourceId,
-        content: nuevoComentario.content,
-        rating: nuevoComentario.rating,
-        createdAt: nuevoComentario.createdAt,
-        fecha: new Date(nuevoComentario.createdAt).toLocaleDateString('es-ES'),
-        usuario: {
+      if (!result || !result.rows || result.rows.length === 0) {
+        return res.status(500).json({ message: "Error al crear el comentario" });
+      }
+      
+      const comentario = result.rows[0];
+      
+      // Obtener información del usuario para la respuesta
+      const userResult = await db.execute(`
+        SELECT id, username FROM users WHERE id = $1
+      `, [userId]);
+      
+      if (!userResult || !userResult.rows || userResult.rows.length === 0) {
+        return res.status(500).json({ message: "Error al obtener información del usuario" });
+      }
+      
+      const usuario = userResult.rows[0];
+      
+      // Devolver la respuesta formateada
+      return res.status(201).json({
+        id: comentario.id,
+        content: comentario.content,
+        rating: comentario.rating,
+        resourceId: comentario.resource_id,
+        user: {
           id: usuario.id,
-          nombre: usuario.username,
+          username: usuario.username,
           avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${usuario.username.substring(0, 2).toUpperCase()}`
-        }
+        },
+        createdAt: comentario.created_at,
+        fecha: new Date(comentario.created_at).toLocaleDateString('es-ES')
       });
     } catch (error) {
       console.error("Error al crear comentario:", error);
