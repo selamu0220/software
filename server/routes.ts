@@ -1149,19 +1149,37 @@ DaVinci Resolve 17 o superior
       }
       
       // Insertar comentario usando ejecución SQL directa
-      const result = await db.execute(`
-        INSERT INTO resource_comments 
-        (resource_id, user_id, content, rating, likes, is_pinned, parent_id, created_at, updated_at)
-        VALUES 
-        ($1, $2, $3, $4, 0, false, null, NOW(), NOW())
-        RETURNING *
-      `, [resourceId, userId, contenidoSanitizado, valoracion || null]);
-      
-      if (!result || !result.rows || result.rows.length === 0) {
-        return res.status(500).json({ message: "Error al crear el comentario" });
+      let comentario;
+      try {
+        // Convertir resourceId a número
+        const resourceIdNum = parseInt(resourceId);
+        if (isNaN(resourceIdNum)) {
+          return res.status(400).json({ message: "ID de recurso inválido" });
+        }
+
+        const queryText = `
+          INSERT INTO resource_comments 
+          (resource_id, user_id, content, rating, likes, is_pinned, parent_id, created_at, updated_at)
+          VALUES 
+          ($1, $2, $3, $4, 0, false, null, NOW(), NOW())
+          RETURNING *
+        `;
+        
+        const queryParams = [resourceIdNum, userId, contenidoSanitizado, valoracion || null];
+        console.log("Ejecutando consulta con parámetros:", queryParams);
+        
+        const result = await db.execute(queryText, queryParams);
+        
+        if (!result || !result.rows || result.rows.length === 0) {
+          return res.status(500).json({ message: "Error al crear el comentario" });
+        }
+        
+        comentario = result.rows[0];
+        console.log("Comentario insertado con éxito:", comentario);
+      } catch (error: any) {
+        console.error("Error al insertar comentario:", error);
+        return res.status(500).json({ message: "Error al crear el comentario: " + (error.message || "Error desconocido") });
       }
-      
-      const comentario = result.rows[0];
       
       // Obtener información del usuario para la respuesta
       const userResult = await db.execute(`
