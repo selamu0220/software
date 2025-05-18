@@ -176,21 +176,25 @@ function RecursoCard({ recurso }: { recurso: any }) {
               className="object-cover w-full h-full"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement.innerHTML = `
-                  <div class="w-full h-full flex items-center justify-center bg-muted">
-                    <div class="text-muted-foreground flex flex-col items-center">
-                      <FileIcon class="w-10 h-10 mb-2 opacity-50" />
-                      <span class="text-xs">${recurso.titulo}</span>
-                    </div>
+                // Usar una solución más simple para evitar problemas con innerHTML
+                const placeholderDiv = document.createElement('div');
+                placeholderDiv.className = "w-full h-full flex items-center justify-center bg-muted";
+                placeholderDiv.innerHTML = `
+                  <div class="text-muted-foreground flex flex-col items-center">
+                    <div class="w-10 h-10 mb-2 opacity-50 flex items-center justify-center">📄</div>
+                    <span class="text-xs">${recurso.titulo}</span>
                   </div>
                 `;
+                if (e.currentTarget.parentElement) {
+                  e.currentTarget.parentElement.appendChild(placeholderDiv);
+                }
               }}
             />
           </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted">
             <div className="text-muted-foreground flex flex-col items-center">
-              <FileIcon className="w-10 h-10 mb-2 opacity-50" />
+              <div className="w-10 h-10 mb-2 opacity-50 flex items-center justify-center">📄</div>
               <span className="text-xs">{recurso.titulo}</span>
             </div>
           </div>
@@ -250,6 +254,7 @@ export default function RecursosPage() {
   const [eliminandoRecursos, setEliminandoRecursos] = useState(false);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [recursosReales, setRecursosReales] = useState<any[]>([]);
+  const [todosLosRecursos, setTodosLosRecursos] = useState<any[]>([]);
   const [cargandoRecursos, setCargandoRecursos] = useState(false);
   
   // Función para corregir las rutas de imágenes y archivos
@@ -297,6 +302,7 @@ export default function RecursosPage() {
         if (response.ok) {
           const data = await response.json();
           setRecursosReales(data);
+          setTodosLosRecursos(data); // Guardar una copia para poder restaurar después de filtrados
           console.log("Recursos cargados:", data);
         } else {
           console.error("Error al cargar recursos:", response.statusText);
@@ -402,9 +408,9 @@ export default function RecursosPage() {
       setBuscando(true);
       
       // Filtrar los recursos basados en la consulta
-      const resultados = recursosReales.filter(recurso => 
-        recurso.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        recurso.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      const resultados = todosLosRecursos.filter(recurso => 
+        recurso.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        recurso.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (recurso.tags && recurso.tags.some((tag: string) => 
           tag.toLowerCase().includes(searchQuery.toLowerCase())
         ))
@@ -418,6 +424,10 @@ export default function RecursosPage() {
       setTimeout(() => {
         setBuscando(false);
       }, 1000);
+    } else {
+      // Si la búsqueda está vacía, mostrar todos los recursos
+      setRecursosReales(todosLosRecursos);
+      setFiltroActivo(false);
     }
   };
 
